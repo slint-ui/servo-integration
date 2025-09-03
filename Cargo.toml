@@ -1,0 +1,42 @@
+[package]
+name = "servo-integration"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+log = "0.4"
+image = "0.24"
+bincode = "1"
+gleam = "0.15"
+winit = "0.30"
+raw-window-handle = "0.6"
+crossbeam-channel = "0.5"
+surfman = "0.10"
+url = { version = "2.5.2", features = ["serde"] }
+rustls = { version = "0.23", features = ["aws_lc_rs"] }
+
+i-slint-backend-winit = { path = "../slint/internal/backends/winit" }
+i-slint-backend-selector = { path = "../slint/internal/backends/selector" }
+slint = { path = "../slint/api/rs/slint", features = [
+    "raw-window-handle-06",
+    "unstable-winit-030",
+] }
+
+webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
+wr_malloc_size_of = { git = "https://github.com/servo/webrender", branch = "0.67" }
+webrender = { git = "https://github.com/servo/webrender", branch = "0.67", features = [
+    "capture",
+] }
+
+layout = { git = "https://github.com/servo/servo", rev = "633d746e" }
+pixels = { git = "https://github.com/servo/servo", rev = "633d746e" }
+libservo = { git = "https://github.com/servo/servo", rev = "633d746e" }
+webgl = { git = "https://github.com/servo/servo", rev = "633d746e" }
+compositing = { git = "https://github.com/servo/servo", rev = "633d746e" }
+servo_allocator = { git = "https://github.com/servo/servo", rev = "633d746e" }
+constellation = { git = "https://github.com/servo/servo", rev = "633d746e" }
+compositing_traits = { git = "https://github.com/servo/servo", rev = "633d746e" }
+constellation_traits = { git = "https://github.com/servo/servo", rev = "633d746e" }
+embedder_traits = { git = "https://github.com/servo/servo", rev = "633d746e", features = [
+    "baked-default-resources",
+] }
