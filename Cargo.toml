@@ -15,9 +15,9 @@ surfman = "0.10"
 url = { version = "2.5.2", features = ["serde"] }
 rustls = { version = "0.23", features = ["aws_lc_rs"] }
 
-i-slint-backend-winit = { path = "../slint/internal/backends/winit" }
-i-slint-backend-selector = { path = "../slint/internal/backends/selector" }
-slint = { path = "../slint/api/rs/slint", features = [
+i-slint-backend-winit = { git = "https://github.com/slint-ui/slint" }
+i-slint-backend-selector = { git = "https://github.com/slint-ui/slint"  }
+slint = { git = "https://github.com/slint-ui/slint", features = [
     "raw-window-handle-06",
     "unstable-winit-030",
 ] }
@@ -28,15 +28,15 @@ webrender = { git = "https://github.com/servo/webrender", branch = "0.67", featu
     "capture",
 ] }
 
-layout = { git = "https://github.com/servo/servo", rev = "633d746e" }
-pixels = { git = "https://github.com/servo/servo", rev = "633d746e" }
-libservo = { git = "https://github.com/servo/servo", rev = "633d746e" }
-webgl = { git = "https://github.com/servo/servo", rev = "633d746e" }
-compositing = { git = "https://github.com/servo/servo", rev = "633d746e" }
-servo_allocator = { git = "https://github.com/servo/servo", rev = "633d746e" }
-constellation = { git = "https://github.com/servo/servo", rev = "633d746e" }
-compositing_traits = { git = "https://github.com/servo/servo", rev = "633d746e" }
-constellation_traits = { git = "https://github.com/servo/servo", rev = "633d746e" }
-embedder_traits = { git = "https://github.com/servo/servo", rev = "633d746e", features = [
+layout = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+pixels = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+libservo = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+webgl = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+compositing = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+servo_allocator = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+constellation = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+compositing_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+constellation_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
+embedder_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b", features = [
     "baked-default-resources",
 ] }
