@@ -244,7 +244,7 @@ dependencies = [
  "jni",
  "jni-sys",
  "libc",
- "log",
+ "log 0.4.27",
  "ndk",
  "ndk-context",
  "ndk-sys 0.6.0+11769913",
@@ -353,7 +353,7 @@ checksum = "0348a1c054491f4bfe6ab86a7b6ab1e44e45d899005de92f58b3df180b36ddaf"
 dependencies = [
  "clipboard-win",
  "image 0.25.8",
- "log",
+ "log 0.4.27",
  "objc2 0.6.2",
  "objc2-app-kit 0.3.1",
  "objc2-core-foundation",
@@ -561,7 +561,7 @@ dependencies = [
  "futures-io",
  "futures-task",
  "futures-util",
- "log",
+ "log 0.4.27",
  "pin-project-lite",
  "rustls-pki-types",
  "tokio",
@@ -658,7 +658,7 @@ checksum = "4f3efb2ca85bc610acfa917b5aaa36f3fcbebed5b3182d7f877b02531c4b80c8"
 dependencies = [
  "anyhow",
  "arrayvec",
- "log",
+ "log 0.4.27",
  "nom 7.1.3",
  "num-rational",
  "v_frame",
@@ -707,7 +707,7 @@ dependencies = [
  "crossbeam-channel",
  "ipc-channel",
  "libc",
- "log",
+ "log 0.4.27",
  "serde_json",
 ]
 
@@ -798,7 +798,7 @@ dependencies = [
  "itertools 0.12.1",
  "lazy_static",
  "lazycell",
- "log",
+ "log 0.4.27",
  "prettyplease",
  "proc-macro2",
  "quote",
@@ -837,7 +837,7 @@ dependencies = [
  "cexpr",
  "clang-sys",
  "itertools 0.13.0",
- "log",
+ "log 0.4.27",
  "prettyplease",
  "proc-macro2",
  "quote",
@@ -1064,7 +1064,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b99da2f8558ca23c71f4fd15dc57c906239752dd27ff3c00a1d56b685b7cbfec"
 dependencies = [
  "bitflags 2.9.4",
- "log",
+ "log 0.4.27",
  "polling",
  "rustix 0.38.44",
  "slab",
@@ -1121,7 +1121,7 @@ dependencies = [
  "fonts",
  "ipc-channel",
  "kurbo",
- "log",
+ "log 0.4.27",
  "net_traits",
  "peniko",
  "pixels",
@@ -1401,7 +1401,7 @@ dependencies = [
  "gleam",
  "ipc-channel",
  "libc",
- "log",
+ "log 0.4.27",
  "pixels",
  "profile_traits",
  "servo-tracing",
@@ -1432,7 +1432,7 @@ dependencies = [
  "glow",
  "image 0.25.8",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "profile_traits",
  "raw-window-handle",
@@ -1515,7 +1515,7 @@ dependencies = [
  "ipc-channel",
  "keyboard-types 0.8.1",
  "layout_api",
- "log",
+ "log 0.4.27",
  "media",
  "net",
  "net_traits",
@@ -1552,7 +1552,7 @@ dependencies = [
  "http 1.3.1",
  "hyper_serde",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "net_traits",
  "pixels",
@@ -2023,7 +2023,7 @@ dependencies = [
  "headers 0.4.1",
  "http 1.3.1",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "net",
  "net_traits",
  "serde",
@@ -2044,7 +2044,7 @@ dependencies = [
  "embedder_traits",
  "http 1.3.1",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "net_traits",
  "serde",
@@ -2266,7 +2266,7 @@ dependencies = [
  "hyper_serde",
  "ipc-channel",
  "keyboard-types 0.8.1",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "num-derive",
  "pixels",
@@ -2343,7 +2343,7 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "186e05a59d4c50738528153b83b0b0194d3a29507dfec16eccd4b342903397d0"
 dependencies = [
- "log",
+ "log 0.4.27",
  "regex",
 ]
 
@@ -2357,7 +2357,7 @@ dependencies = [
  "anstyle",
  "env_filter",
  "jiff",
- "log",
+ "log 0.4.27",
 ]
 
 [[package]]
@@ -2536,7 +2536,7 @@ dependencies = [
  "glow",
  "image 0.25.8",
  "imgref",
- "log",
+ "log 0.4.27",
  "lru",
  "rgb",
  "rustybuzz",
@@ -2645,7 +2645,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "457e789b3d1202543297a350643cf459f836cade38934e7a4cf6a39e7cde2905"
 dependencies = [
  "fontconfig-parser",
- "log",
+ "log 0.4.27",
  "memmap2",
  "slotmap",
  "tinyvec",
@@ -2685,7 +2685,7 @@ dependencies = [
  "ipc-channel",
  "itertools 0.14.0",
  "libc",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "memmap2",
  "net_traits",
@@ -2722,7 +2722,7 @@ dependencies = [
  "atomic_refcell",
  "dwrote",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "memmap2",
  "parking_lot",
@@ -2954,7 +2954,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "061957ca7a966a39a79ebca393a9a6c7babda10bf9dd6f11d00041558d929c22"
 dependencies = [
  "libc",
- "log",
+ "log 0.4.27",
 ]
 
 [[package]]
@@ -3055,7 +3055,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1a95dfc23a2b4a9a2f5ab41d194f8bfda3cabec42af4e39f08c339eb2a0c124d"
 dependencies = [
  "khronos_api",
- "log",
+ "log 0.4.27",
  "xml-rs",
 ]
 
@@ -3186,7 +3186,7 @@ version = "0.27.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c151a2a5ef800297b4e79efa4f4bec035c5f51d5ae587287c9b952bdf734cacd"
 dependencies = [
- "log",
+ "log 0.4.27",
  "presser",
  "thiserror 1.0.69",
  "windows 0.58.0",
@@ -3408,7 +3408,7 @@ version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "55d958c2f74b664487a2035fe1dadb032c48718a03b63f3ab0b8537db8549ed4"
 dependencies = [
- "log",
+ "log 0.4.27",
  "markup5ever",
  "match_token",
 ]
@@ -3536,7 +3536,7 @@ dependencies = [
  "http 1.3.1",
  "hyper 1.7.0",
  "hyper-util",
- "log",
+ "log 0.4.27",
  "rustls",
  "rustls-pki-types",
  "tokio",
@@ -3838,7 +3838,7 @@ dependencies = [
  "core-foundation-sys",
  "iana-time-zone-haiku",
  "js-sys",
- "log",
+ "log 0.4.27",
  "wasm-bindgen",
  "windows-core 0.61.2",
 ]
@@ -4488,7 +4488,7 @@ dependencies = [
  "bitflags 2.9.4",
  "input-sys",
  "libc",
- "log",
+ "log 0.4.27",
  "udev",
 ]
 
@@ -4604,7 +4604,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be1f93b8b1eb69c77f24bbb0afdf66f54b632ee39af40ca21c4365a1d7347e49"
 dependencies = [
  "jiff-static",
- "log",
+ "log 0.4.27",
  "portable-atomic",
  "portable-atomic-util",
  "serde",
@@ -4631,7 +4631,7 @@ dependencies = [
  "cfg-if",
  "combine",
  "jni-sys",
- "log",
+ "log 0.4.27",
  "thiserror 1.0.69",
  "walkdir",
  "windows-sys 0.45.0",
@@ -4758,7 +4758,7 @@ dependencies = [
  "itertools 0.14.0",
  "kurbo",
  "layout_api",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "net_traits",
  "parking_lot",
@@ -4913,7 +4913,7 @@ dependencies = [
  "keyboard-types 0.8.1",
  "layout",
  "layout_api",
- "log",
+ "log 0.4.27",
  "media",
  "mozangle",
  "net",
@@ -5039,6 +5039,15 @@ dependencies = [
 
 [[package]]
 name = "log"
+version = "0.3.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e19e8d5c34a3e0e2223db8e060f9e8264aeeb5c5fc64a4ee9965c062211c024b"
+dependencies = [
+ "log 0.4.27",
+]
+
+[[package]]
+name = "log"
 version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
@@ -5140,7 +5149,7 @@ version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "311fe69c934650f8f19652b3946075f0fc41ad8757dbb68f1ca14e7900ecc1c3"
 dependencies = [
- "log",
+ "log 0.4.27",
  "tendril",
  "web_atoms",
 ]
@@ -5181,7 +5190,7 @@ dependencies = [
  "euclid",
  "fnv",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "serde",
  "servo-media",
  "servo_config",
@@ -5222,7 +5231,7 @@ dependencies = [
  "block",
  "core-graphics-types 0.1.3",
  "foreign-types",
- "log",
+ "log 0.4.27",
  "objc",
  "paste",
 ]
@@ -5234,7 +5243,7 @@ source = "git+https://github.com/servo/servo?rev=b73c81630ab1d1e1a931dca84d70f99
 dependencies = [
  "base",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "profile_traits",
  "script_traits",
@@ -5316,7 +5325,7 @@ dependencies = [
  "cc",
  "encoding_rs",
  "libc",
- "log",
+ "log 0.4.27",
  "mozjs_sys",
 ]
 
@@ -5372,7 +5381,7 @@ dependencies = [
  "hashbrown 0.15.5",
  "hexf-parse",
  "indexmap",
- "log",
+ "log 0.4.27",
  "num-traits",
  "once_cell",
  "rustc-hash 1.1.0",
@@ -5390,7 +5399,7 @@ checksum = "c3f42e7bbe13d351b6bead8286a43aac9534b82bd3cc43e47037f012ebfd62d4"
 dependencies = [
  "bitflags 2.9.4",
  "jni-sys",
- "log",
+ "log 0.4.27",
  "ndk-sys 0.6.0+11769913",
  "num_enum",
  "raw-window-handle",
@@ -5456,7 +5465,7 @@ dependencies = [
  "imsz",
  "ipc-channel",
  "itertools 0.14.0",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "mime",
  "mime_guess",
@@ -5509,7 +5518,7 @@ dependencies = [
  "hyper-util",
  "hyper_serde",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "mime",
  "num-traits",
@@ -6335,7 +6344,7 @@ dependencies = [
  "euclid",
  "image 0.25.8",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "serde",
  "servo_malloc_size_of",
@@ -6355,7 +6364,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8c1f7d82649829ecdef8e258790b0587acf0a8403f0ce963473d8e918acc1643"
 dependencies = [
  "euclid",
- "log",
+ "log 0.4.27",
  "smallvec",
 ]
 
@@ -6501,7 +6510,7 @@ dependencies = [
  "base",
  "ipc-channel",
  "libc",
- "log",
+ "log 0.4.27",
  "profile_traits",
  "regex",
  "serde",
@@ -6521,7 +6530,7 @@ dependencies = [
  "base",
  "crossbeam-channel",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "serde",
  "servo_allocator",
@@ -6721,7 +6730,7 @@ dependencies = [
  "itertools 0.12.1",
  "libc",
  "libfuzzer-sys",
- "log",
+ "log 0.4.27",
  "maybe-rayon",
  "new_debug_unreachable",
  "noop_proc_macro",
@@ -6866,7 +6875,7 @@ checksum = "a8928798c0a55e03c9ca6c4c6846f76377427d2c1e1f7e6de3c06ae57942df43"
 dependencies = [
  "gif",
  "image-webp",
- "log",
+ "log 0.4.27",
  "pico-args",
  "rgb",
  "svgtypes",
@@ -7003,7 +7012,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0ebcbd2f03de0fc1122ad9bb24b127a5a6cd51d72604a3f3c50ac459762b6cc"
 dependencies = [
  "aws-lc-rs",
- "log",
+ "log 0.4.27",
  "once_cell",
  "rustls-pki-types",
  "rustls-webpki",
@@ -7056,7 +7065,7 @@ dependencies = [
  "bitflags 2.9.4",
  "bytemuck",
  "core_maths",
- "log",
+ "log 0.4.27",
  "smallvec",
  "ttf-parser 0.25.1",
  "unicode-bidi-mirroring",
@@ -7153,7 +7162,7 @@ dependencies = [
  "kurbo",
  "layout_api",
  "libc",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "markup5ever",
  "media",
@@ -7229,7 +7238,7 @@ dependencies = [
  "jstraceable_derive",
  "keyboard-types 0.8.1",
  "libc",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "mozjs",
  "num-traits",
@@ -7266,7 +7275,7 @@ dependencies = [
  "euclid",
  "ipc-channel",
  "keyboard-types 0.8.1",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "media",
  "net_traits",
@@ -7291,7 +7300,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6277f0217056f77f1d8f49f2950ac6c278c0d607c45f5ee99328d792ede24ec"
 dependencies = [
  "ab_glyph",
- "log",
+ "log 0.4.27",
  "memmap2",
  "smithay-client-toolkit",
  "tiny-skia",
@@ -7340,7 +7349,7 @@ dependencies = [
  "cssparser",
  "derive_more 2.0.1",
  "fxhash",
- "log",
+ "log 0.4.27",
  "new_debug_unreachable",
  "phf",
  "phf_codegen",
@@ -7465,13 +7474,14 @@ dependencies = [
  "constellation_traits",
  "crossbeam-channel",
  "embedder_traits",
+ "euclid",
  "gleam",
  "i-slint-backend-selector",
  "i-slint-backend-winit",
  "image 0.24.9",
  "layout",
  "libservo",
- "log",
+ "log 0.4.27",
  "pixels",
  "raw-window-handle",
  "rustls",
@@ -7479,6 +7489,7 @@ dependencies = [
  "slint",
  "surfman",
  "url",
+ "warn",
  "webgl",
  "webrender",
  "webrender_api",
@@ -7506,7 +7517,7 @@ source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862c
 dependencies = [
  "byte-slice-cast",
  "euclid",
- "log",
+ "log 0.4.27",
  "num-complex",
  "num-traits",
  "petgraph",
@@ -7574,7 +7585,7 @@ name = "servo-media-webrtc"
 version = "0.1.0"
 source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
 dependencies = [
- "log",
+ "log 0.4.27",
  "servo-media-streams",
  "uuid",
 ]
@@ -7688,7 +7699,7 @@ name = "servo_rand"
 version = "0.0.1"
 source = "git+https://github.com/servo/servo?rev=b73c81630ab1d1e1a931dca84d70f997c12c286b#b73c81630ab1d1e1a931dca84d70f997c12c286b"
 dependencies = [
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "rand 0.8.5",
  "rand_core 0.6.4",
@@ -7781,7 +7792,7 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a9c6883ca9c3c7c90e888de77b7a5c849c779d25d74a1269b0218b14e8b136c"
 dependencies = [
- "log",
+ "log 0.4.27",
 ]
 
 [[package]]
@@ -7903,7 +7914,7 @@ dependencies = [
  "calloop-wayland-source",
  "cursor-icon",
  "libc",
- "log",
+ "log 0.4.27",
  "memmap2",
  "rustix 0.38.44",
  "thiserror 1.0.69",
@@ -7980,7 +7991,7 @@ dependencies = [
  "fastrand",
  "foreign-types",
  "js-sys",
- "log",
+ "log 0.4.27",
  "memmap2",
  "objc2 0.5.2",
  "objc2-foundation 0.2.2",
@@ -8147,7 +8158,7 @@ dependencies = [
  "itertools 0.14.0",
  "itoa",
  "lazy_static",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "matches",
  "mime",
@@ -8282,7 +8293,7 @@ dependencies = [
  "gl_generator",
  "glow",
  "libc",
- "log",
+ "log 0.4.27",
  "mach2",
  "objc2 0.6.2",
  "objc2-app-kit 0.3.1",
@@ -8585,7 +8596,7 @@ dependencies = [
  "arrayvec",
  "bytemuck",
  "cfg-if",
- "log",
+ "log 0.4.27",
  "png 0.17.16",
  "tiny-skia-path",
 ]
@@ -8796,7 +8807,7 @@ version = "0.1.41"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "784e0ac535deb450455cbfa28a6f0df145ea1bb7ae51b821cf5e7927fdcfbdd0"
 dependencies = [
- "log",
+ "log 0.4.27",
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",
@@ -8859,7 +8870,7 @@ dependencies = [
  "data-encoding",
  "http 1.3.1",
  "httparse",
- "log",
+ "log 0.4.27",
  "rand 0.9.2",
  "rustls",
  "rustls-pki-types",
@@ -9093,7 +9104,7 @@ dependencies = [
  "fontdb",
  "imagesize",
  "kurbo",
- "log",
+ "log 0.4.27",
  "pico-args",
  "roxmltree",
  "rustybuzz",
@@ -9169,7 +9180,7 @@ source = "git+https://github.com/linebender/vello?rev=5e3e12559781891b204553161a
 dependencies = [
  "bytemuck",
  "fearless_simd",
- "log",
+ "log 0.4.27",
  "peniko",
  "png 0.17.16",
  "skrifa",
@@ -9244,6 +9255,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "warn"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5f2638072850e7fde2e4e96d78204024000382e5666876bd8a3e7e9db6ed22cb"
+dependencies = [
+ "log 0.3.9",
+]
+
+[[package]]
 name = "warp"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9255,7 +9275,7 @@ dependencies = [
  "headers 0.3.9",
  "http 0.2.12",
  "hyper 0.14.32",
- "log",
+ "log 0.4.27",
  "mime",
  "mime_guess",
  "percent-encoding",
@@ -9304,7 +9324,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f0a0651a5c2bc21487bde11ee802ccaf4c51935d0d3d42a6101f98161700bc6"
 dependencies = [
  "bumpalo",
- "log",
+ "log 0.4.27",
  "proc-macro2",
  "quote",
  "syn",
@@ -9460,7 +9480,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "34949b42822155826b41db8e5d0c1be3a2bd296c747577a43a3e6daefc296142"
 dependencies = [
  "dlib",
- "log",
+ "log 0.4.27",
  "once_cell",
  "pkg-config",
 ]
@@ -9508,7 +9528,7 @@ dependencies = [
  "cookie 0.16.2",
  "http 0.2.12",
  "icu_segmenter",
- "log",
+ "log 0.4.27",
  "serde",
  "serde_derive",
  "serde_json",
@@ -9537,7 +9557,7 @@ dependencies = [
  "half",
  "ipc-channel",
  "itertools 0.14.0",
- "log",
+ "log 0.4.27",
  "pixels",
  "surfman",
  "webrender",
@@ -9554,7 +9574,7 @@ dependencies = [
  "compositing_traits",
  "euclid",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "pixels",
  "serde",
  "servo_config",
@@ -9615,7 +9635,7 @@ dependencies = [
  "gleam",
  "glslopt",
  "lazy_static",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "num-traits",
  "peek-poke",
@@ -9671,7 +9691,7 @@ dependencies = [
  "crossbeam-channel",
  "euclid",
  "glow",
- "log",
+ "log 0.4.27",
  "openxr",
  "raw-window-handle",
  "serde",
@@ -9689,7 +9709,7 @@ dependencies = [
  "embedder_traits",
  "euclid",
  "ipc-channel",
- "log",
+ "log 0.4.27",
  "serde",
 ]
 
@@ -9713,7 +9733,7 @@ dependencies = [
  "document-features",
  "hashbrown 0.15.5",
  "indexmap",
- "log",
+ "log 0.4.27",
  "naga",
  "once_cell",
  "parking_lot",
@@ -9782,7 +9802,7 @@ dependencies = [
  "khronos-egl",
  "libc",
  "libloading",
- "log",
+ "log 0.4.27",
  "metal",
  "naga",
  "ndk-sys 0.5.0+25.2.9519653",
@@ -9810,7 +9830,7 @@ dependencies = [
  "bitflags 2.9.4",
  "bytemuck",
  "js-sys",
- "log",
+ "log 0.4.27",
  "serde",
  "thiserror 2.0.16",
  "web-sys",
@@ -10412,7 +10432,7 @@ dependencies = [
  "fxhash",
  "lazy_static",
  "libc",
- "log",
+ "log 0.4.27",
  "malloc_size_of_derive",
  "objc",
  "rayon",
@@ -10536,7 +10556,7 @@ checksum = "d039de8032a9a8856a6be89cea3e5d12fdd82306ab7c94d74e6deab2460651c5"
 dependencies = [
  "bitflags 2.9.4",
  "dlib",
- "log",
+ "log 0.4.27",
  "once_cell",
  "xkeysym",
 ]
@@ -10559,7 +10579,7 @@ version = "0.35.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee3f1e41afb31a75aef076563b0ad3ecc24f5bd9d12a72b132222664eb76b494"
 dependencies = [
- "log",
+ "log 0.4.27",
  "markup5ever",
 ]
 

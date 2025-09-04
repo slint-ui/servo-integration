@@ -3,6 +3,10 @@ name = "servo-integration"
 version = "0.1.0"
 edition = "2024"
 
+[[bin]]
+name = "servo-integration"
+path = "src/main.rs"
+
 [dependencies]
 log = "0.4"
 image = "0.24"
@@ -40,3 +44,5 @@ constellation_traits = { git = "https://github.com/servo/servo", rev = "b73c8163
 embedder_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b", features = [
     "baked-default-resources",
 ] }
+euclid = "0.22.11"
+warn = "0.2.2"

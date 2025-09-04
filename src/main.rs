@@ -1,150 +1,145 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
-mod servo_util;
-
 use std::cell::RefCell;
-use std::error::Error;
 use std::rc::Rc;
 
-use winit::event::WindowEvent;
-use winit::event_loop::ActiveEventLoop;
-use winit::window::WindowId;
+use url::Url;
 
-use servo::RenderingContext;
+use winit::dpi;
 
-use i_slint_backend_winit::{Backend, CustomApplicationHandler, WinitWindowEventResult};
-use slint::{RenderingState, Window, platform::set_platform};
+use slint::winit_030::WinitWindowAccessor;
 
-use crate::servo_util::MyServo;
-use crate::servo_util::render_context::get_rendering_context;
-use crate::servo_util::webview::WebView;
+use slint::RenderingState;
+
+use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
+
+use servo::{
+    RenderingContext, Servo, ServoBuilder, WebView, WebViewBuilder, WindowRenderingContext,
+};
 
 slint::slint! {
+
     export component MyApp inherits Window {
         width: 1024px;
         height: 768px;
 
         in property <image> web_content <=> image.source;
 
-        image := Image {
+        image :=  Image {
             width: 100%;
             height: 100%;
         }
     }
 }
+struct AppDelegate {
+    app: MyApp,
+}
 
-fn main() -> Result<(), Box<dyn Error>> {
-    rustls::crypto::aws_lc_rs::default_provider()
-        .install_default()
-        .expect("Failed to install crypto provider");
+impl servo::WebViewDelegate for AppDelegate {
+    fn notify_new_frame_ready(&self, _webview: WebView) {
+        self.app.window().request_redraw();
+    }
+}
 
-    let app_state = Rc::new(RefCell::new(AppState::default()));
+fn main() {
+    let app = MyApp::new().unwrap();
+    let app_weak = app.as_weak();
 
-    let handler = ApplicationHandler {
-        app_state: app_state.clone(),
-    };
+    //let window = app.window();
 
-    let backend = Backend::builder()
-        .with_custom_application_handler(handler)
-        .build()?;
+    let servo: Rc<RefCell<Option<Servo>>> = Rc::new(RefCell::new(None));
+    let servo_clone = servo.clone();
 
-    let proxy = backend.create_winit_event_loop_proxy();
+    let webview: Rc<RefCell<Option<WebView>>> = Rc::new(RefCell::new(None));
+    let webview_clone = webview.clone();
 
-    set_platform(Box::new(backend))?;
+    slint::spawn_local({
+        let app_weak = app_weak.clone();
+        async move {
+            let app = app_weak.upgrade().unwrap();
+            let winit_window = app.window().winit_window().await.unwrap();
+            let slint_window_handle = app.window().window_handle();
 
-    let app = Rc::new(MyApp::new()?);
+            let window_handle = slint_window_handle.window_handle().unwrap();
+            let display_handle = slint_window_handle.display_handle().unwrap();
 
-    let app_for_closure = app.clone();
-    let app_state_for_closer = app_state.clone();
+            let window_size = app.window().size();
+            let size = dpi::PhysicalSize::new(window_size.width, window_size.height);
 
-    app.window()
+            let rendering_context =
+                WindowRenderingContext::new(display_handle, window_handle, size).unwrap();
+            let rendering_context_rc = Rc::new(rendering_context);
+
+            let offscreen_context = rendering_context_rc.offscreen_context(size);
+            let offscreen_context_rc = Rc::new(offscreen_context);
+
+            let _ = offscreen_context_rc.make_current();
+
+            let servo_instance = ServoBuilder::new(rendering_context_rc).build();
+            servo_instance.setup_logging();
+
+            let delegate = Rc::new(AppDelegate { app: app });
+
+            let url = Url::parse("https://example.com/").unwrap();
+            let webview_instance = WebViewBuilder::new(&servo_instance)
+                .url(url)
+                .delegate(delegate.clone())
+                .build();
+
+            *webview_clone.borrow_mut() = Some(webview_instance);
+            *servo_clone.borrow_mut() = Some(servo_instance);
+        }
+    })
+    .unwrap();
+
+    /* 
+    window
         .set_rendering_notifier(move |state, _graphics_api| match state {
             RenderingState::RenderingSetup => {
-                let proxy = proxy.clone().expect("Event loop proxy not available");
+                let app = app_weak.upgrade().unwrap();
 
-                let window = app_for_closure.window();
+                let window = app.window();
+                let slint_window_handle = window.window_handle();
 
-                let context = get_rendering_context(window);
+                let window_handle = slint_window_handle.window_handle().unwrap();
+                let display_handle = slint_window_handle.display_handle().unwrap();
 
-                let servo = MyServo::new(proxy, context.clone());
+                let window_size = window.size();
+                let size = dpi::PhysicalSize::new(window_size.width, window_size.height);
 
-                let webview = servo.create_webview(window);
+                let rendering_context =
+                    WindowRenderingContext::new(display_handle, window_handle, size).unwrap();
+                let rendering_context_rc = Rc::new(rendering_context);
 
-                servo.spin_event_loop(window);
+                let offscreen_context = rendering_context_rc.offscreen_context(size);
+                let offscreen_context_rc = Rc::new(offscreen_context);
 
-                let new_app_state = AppState {
-                    is_initialized: true,
-                    servo: Some(servo),
-                    rendering_context: Some(context),
-                    webview: Some(webview),
-                    app: Some(app_for_closure.clone()),
-                };
+                let _ = offscreen_context_rc.make_current();
 
-                *app_state_for_closer.borrow_mut() = new_app_state;
+                let servo_instance = ServoBuilder::new(offscreen_context_rc).build();
+                servo_instance.setup_logging();
+
+                let delegate = Rc::new(AppDelegate { app: app });
+
+                let url = Url::parse("https://example.com/").unwrap();
+                let webview_instance = WebViewBuilder::new(&servo_instance)
+                    .url(url)
+                    .delegate(delegate.clone())
+                    .build();
+
+                *webview_clone.borrow_mut() = Some(webview_instance);
+                *servo_clone.borrow_mut() = Some(servo_instance);
             }
             RenderingState::RenderingTeardown => {
-                let mut app_state_mut = app_state_for_closer.borrow_mut();
-                if let Some(servo) = app_state_mut.servo.take() {
-                    servo.deinit();
+                *webview_clone.borrow_mut() = None;
+                if let Some(servo_instance) = servo_clone.borrow_mut().take() {
+                    servo_instance.deinit();
                 }
             }
             _ => {}
-        })?;
+        })
+        .unwrap();
+*/
 
-    app.run()?;
-
-    Ok(())
-}
-
-#[derive(Default)]
-pub struct AppState {
-    pub is_initialized: bool,
-    pub servo: Option<MyServo>,
-    pub rendering_context: Option<Rc<dyn RenderingContext>>,
-    pub webview: Option<WebView>,
-    pub app: Option<Rc<MyApp>>,
-}
-
-struct ApplicationHandler {
-    app_state: Rc<RefCell<AppState>>,
-}
-
-impl CustomApplicationHandler for ApplicationHandler {
-    fn window_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        _: WindowId,
-        _: Option<&winit::window::Window>,
-        _: Option<&Window>,
-        event: &WindowEvent,
-    ) -> WinitWindowEventResult {
-        match event {
-            WindowEvent::CloseRequested => {
-                event_loop.exit();
-            }
-            WindowEvent::RedrawRequested => {
-                let app_state = self.app_state.borrow();
-
-                if app_state.is_initialized {
-                    let servo = app_state.servo.as_ref().expect("Servo not available");
-
-                    let app = app_state.app.as_ref().expect("App not available");
-
-                    // Continue spinning the servo event loop
-                    if !servo.spin_event_loop(&app.window()) {
-                        // Servo has shut down
-                        event_loop.exit();
-                        return WinitWindowEventResult::Propagate;
-                    }
-
-                    let rendered_image = servo.get_rendered_image();
-                    //     .expect("Failed to get rendered image");
-
-                    // app.set_web_content(rendered_image);
-                }
-            }
-            _ => (),
-        }
-        WinitWindowEventResult::Propagate
-    }
+    app.run().unwrap();
 }
