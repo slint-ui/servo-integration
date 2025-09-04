@@ -46,3 +46,4 @@ embedder_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d
 ] }
 euclid = "0.22.11"
 warn = "0.2.2"
+smol = "2.0.2"
