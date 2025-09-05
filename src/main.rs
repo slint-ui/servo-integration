@@ -13,8 +13,7 @@ use winit::dpi;
 use slint::winit_030::WinitWindowAccessor;
 
 use servo::{
-    LoadStatus, RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView,
-    WebViewBuilder,
+    RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
 };
 
 slint::slint! {
@@ -41,12 +40,11 @@ struct AppDelegate {
 }
 
 impl servo::WebViewDelegate for AppDelegate {
-    fn notify_load_status_changed(&self, webview: WebView, status: LoadStatus) {
-        if status == LoadStatus::Complete {
-            eprintln!("Load finished for {:?}", webview.page_title());
-            save_output_image(&self.rendering_context);
-            self.rendering_context.present();
-        }
+    fn notify_new_frame_ready(&self, webview: WebView) {
+        eprintln!("New frame ready for {:?}", webview.page_title());
+        webview.show(true);
+        webview.paint();
+        save_output_image(&self.rendering_context);
     }
 }
 
@@ -132,8 +130,6 @@ impl embedder_traits::EventLoopWaker for Waker {
     }
 }
 
-/// This needs to be done before presenting(), because `ReneringContext::read_to_image` reads
-/// from the back buffer.
 pub fn save_output_image<T>(rendering_context: &Rc<T>)
 where
     T: RenderingContext + ?Sized,
@@ -144,11 +140,38 @@ where
 
     let image = rendering_context.read_to_image(viewport_rect).unwrap();
 
+    let image_size = image.dimensions();
+    eprintln!(
+        "Captured image dimensions: {}x{}",
+        image_size.0, image_size.1
+    );
+
+    // Check if image has any non-white content
+    let has_non_white_content = image.pixels().any(|pixel| {
+        let rgba = pixel.0;
+        // Check if any pixel is not white (255,255,255) with full alpha
+        rgba[0] != 255 || rgba[1] != 255 || rgba[2] != 255 || rgba[3] != 255
+    });
+
+    eprintln!("Image has non-white content: {}", has_non_white_content);
+
+    // Sample a few pixels for debugging
+    let mut pixel_samples = Vec::new();
+    for (i, pixel) in image.pixels().enumerate() {
+        if i < 10 || i % (image.len() / 10) == 0 {
+            pixel_samples.push(pixel.0);
+        }
+        if pixel_samples.len() >= 20 {
+            break;
+        }
+    }
+    eprintln!("Pixel samples: {:?}", pixel_samples);
+
     let output_path = "./output.png";
 
     let image_format = ImageFormat::from_path(output_path).unwrap_or(ImageFormat::Png);
 
     DynamicImage::ImageRgba8(image)
         .save_with_format(output_path, image_format)
-        .unwrap()
+        .unwrap();
 }
