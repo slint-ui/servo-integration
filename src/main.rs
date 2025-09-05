@@ -13,7 +13,8 @@ use winit::dpi;
 use slint::winit_030::WinitWindowAccessor;
 
 use servo::{
-    RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
+    LoadStatus, RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView,
+    WebViewBuilder,
 };
 
 slint::slint! {
@@ -40,10 +41,12 @@ struct AppDelegate {
 }
 
 impl servo::WebViewDelegate for AppDelegate {
-    fn notify_new_frame_ready(&self, _webview: WebView) {
-        eprintln!("New frame ready {:?}", _webview.page_title());
-        eprintln!("{}", _webview.paint());
-        output_image(&self.rendering_context);
+    fn notify_load_status_changed(&self, webview: WebView, status: LoadStatus) {
+        if status == LoadStatus::Complete {
+            eprintln!("Load finished for {:?}", webview.page_title());
+            save_output_image(&self.rendering_context);
+            self.rendering_context.present();
+        }
     }
 }
 
@@ -120,26 +123,26 @@ impl Waker {
 }
 
 impl embedder_traits::EventLoopWaker for Waker {
-    fn clone_box(&self) -> Box<dyn embedder_traits::EventLoopWaker> {
-        Box::new(Self(self.0.clone()))
-    }
-
     fn wake(&self) {
         self.0.send_blocking(()).unwrap();
     }
+
+    fn clone_box(&self) -> Box<dyn embedder_traits::EventLoopWaker> {
+        Box::new(Self(self.0.clone()))
+    }
 }
 
-pub fn output_image(rendering_context: &Rc<SoftwareRenderingContext>) {
-    rendering_context.present();
-
+/// This needs to be done before presenting(), because `ReneringContext::read_to_image` reads
+/// from the back buffer.
+pub fn save_output_image<T>(rendering_context: &Rc<T>)
+where
+    T: RenderingContext + ?Sized,
+{
     let size = rendering_context.size2d().to_i32();
-    let rect = DeviceIntRect::from_origin_and_size(Point2D::origin(), size);
 
-    let image = rendering_context.read_to_image(rect).unwrap();
+    let viewport_rect = DeviceIntRect::from_origin_and_size(Point2D::origin(), size);
 
-    let image_size = image.dimensions();
-
-    println!("{:?} from {:#?}", image_size, rect);
+    let image = rendering_context.read_to_image(viewport_rect).unwrap();
 
     let output_path = "./output.png";
 
@@ -147,5 +150,5 @@ pub fn output_image(rendering_context: &Rc<SoftwareRenderingContext>) {
 
     DynamicImage::ImageRgba8(image)
         .save_with_format(output_path, image_format)
-        .unwrap();
+        .unwrap()
 }
