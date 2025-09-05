@@ -6,14 +6,14 @@ use std::rc::Rc;
 use euclid::Point2D;
 use image::{DynamicImage, ImageFormat};
 use url::Url;
-
 use webrender_api::units::DeviceIntRect;
 use winit::dpi;
 
 use slint::winit_030::WinitWindowAccessor;
 
 use servo::{
-    RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
+    LoadStatus, RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView,
+    WebViewBuilder,
 };
 
 slint::slint! {
@@ -40,11 +40,18 @@ struct AppDelegate {
 }
 
 impl servo::WebViewDelegate for AppDelegate {
-    fn notify_new_frame_ready(&self, webview: WebView) {
-        eprintln!("New frame ready for {:?}", webview.page_title());
-        webview.show(true);
-        webview.paint();
-        save_output_image(&self.rendering_context);
+    fn notify_load_status_changed(&self, webview: WebView, status: LoadStatus) {
+        if status == LoadStatus::Complete {
+            eprintln!("Load finished for {:?}", webview.page_title());
+
+            webview.show(true);
+
+            std::thread::sleep(std::time::Duration::from_millis(100));
+
+            webview.paint();
+
+            save_output_image(&self.rendering_context);
+        }
     }
 }
 
@@ -122,7 +129,8 @@ impl Waker {
 
 impl embedder_traits::EventLoopWaker for Waker {
     fn wake(&self) {
-        self.0.send_blocking(()).unwrap();
+        // Use try_send to avoid blocking and handle errors gracefully
+        let _ = self.0.try_send(());
     }
 
     fn clone_box(&self) -> Box<dyn embedder_traits::EventLoopWaker> {
