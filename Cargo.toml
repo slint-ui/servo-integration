@@ -8,42 +8,19 @@ name = "servo-integration"
 path = "src/main.rs"
 
 [dependencies]
-log = "0.4"
-image = "0.25.8"
-bincode = "1"
-gleam = "0.15"
+url = "2.5.2"
+smol = "2.0.2"
 winit = "0.30"
-raw-window-handle = "0.6"
-crossbeam-channel = "0.5"
-surfman = "0.10"
-url = { version = "2.5.2", features = ["serde"] }
-rustls = { version = "0.23", features = ["aws_lc_rs"] }
+rustls = "0.23"
+euclid = "0.22.11"
 
-i-slint-backend-winit = { git = "https://github.com/slint-ui/slint" }
-i-slint-backend-selector = { git = "https://github.com/slint-ui/slint"  }
 slint = { git = "https://github.com/slint-ui/slint", features = [
-    "raw-window-handle-06",
     "unstable-winit-030",
 ] }
 
 webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
-wr_malloc_size_of = { git = "https://github.com/servo/webrender", branch = "0.67" }
-webrender = { git = "https://github.com/servo/webrender", branch = "0.67", features = [
-    "capture",
-] }
 
-layout = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-pixels = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
 libservo = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-webgl = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-compositing = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-servo_allocator = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-constellation = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-compositing_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-constellation_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
 embedder_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b", features = [
     "baked-default-resources",
 ] }
-euclid = "0.22.11"
-warn = "0.2.2"
-smol = "2.0.2"
