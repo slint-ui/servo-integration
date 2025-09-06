@@ -4,7 +4,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use euclid::Point2D;
-use image::{DynamicImage, ImageFormat};
 use url::Url;
 use webrender_api::units::DeviceIntRect;
 use winit::dpi;
@@ -12,8 +11,7 @@ use winit::dpi;
 use slint::winit_030::WinitWindowAccessor;
 
 use servo::{
-    LoadStatus, RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView,
-    WebViewBuilder,
+    RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
 };
 
 slint::slint! {
@@ -37,21 +35,18 @@ slint::slint! {
 }
 struct AppDelegate {
     rendering_context: Rc<SoftwareRenderingContext>,
+    frame_sender: smol::channel::Sender<slint::Image>,
 }
 
 impl servo::WebViewDelegate for AppDelegate {
-    fn notify_load_status_changed(&self, webview: WebView, status: LoadStatus) {
-        if status == LoadStatus::Complete {
-            eprintln!("Load finished for {:?}", webview.page_title());
+    fn notify_new_frame_ready(&self, webview: WebView) {
+        eprintln!("New frame ready for {:?}", webview.page_title());
+        webview.show(true);
+        webview.paint();
 
-            webview.show(true);
-
-            std::thread::sleep(std::time::Duration::from_millis(100));
-
-            webview.paint();
-
-            save_output_image(&self.rendering_context);
-        }
+        // Send updated frame to Slint with verification
+        let image = get_slint_image_with_verification(&self.rendering_context);
+        let _ = self.frame_sender.try_send(image);
     }
 }
 
@@ -61,6 +56,9 @@ fn main() {
 
     let (waker_sender, waker_receiver) = smol::channel::unbounded::<()>();
 
+    // Create channels for communication between UI and Servo rendering
+    let (frame_sender, frame_receiver) = smol::channel::unbounded::<slint::Image>();
+
     let servo: Rc<RefCell<Option<Servo>>> = Rc::new(RefCell::new(None));
 
     let webview: Rc<RefCell<Option<WebView>>> = Rc::new(RefCell::new(None));
@@ -69,6 +67,7 @@ fn main() {
     slint::spawn_local({
         let app_weak = app_weak.clone();
         let servo_clone = servo.clone();
+        let frame_sender_clone = frame_sender.clone();
 
         async move {
             let app = app_weak.upgrade().unwrap();
@@ -87,9 +86,10 @@ fn main() {
 
             let delegate = Rc::new(AppDelegate {
                 rendering_context: rendering_context_rc,
+                frame_sender: frame_sender_clone,
             });
 
-            let url = Url::parse("https://example.com/").unwrap();
+            let url = Url::parse("https://slint.dev/").unwrap();
             let webview_instance = WebViewBuilder::new(&servo_instance)
                 .url(url)
                 .delegate(delegate.clone())
@@ -115,6 +115,25 @@ fn main() {
     })
     .unwrap();
 
+    // Use timer to efficiently update web content from Servo frames
+    let app_weak_timer = app.as_weak();
+    let timer = slint::Timer::default();
+    timer.start(
+        slint::TimerMode::Repeated,
+        std::time::Duration::from_millis(16), // ~60 FPS
+        move || {
+            // Check for new frames from Servo
+            if let Ok(image) = frame_receiver.try_recv() {
+                if let Some(app) = app_weak_timer.upgrade() {
+                    eprintln!("Updating Slint UI with new frame from timer");
+                    app.set_web_content(image);
+                    // Only request redraw when we have new content
+                    app.window().request_redraw();
+                }
+            }
+        },
+    );
+
     app.run().unwrap();
 }
 
@@ -138,24 +157,20 @@ impl embedder_traits::EventLoopWaker for Waker {
     }
 }
 
-pub fn save_output_image<T>(rendering_context: &Rc<T>)
+pub fn get_slint_image_with_verification<T>(rendering_context: &Rc<T>) -> slint::Image
 where
     T: RenderingContext + ?Sized,
 {
     let size = rendering_context.size2d().to_i32();
-
     let viewport_rect = DeviceIntRect::from_origin_and_size(Point2D::origin(), size);
 
-    let image = rendering_context.read_to_image(viewport_rect).unwrap();
+    let image_buffer = rendering_context.read_to_image(viewport_rect).unwrap();
+    let (width, height) = image_buffer.dimensions();
 
-    let image_size = image.dimensions();
-    eprintln!(
-        "Captured image dimensions: {}x{}",
-        image_size.0, image_size.1
-    );
+    eprintln!("Captured image dimensions: {}x{}", width, height);
 
-    // Check if image has any non-white content
-    let has_non_white_content = image.pixels().any(|pixel| {
+    // Check if image has any non-white content for verification
+    let has_non_white_content = image_buffer.pixels().any(|pixel| {
         let rgba = pixel.0;
         // Check if any pixel is not white (255,255,255) with full alpha
         rgba[0] != 255 || rgba[1] != 255 || rgba[2] != 255 || rgba[3] != 255
@@ -163,23 +178,22 @@ where
 
     eprintln!("Image has non-white content: {}", has_non_white_content);
 
-    // Sample a few pixels for debugging
+    // Sample a few pixels for verification
     let mut pixel_samples = Vec::new();
-    for (i, pixel) in image.pixels().enumerate() {
-        if i < 10 || i % (image.len() / 10) == 0 {
+    for (i, pixel) in image_buffer.pixels().enumerate() {
+        if i < 5 {
             pixel_samples.push(pixel.0);
         }
-        if pixel_samples.len() >= 20 {
+        if pixel_samples.len() >= 5 {
             break;
         }
     }
-    eprintln!("Pixel samples: {:?}", pixel_samples);
+    eprintln!("First 5 pixel samples: {:?}", pixel_samples);
 
-    let output_path = "./output.png";
+    // Convert the ImageBuffer to raw RGBA bytes
+    let rgba_data: Vec<u8> = image_buffer.into_raw();
+    let buffer = slint::SharedPixelBuffer::clone_from_slice(&rgba_data, width, height);
 
-    let image_format = ImageFormat::from_path(output_path).unwrap_or(ImageFormat::Png);
-
-    DynamicImage::ImageRgba8(image)
-        .save_with_format(output_path, image_format)
-        .unwrap();
+    // Create a Slint Image from the raw RGBA data
+    return slint::Image::from_rgba8(buffer);
 }
