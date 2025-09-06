@@ -4,15 +4,18 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use euclid::Point2D;
+use smol::{channel, channel::Sender};
 use url::Url;
-use webrender_api::units::DeviceIntRect;
 use winit::dpi;
 
-use slint::winit_030::WinitWindowAccessor;
+use slint::{Image, SharedPixelBuffer, winit_030::WinitWindowAccessor};
 
+use embedder_traits::EventLoopWaker;
 use servo::{
     RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
+    WebViewDelegate,
 };
+use webrender_api::units::DeviceIntRect;
 
 slint::slint! {
     export component MyApp inherits Window {
@@ -38,7 +41,7 @@ struct AppDelegate {
     rendering_context: Rc<SoftwareRenderingContext>,
 }
 
-impl servo::WebViewDelegate for AppDelegate {
+impl WebViewDelegate for AppDelegate {
     fn notify_new_frame_ready(&self, webview: WebView) {
         webview.show(true);
         webview.paint();
@@ -46,7 +49,6 @@ impl servo::WebViewDelegate for AppDelegate {
         let image = get_slint_image(&self.rendering_context);
 
         let app = self.app_weak.upgrade().unwrap();
-
         app.set_web_content(image);
         app.window().request_redraw();
     }
@@ -56,11 +58,10 @@ fn main() {
     let app = MyApp::new().unwrap();
     let app_weak = app.as_weak();
 
-    let (waker_sender, waker_receiver) = smol::channel::unbounded::<()>();
+    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
     let servo: Rc<RefCell<Option<Servo>>> = Rc::new(RefCell::new(None));
     let webview: Rc<RefCell<Option<WebView>>> = Rc::new(RefCell::new(None));
-    
 
     slint::spawn_local({
         let app_weak_clone = app_weak.clone();
@@ -87,7 +88,7 @@ fn main() {
             });
 
             let url = Url::parse("https://slint.dev/").unwrap();
-            
+
             let webview_instance = WebViewBuilder::new(&servo_instance)
                 .url(url)
                 .delegate(delegate)
@@ -117,25 +118,25 @@ fn main() {
 }
 
 #[derive(Clone)]
-struct Waker(smol::channel::Sender<()>);
+struct Waker(Sender<()>);
 
 impl Waker {
-    fn new(sender: smol::channel::Sender<()>) -> Self {
+    fn new(sender: Sender<()>) -> Self {
         Self(sender)
     }
 }
 
-impl embedder_traits::EventLoopWaker for Waker {
+impl EventLoopWaker for Waker {
     fn wake(&self) {
         let _ = self.0.try_send(());
     }
 
-    fn clone_box(&self) -> Box<dyn embedder_traits::EventLoopWaker> {
+    fn clone_box(&self) -> Box<dyn EventLoopWaker> {
         Box::new(Self(self.0.clone()))
     }
 }
 
-pub fn get_slint_image<T>(rendering_context: &Rc<T>) -> slint::Image
+pub fn get_slint_image<T>(rendering_context: &Rc<T>) -> Image
 where
     T: RenderingContext + ?Sized,
 {
@@ -145,8 +146,8 @@ where
     let image_buffer = rendering_context.read_to_image(viewport_rect).unwrap();
     let (width, height) = image_buffer.dimensions();
 
-    let rgba_data: Vec<u8> = image_buffer.into_raw();
-    let buffer = slint::SharedPixelBuffer::clone_from_slice(&rgba_data, width, height);
+    let pixel_slice = image_buffer.into_raw();
+    let shared_pixel_buffer = SharedPixelBuffer::clone_from_slice(&pixel_slice, width, height);
 
-    slint::Image::from_rgba8(buffer)
+    Image::from_rgba8(shared_pixel_buffer)
 }
