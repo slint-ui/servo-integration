@@ -1,5 +1,4 @@
 #![allow(unsafe_op_in_unsafe_fn)]
-
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -29,16 +28,15 @@ slint::slint! {
                 text: "Hello from Slint";
             }
             image := Image {
-                width: 100%;
-                height: 100%;
-            }
+                    width: 100%;
+                    height: 100%;
+                }
         }
     }
 }
 
 struct AppDelegate {
-    app_weak: slint::Weak<MyApp>,
-    rendering_context: Rc<SoftwareRenderingContext>,
+    state: Rc<State>,
 }
 
 impl WebViewDelegate for AppDelegate {
@@ -46,31 +44,40 @@ impl WebViewDelegate for AppDelegate {
         webview.show(true);
         webview.paint();
 
-        let image = get_slint_image(&self.rendering_context);
-
-        let app = self.app_weak.upgrade().unwrap();
-        app.set_web_content(image);
-        app.window().request_redraw();
+        if let Some(ref rendering_context) = *self.state.rendering_context.borrow() {
+            let image = get_slint_image(rendering_context);
+            self.state.app.set_web_content(image);
+            self.state.app.window().request_redraw();
+        }
     }
 }
 
+struct State {
+    app: MyApp,
+    servo: RefCell<Option<Servo>>,
+    webview: RefCell<Option<WebView>>,
+    rendering_context: RefCell<Option<Rc<SoftwareRenderingContext>>>,
+}
+
+impl State {}
+
 fn main() {
-    let app = MyApp::new().unwrap();
-    let app_weak = app.as_weak();
+    let state = Rc::new(State {
+        app: MyApp::new().unwrap(),
+        servo: RefCell::new(None),
+        webview: RefCell::new(None),
+        rendering_context: RefCell::new(None),
+    });
+
+    let state_weak = Rc::downgrade(&state);
 
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
-    let servo: Rc<RefCell<Option<Servo>>> = Rc::new(RefCell::new(None));
-    let webview: Rc<RefCell<Option<WebView>>> = Rc::new(RefCell::new(None));
-
     slint::spawn_local({
-        let app_weak_clone = app_weak.clone();
-        let servo_clone = servo.clone();
-        let webview_clone = webview.clone();
-
         async move {
-            let app = app_weak_clone.upgrade().unwrap();
-            let winit_window = app.window().winit_window().await.unwrap();
+            let state = state_weak.upgrade().unwrap();
+
+            let winit_window = state.app.window().winit_window().await.unwrap();
 
             let window_size = winit_window.inner_size();
             let size = dpi::PhysicalSize::new(window_size.width, window_size.height);
@@ -83,8 +90,7 @@ fn main() {
                 .build();
 
             let delegate = Rc::new(AppDelegate {
-                app_weak: app_weak_clone.clone(),
-                rendering_context: rendering_context_rc,
+                state: state.clone(),
             });
 
             let url = Url::parse("https://slint.dev/").unwrap();
@@ -94,27 +100,29 @@ fn main() {
                 .delegate(delegate)
                 .build();
 
-            *webview_clone.borrow_mut() = Some(webview_instance);
-            *servo_clone.borrow_mut() = Some(servo_instance);
+            *state.servo.borrow_mut() = Some(servo_instance);
+            *state.webview.borrow_mut() = Some(webview_instance);
+            *state.rendering_context.borrow_mut() = Some(rendering_context_rc.clone());
         }
     })
     .unwrap();
 
-    slint::spawn_local({
-        let servo_clone = servo.clone();
-
-        async move {
-            loop {
-                let _ = waker_receiver.recv().await;
-                if let Some(servo) = servo_clone.borrow().as_ref() {
-                    servo.spin_event_loop();
+    {
+        let state = state.clone();
+        slint::spawn_local({
+            async move {
+                loop {
+                    let _ = waker_receiver.recv().await;
+                    if let Some(ref servo) = *state.servo.borrow() {
+                        servo.spin_event_loop();
+                    }
                 }
             }
-        }
-    })
-    .unwrap();
+        })
+        .unwrap();
+    }
 
-    app.run().unwrap();
+    state.app.run().unwrap();
 }
 
 #[derive(Clone)]
