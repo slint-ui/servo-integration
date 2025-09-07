@@ -1,14 +1,13 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
-use euclid::{Point2D, vec2};
-use smol::{channel, channel::Sender};
+use euclid::Point2D;
+use euclid::vec2;
 use url::Url;
 use winit::dpi;
 
-use slint::{Image, SharedPixelBuffer, winit_030::WinitWindowAccessor};
+use smol::{channel, channel::Sender};
 
 use embedder_traits::EventLoopWaker;
 use servo::{
@@ -19,6 +18,8 @@ use webrender_api::{
     ScrollLocation,
     units::{DeviceIntPoint, DeviceIntRect},
 };
+
+use slint::{ComponentHandle, Image, SharedPixelBuffer, winit_030::WinitWindowAccessor};
 
 slint::slint! {
     export component MyApp inherits Window {
@@ -43,43 +44,13 @@ slint::slint! {
     }
 }
 
-struct AppDelegate {
-    state: Rc<State>,
-}
-
-impl WebViewDelegate for AppDelegate {
-    fn notify_new_frame_ready(&self, webview: WebView) {
-        webview.show(true);
-        webview.paint();
-        if let Some(ref rendering_context) = *self.state.rendering_context.borrow() {
-            let image = get_slint_image(rendering_context);
-            self.state.app.set_web_content(image);
-            self.state.app.window().request_redraw();
-        }
-    }
-}
-
-struct State {
-    app: MyApp,
-    servo: RefCell<Option<Servo>>,
-    webview: RefCell<Option<WebView>>,
-    rendering_context: RefCell<Option<Rc<SoftwareRenderingContext>>>,
-}
-
-impl State {}
-
 fn main() {
-    // let url_string = "https://slint.dev/";
-    let url_string = "https://demo.servo.org/experiments/twgl-tunnel/";
+    let url_string = "https://slint.dev/";
+    // let url_string = "https://demo.servo.org/experiments/twgl-tunnel/";
 
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
-    let state = Rc::new(State {
-        app: MyApp::new().unwrap(),
-        servo: RefCell::new(None),
-        webview: RefCell::new(None),
-        rendering_context: RefCell::new(None),
-    });
+    let state = Rc::new(State::new(MyApp::new().unwrap()));
 
     let state_weak = Rc::downgrade(&state);
     slint::spawn_local({
@@ -97,24 +68,18 @@ fn main() {
 
     let state_weak = Rc::downgrade(&state);
     state.app.on_scroll(move |x, y| {
-        let Some(state) = state_weak.upgrade() else {
-            return;
-        };
-        let webview_ref = state.webview.borrow();
-        let Some(webview) = webview_ref.as_ref() else {
-            return;
-        };
+        let state = state_weak.upgrade().unwrap();
 
-        // Convert Slint deltas to Servo scroll delta
+        let webview_ref = state.webview.borrow();
+        let webview = webview_ref.as_ref().unwrap();
+
         let dx = -(x as f32);
         let dy = -(y as f32);
+
         let moved_by = vec2(dx, dy);
+        let point = DeviceIntPoint::new(10, 10);
 
-        // Use simple origin point for scroll location
-        let pos = DeviceIntPoint::new(0, 0);
-
-        // Send scroll event to Servo webview
-        webview.notify_scroll_event(ScrollLocation::Delta(moved_by), pos);
+        webview.notify_scroll_event(ScrollLocation::Delta(moved_by), point);
     });
 
     let state_weak = Rc::downgrade(&state);
@@ -134,9 +99,7 @@ fn main() {
                 .event_loop_waker(Box::new(Waker::new(waker_sender)))
                 .build();
 
-            let delegate = Rc::new(AppDelegate {
-                state: state.clone(),
-            });
+            let delegate = Rc::new(AppDelegate::new(state.clone()));
 
             let url = Url::parse(url_string).unwrap();
 
@@ -174,7 +137,55 @@ impl EventLoopWaker for Waker {
     }
 }
 
-pub fn get_slint_image<T>(rendering_context: &Rc<T>) -> Image
+pub struct AppDelegate {
+    pub state: Rc<State>,
+}
+
+impl AppDelegate {
+    pub fn new(state: Rc<State>) -> Self {
+        Self { state }
+    }
+}
+
+impl WebViewDelegate for AppDelegate {
+    fn notify_new_frame_ready(&self, webview: WebView) {
+        webview.show(true);
+        webview.paint();
+        self.state.update_web_content_with_latest_frame();
+    }
+}
+
+pub struct State {
+    pub app: MyApp,
+    pub servo: RefCell<Option<Servo>>,
+    pub webview: RefCell<Option<WebView>>,
+    pub rendering_context: RefCell<Option<Rc<SoftwareRenderingContext>>>,
+}
+
+impl State {
+    pub fn new(app: MyApp) -> Self {
+        Self {
+            app,
+            servo: RefCell::new(None),
+            webview: RefCell::new(None),
+            rendering_context: RefCell::new(None),
+        }
+    }
+
+    pub fn get_slint_image(&self) -> Image {
+        let rendering_context_ref = self.rendering_context.borrow();
+        let rendering_context = rendering_context_ref.as_ref().unwrap();
+        slint_image_from_rendering_context(rendering_context)
+    }
+
+    pub fn update_web_content_with_latest_frame(&self) {
+        let image = self.get_slint_image();
+        self.app.set_web_content(image);
+        self.app.window().request_redraw();
+    }
+}
+
+pub fn slint_image_from_rendering_context<T>(rendering_context: &Rc<T>) -> Image
 where
     T: RenderingContext + ?Sized,
 {
