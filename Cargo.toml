@@ -7,6 +7,15 @@ edition = "2024"
 name = "servo-integration"
 path = "src/main.rs"
 
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 1
+
 [dependencies]
 url = "2.5.2"
 smol = "2.0.2"

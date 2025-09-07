@@ -1,4 +1,5 @@
 #![allow(unsafe_op_in_unsafe_fn)]
+
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -14,7 +15,10 @@ use servo::{
     RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
     WebViewDelegate,
 };
-use webrender_api::{ScrollLocation, units::{DeviceIntRect, DeviceIntPoint}};
+use webrender_api::{
+    ScrollLocation,
+    units::{DeviceIntPoint, DeviceIntRect},
+};
 
 slint::slint! {
     export component MyApp inherits Window {
@@ -25,21 +29,17 @@ slint::slint! {
 
         callback scroll(length, length);
 
-        VerticalLayout {
-            Text {
-                text: "Hello from Slint";
+        TouchArea {
+            image := Image {
+                width: 100%;
+                height: 100%;
             }
-            area := TouchArea {
-                image := Image {
-                    width: 100%;
-                    height: 100%;
-                }
-                scroll-event(e) => {
-                    scroll(e.delta-x, e.delta-y);
-                    return accept;
-                }
+            scroll-event(e) => {
+                scroll(e.delta-x, e.delta-y);
+                return accept;
             }
         }
+
     }
 }
 
@@ -51,7 +51,6 @@ impl WebViewDelegate for AppDelegate {
     fn notify_new_frame_ready(&self, webview: WebView) {
         webview.show(true);
         webview.paint();
-
         if let Some(ref rendering_context) = *self.state.rendering_context.borrow() {
             let image = get_slint_image(rendering_context);
             self.state.app.set_web_content(image);
@@ -70,6 +69,11 @@ struct State {
 impl State {}
 
 fn main() {
+    // let url_string = "https://slint.dev/";
+    let url_string = "https://demo.servo.org/experiments/twgl-tunnel/";
+
+    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
+
     let state = Rc::new(State {
         app: MyApp::new().unwrap(),
         servo: RefCell::new(None),
@@ -78,27 +82,42 @@ fn main() {
     });
 
     let state_weak = Rc::downgrade(&state);
+    slint::spawn_local({
+        async move {
+            let state = state_weak.upgrade().unwrap();
+            loop {
+                let _ = waker_receiver.recv().await;
+                if let Some(ref servo) = *state.servo.borrow() {
+                    servo.spin_event_loop();
+                }
+            }
+        }
+    })
+    .unwrap();
 
-    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
-
-    let state_weak_for_scroll = Rc::downgrade(&state);
+    let state_weak = Rc::downgrade(&state);
     state.app.on_scroll(move |x, y| {
-        let Some(state) = state_weak_for_scroll.upgrade() else { return; };
+        let Some(state) = state_weak.upgrade() else {
+            return;
+        };
         let webview_ref = state.webview.borrow();
-        let Some(webview) = webview_ref.as_ref() else { return; };
-        
+        let Some(webview) = webview_ref.as_ref() else {
+            return;
+        };
+
         // Convert Slint deltas to Servo scroll delta
         let dx = -(x as f32);
         let dy = -(y as f32);
         let moved_by = vec2(dx, dy);
-        
+
         // Use simple origin point for scroll location
         let pos = DeviceIntPoint::new(0, 0);
-        
+
         // Send scroll event to Servo webview
         webview.notify_scroll_event(ScrollLocation::Delta(moved_by), pos);
     });
 
+    let state_weak = Rc::downgrade(&state);
     slint::spawn_local({
         async move {
             let state = state_weak.upgrade().unwrap();
@@ -119,7 +138,7 @@ fn main() {
                 state: state.clone(),
             });
 
-            let url = Url::parse("https://slint.dev/").unwrap();
+            let url = Url::parse(url_string).unwrap();
 
             let webview_instance = WebViewBuilder::new(&servo_instance)
                 .url(url)
@@ -132,21 +151,6 @@ fn main() {
         }
     })
     .unwrap();
-
-    {
-        let state = state.clone();
-        slint::spawn_local({
-            async move {
-                loop {
-                    let _ = waker_receiver.recv().await;
-                    if let Some(ref servo) = *state.servo.borrow() {
-                        servo.spin_event_loop();
-                    }
-                }
-            }
-        })
-        .unwrap();
-    }
 
     state.app.run().unwrap();
 }
