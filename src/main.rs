@@ -2,7 +2,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use euclid::Point2D;
+use euclid::{Point2D, vec2};
 use smol::{channel, channel::Sender};
 use url::Url;
 use winit::dpi;
@@ -14,7 +14,7 @@ use servo::{
     RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
     WebViewDelegate,
 };
-use webrender_api::units::DeviceIntRect;
+use webrender_api::{ScrollLocation, units::{DeviceIntRect, DeviceIntPoint}};
 
 slint::slint! {
     export component MyApp inherits Window {
@@ -23,14 +23,22 @@ slint::slint! {
 
         in property <image> web_content <=> image.source;
 
+        callback scroll(length, length);
+
         VerticalLayout {
             Text {
                 text: "Hello from Slint";
             }
-            image := Image {
+            area := TouchArea {
+                image := Image {
                     width: 100%;
                     height: 100%;
                 }
+                scroll-event(e) => {
+                    scroll(e.delta-x, e.delta-y);
+                    return accept;
+                }
+            }
         }
     }
 }
@@ -72,6 +80,24 @@ fn main() {
     let state_weak = Rc::downgrade(&state);
 
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
+
+    let state_weak_for_scroll = Rc::downgrade(&state);
+    state.app.on_scroll(move |x, y| {
+        let Some(state) = state_weak_for_scroll.upgrade() else { return; };
+        let webview_ref = state.webview.borrow();
+        let Some(webview) = webview_ref.as_ref() else { return; };
+        
+        // Convert Slint deltas to Servo scroll delta
+        let dx = -(x as f32);
+        let dy = -(y as f32);
+        let moved_by = vec2(dx, dy);
+        
+        // Use simple origin point for scroll location
+        let pos = DeviceIntPoint::new(0, 0);
+        
+        // Send scroll event to Servo webview
+        webview.notify_scroll_event(ScrollLocation::Delta(moved_by), pos);
+    });
 
     slint::spawn_local({
         async move {
