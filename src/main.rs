@@ -20,7 +20,6 @@ slint::include_modules!();
 
 fn main() {
     let url_string = "https://slint.dev/";
-    // let url_string = "https://demo.servo.org/experiments/twgl-tunnel/";
 
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
@@ -33,6 +32,6 @@ fn main() {
     on_scroll_event(state.clone());
 
     on_pointer_event(state.clone());
-
+    
     state.app.run().unwrap();
 }

@@ -1,24 +1,20 @@
 use std::rc::Rc;
 
-use euclid::vec2;
-use webrender_api::{units::DeviceIntPoint, ScrollLocation};
+use euclid::Vector2D;
+use webrender_api::{ScrollLocation, units::DeviceIntPoint};
 
 use crate::{pointer_event::convert_slint_pointer_event_to_servo_input_event, state::State};
 
-
 pub fn on_scroll_event(state: Rc<State>) {
     let state_weak = Rc::downgrade(&state);
-    state.app.on_scroll(move |x, y| {
+    state.app.on_scroll_event(move |dx, dy| {
         let state = state_weak.upgrade().unwrap();
 
         let webview_ref = state.webview.borrow();
         let webview = webview_ref.as_ref().unwrap();
 
-        let dx = -(x as f32);
-        let dy = -(y as f32);
-
-        let moved_by = vec2(dx, dy);
-        let point = DeviceIntPoint::new(10, 10);
+        let point = DeviceIntPoint::new(0, 0);
+        let moved_by = Vector2D::new(-dx as f32, -dy as f32);
 
         webview.notify_scroll_event(ScrollLocation::Delta(moved_by), point);
     });
