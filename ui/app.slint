@@ -1,0 +1,26 @@
+export component MyApp inherits Window {
+    width: 1024px;
+    height: 768px;
+
+    in property <image> web_content <=> image.source;
+    out property <length> mouse_x <=> touch_area.mouse-x;
+    out property <length> mouse_y <=> touch_area.mouse-y;
+
+    callback scroll(length, length);
+    callback pointer_event(PointerEvent);
+
+    touch_area := TouchArea {
+        image := Image {
+            width: 100%;
+            height: 100%;
+        }
+
+        pointer-event(event) => {
+            root.pointer_event(event);
+        }
+        scroll-event(event) => {
+            scroll(event.delta-x, event.delta-y);
+            return accept;
+        }
+    }
+}

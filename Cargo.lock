@@ -2681,6 +2681,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e57e16b3fe8ff4364c0661fdaac543fb38b29ea9bc9c2f45612d90adf931d2b"
 dependencies = [
  "hashbrown 0.15.5",
+ "rayon",
  "ttf-parser 0.21.1",
 ]
 
@@ -3319,6 +3320,7 @@ dependencies = [
  "allocator-api2",
  "equivalent",
  "foldhash",
+ "rayon",
  "serde",
 ]
 
@@ -3612,7 +3614,7 @@ dependencies = [
  "drm",
  "gbm",
  "glutin",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "i-slint-core",
  "i-slint-renderer-femtovg",
  "input",
@@ -3630,7 +3632,7 @@ dependencies = [
  "const-field-offset",
  "cpp",
  "cpp_build",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "i-slint-core",
  "i-slint-core-macros",
  "lyon_path",
@@ -3649,7 +3651,7 @@ dependencies = [
  "i-slint-backend-linuxkms",
  "i-slint-backend-qt",
  "i-slint-backend-winit",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "i-slint-core",
  "i-slint-core-macros",
 ]
@@ -3669,7 +3671,7 @@ dependencies = [
  "futures",
  "glutin",
  "glutin-winit",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "i-slint-core",
  "i-slint-core-macros",
  "i-slint-renderer-femtovg",
@@ -3695,6 +3697,19 @@ dependencies = [
 [[package]]
 name = "i-slint-common"
 version = "1.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7e6843e1be6b40519087c03d07127a71f686f451418d13998dfbe684d3a88793"
+dependencies = [
+ "cfg-if",
+ "derive_more 2.0.1",
+ "fontdb",
+ "libloading",
+ "ttf-parser 0.25.1",
+]
+
+[[package]]
+name = "i-slint-common"
+version = "1.13.0"
 source = "git+https://github.com/slint-ui/slint#b828b23748c79931b6886940b2eb467965fa2847"
 dependencies = [
  "cfg-if",
@@ -3707,13 +3722,43 @@ dependencies = [
 [[package]]
 name = "i-slint-compiler"
 version = "1.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc172dcb37ec9e86b6c53a35c85400e8c03e0337c036859de3b60b5073813412"
+dependencies = [
+ "by_address",
+ "codemap",
+ "codemap-diagnostic",
+ "derive_more 2.0.1",
+ "fontdue",
+ "i-slint-common 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image",
+ "itertools 0.14.0",
+ "linked_hash_set",
+ "lyon_extra",
+ "lyon_path",
+ "num_enum",
+ "polib",
+ "proc-macro2",
+ "quote",
+ "rayon",
+ "resvg",
+ "rowan",
+ "smol_str 0.3.2",
+ "strum 0.27.2",
+ "typed-index-collections",
+ "url",
+]
+
+[[package]]
+name = "i-slint-compiler"
+version = "1.13.0"
 source = "git+https://github.com/slint-ui/slint#b828b23748c79931b6886940b2eb467965fa2847"
 dependencies = [
  "by_address",
  "codemap",
  "codemap-diagnostic",
  "derive_more 2.0.1",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "itertools 0.14.0",
  "linked_hash_set",
  "lyon_extra",
@@ -3743,7 +3788,7 @@ dependencies = [
  "derive_more 2.0.1",
  "euclid",
  "fontdue",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "i-slint-core-macros",
  "image",
  "integer-sqrt",
@@ -3798,7 +3843,7 @@ dependencies = [
  "dwrote",
  "femtovg",
  "glow",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "i-slint-core",
  "i-slint-core-macros",
  "imgref",
@@ -3826,7 +3871,7 @@ dependencies = [
  "derive_more 2.0.1",
  "glow",
  "glutin",
- "i-slint-common",
+ "i-slint-common 1.13.0 (git+https://github.com/slint-ui/slint)",
  "i-slint-core",
  "i-slint-core-macros",
  "lyon_path",
@@ -4969,6 +5014,15 @@ dependencies = [
  "libc",
  "pkg-config",
  "vcpkg",
+]
+
+[[package]]
+name = "linereader"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d921fea6860357575519aca014c6e22470585accdd543b370c404a8a72d0dd1d"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
@@ -6381,6 +6435,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "polib"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6b393b155cf9be86249cba1b56cc81be0e6212c66d94ac0d76d37a1761f3bb1b"
+dependencies = [
+ "linereader",
+]
+
+[[package]]
 name = "polling"
 version = "3.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6476,7 +6539,7 @@ version = "3.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edce586971a4dfaa28950c6f18ed55e0406c1ab88bbce2c6f6293a7aaba73d35"
 dependencies = [
- "toml_edit",
+ "toml_edit 0.22.27",
 ]
 
 [[package]]
@@ -7458,6 +7521,7 @@ dependencies = [
  "libservo",
  "rustls",
  "slint",
+ "slint-build",
  "smol",
  "url",
  "webrender_api",
@@ -7835,11 +7899,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "slint-build"
+version = "1.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d1852dff8f8174fafde1435ba083bfd924ca0a0a6b072d95e282336a72eb9bd"
+dependencies = [
+ "derive_more 2.0.1",
+ "i-slint-compiler 1.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "spin_on",
+ "toml_edit 0.23.4",
+]
+
+[[package]]
 name = "slint-macros"
 version = "1.13.0"
 source = "git+https://github.com/slint-ui/slint#b828b23748c79931b6886940b2eb467965fa2847"
 dependencies = [
- "i-slint-compiler",
+ "i-slint-compiler 1.13.0 (git+https://github.com/slint-ui/slint)",
  "proc-macro2",
  "quote",
  "spin_on",
@@ -8728,8 +8804,8 @@ checksum = "dc1beb996b9d83529a9e75c17a1686767d148d70663143c7854d8b4a09ced362"
 dependencies = [
  "serde",
  "serde_spanned",
- "toml_datetime",
- "toml_edit",
+ "toml_datetime 0.6.11",
+ "toml_edit 0.22.27",
 ]
 
 [[package]]
@@ -8737,6 +8813,15 @@ name = "toml_datetime"
 version = "0.6.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "22cddaf88f4fbc13c51aebbf5f8eceb5c7c5a9da2ac40a13519eb5b0a0e8f11c"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "toml_datetime"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bade1c3e902f58d73d3f294cd7f20391c1cb2fbcb643b73566bc773971df91e3"
 dependencies = [
  "serde",
 ]
@@ -8750,8 +8835,30 @@ dependencies = [
  "indexmap",
  "serde",
  "serde_spanned",
- "toml_datetime",
+ "toml_datetime 0.6.11",
  "toml_write",
+ "winnow",
+]
+
+[[package]]
+name = "toml_edit"
+version = "0.23.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7211ff1b8f0d3adae1663b7da9ffe396eabe1ca25f0b0bee42b0da29a9ddce93"
+dependencies = [
+ "indexmap",
+ "toml_datetime 0.7.0",
+ "toml_parser",
+ "toml_writer",
+ "winnow",
+]
+
+[[package]]
+name = "toml_parser"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b551886f449aa90d4fe2bdaa9f4a2577ad2dde302c61ecf262d80b116db95c10"
+dependencies = [
  "winnow",
 ]
 
@@ -8760,6 +8867,12 @@ name = "toml_write"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5d99f8c9a7727884afe522e9bd5edbfc91a3312b36a77b5fb8926e4c31a41801"
+
+[[package]]
+name = "toml_writer"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcc842091f2def52017664b53082ecbbeb5c7731092bad69d2c63050401dfd64"
 
 [[package]]
 name = "topological-sort"

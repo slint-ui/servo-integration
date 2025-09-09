@@ -33,3 +33,6 @@ libservo = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931
 embedder_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b", features = [
     "baked-default-resources",
 ] }
+
+[build-dependencies]
+slint-build = "1.12.1"
