@@ -1,25 +1,30 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
+mod pointer_event;
+
 use std::{cell::RefCell, rc::Rc};
 
-use euclid::Point2D;
-use euclid::vec2;
+use euclid::{Point2D, vec2};
 use url::Url;
 use winit::dpi;
 
 use smol::{channel, channel::Sender};
 
+use slint::{ComponentHandle, Image, SharedPixelBuffer, winit_030::WinitWindowAccessor};
+
 use embedder_traits::EventLoopWaker;
-use servo::{
-    RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
-    WebViewDelegate,
-};
+
 use webrender_api::{
     ScrollLocation,
     units::{DeviceIntPoint, DeviceIntRect},
 };
 
-use slint::{ComponentHandle, Image, SharedPixelBuffer, winit_030::WinitWindowAccessor};
+use servo::{
+    RenderingContext, Servo, ServoBuilder, SoftwareRenderingContext, WebView, WebViewBuilder,
+    WebViewDelegate,
+};
+
+use crate::pointer_event::convert_slint_pointer_event_to_servo_input_event;
 
 slint::slint! {
     export component MyApp inherits Window {
@@ -27,16 +32,22 @@ slint::slint! {
         height: 768px;
 
         in property <image> web_content <=> image.source;
+        out property <length> mouse_x <=> touch_area.mouse-x;
+        out property <length> mouse_y <=> touch_area.mouse-y;
 
         callback scroll(length, length);
+        callback pointer_event(PointerEvent);
 
-        TouchArea {
+        touch_area := TouchArea {
             image := Image {
                 width: 100%;
                 height: 100%;
             }
-            scroll-event(e) => {
-                scroll(e.delta-x, e.delta-y);
+            pointer-event(event) => {
+                root.pointer_event(event);
+            }
+            scroll-event(event) => {
+                scroll(event.delta-x, event.delta-y);
                 return accept;
             }
         }
@@ -83,6 +94,30 @@ fn main() {
     });
 
     let state_weak = Rc::downgrade(&state);
+    state.app.on_pointer_event(move |event| {
+        let state = state_weak.upgrade().unwrap();
+
+        let webview_ref = state.webview.borrow();
+        let webview = webview_ref.as_ref().unwrap();
+
+        let event_str = format!("{:?}", event);
+        println!("Pointer event: {}", event_str);
+
+        let mouse_x = state.app.get_mouse_x();
+        let mouse_y = state.app.get_mouse_y();
+        let scale_factor = *state.scale_factor.borrow();
+
+        let input_event = convert_slint_pointer_event_to_servo_input_event(
+            &event_str,
+            mouse_x,
+            mouse_y,
+            scale_factor,
+        );
+
+        webview.notify_input_event(input_event);
+    });
+
+    let state_weak = Rc::downgrade(&state);
     slint::spawn_local({
         async move {
             let state = state_weak.upgrade().unwrap();
@@ -91,25 +126,28 @@ fn main() {
 
             let window_size = winit_window.inner_size();
             let size = dpi::PhysicalSize::new(window_size.width, window_size.height);
+            let scale_factor = winit_window.scale_factor() as f32;
 
             let rendering_context = SoftwareRenderingContext::new(size).unwrap();
             let rendering_context_rc = Rc::new(rendering_context);
 
-            let servo_instance = ServoBuilder::new(rendering_context_rc.clone())
+            let servo = ServoBuilder::new(rendering_context_rc.clone())
                 .event_loop_waker(Box::new(Waker::new(waker_sender)))
                 .build();
 
+            let url = Url::parse(url_string).unwrap();
             let delegate = Rc::new(AppDelegate::new(state.clone()));
 
-            let url = Url::parse(url_string).unwrap();
-
-            let webview_instance = WebViewBuilder::new(&servo_instance)
+            let webview = WebViewBuilder::new(&servo)
                 .url(url)
                 .delegate(delegate)
                 .build();
 
-            *state.servo.borrow_mut() = Some(servo_instance);
-            *state.webview.borrow_mut() = Some(webview_instance);
+            webview.show(true);
+
+            *state.servo.borrow_mut() = Some(servo);
+            *state.scale_factor.borrow_mut() = scale_factor;
+            *state.webview.borrow_mut() = Some(webview);
             *state.rendering_context.borrow_mut() = Some(rendering_context_rc.clone());
         }
     })
@@ -149,7 +187,6 @@ impl AppDelegate {
 
 impl WebViewDelegate for AppDelegate {
     fn notify_new_frame_ready(&self, webview: WebView) {
-        webview.show(true);
         webview.paint();
         self.state.update_web_content_with_latest_frame();
     }
@@ -157,6 +194,7 @@ impl WebViewDelegate for AppDelegate {
 
 pub struct State {
     pub app: MyApp,
+    pub scale_factor: RefCell<f32>,
     pub servo: RefCell<Option<Servo>>,
     pub webview: RefCell<Option<WebView>>,
     pub rendering_context: RefCell<Option<Rc<SoftwareRenderingContext>>>,
@@ -168,6 +206,7 @@ impl State {
             app,
             servo: RefCell::new(None),
             webview: RefCell::new(None),
+            scale_factor: RefCell::new(1.0),
             rendering_context: RefCell::new(None),
         }
     }
@@ -193,9 +232,10 @@ where
     let viewport_rect = DeviceIntRect::from_origin_and_size(Point2D::origin(), size);
 
     let image_buffer = rendering_context.read_to_image(viewport_rect).unwrap();
-    let (width, height) = image_buffer.dimensions();
 
+    let (width, height) = image_buffer.dimensions();
     let pixel_slice = image_buffer.into_raw();
+
     let shared_pixel_buffer = SharedPixelBuffer::clone_from_slice(&pixel_slice, width, height);
 
     Image::from_rgba8(shared_pixel_buffer)
