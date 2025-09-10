@@ -1,6 +1,5 @@
 mod delegate;
 mod on_events;
-mod pointer_event;
 mod servo_util;
 mod state;
 mod waker;
