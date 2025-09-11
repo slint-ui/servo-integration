@@ -11,6 +11,7 @@ use crate::MyApp;
 
 pub struct State {
     pub app: MyApp,
+    pub scale_factor: RefCell<f32>,
     pub servo: RefCell<Option<Servo>>,
     pub webview: RefCell<Option<WebView>>,
     pub rendering_context: RefCell<Option<Rc<SoftwareRenderingContext>>>,
@@ -22,6 +23,7 @@ impl State {
             app,
             servo: RefCell::new(None),
             webview: RefCell::new(None),
+            scale_factor: RefCell::new(1.0),
             rendering_context: RefCell::new(None),
         }
     }

@@ -1,8 +1,8 @@
 use std::rc::Rc;
 
-use euclid::{Point2D, Vector2D};
+use euclid::Vector2D;
 
-use webrender_api::ScrollLocation;
+use webrender_api::{ScrollLocation, units::DevicePoint};
 
 use servo::{InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent};
 
@@ -16,15 +16,18 @@ pub fn on_scroll_event(state: Rc<State>) {
         let webview_ref = state.webview.borrow();
         let webview = webview_ref.as_ref().unwrap();
 
-        let x = state.app.get_mouse_x();
-        let y = state.app.get_mouse_y();
+        let scale_factor = *state.scale_factor.borrow();
+
+        let mouse_x = state.app.get_mouse_x();
+        let mouse_y = state.app.get_mouse_y();
 
         println!("dx:{dx:?} dy:{dy:?}");
 
-        let point = Point2D::new(x, y);
+        let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
-        let moved_by = Vector2D::new(-dx, -dy);
-        webview.notify_scroll_event(ScrollLocation::Delta(moved_by), point.to_i32());
+        let moved_by = Vector2D::new(dx, dy);
+
+        webview.notify_scroll_event(ScrollLocation::Delta(-moved_by), point.to_i32());
     });
 }
 
@@ -36,14 +39,17 @@ pub fn on_pointer_event(state: Rc<State>) {
         let webview_ref = state.webview.borrow();
         let webview = webview_ref.as_ref().unwrap();
 
+        let scale_factor = *state.scale_factor.borrow();
+
         let event_str = format!("{:?}", event);
         // println!("Pointer event: {}", event_str);
 
         let mouse_x = state.app.get_mouse_x();
         let mouse_y = state.app.get_mouse_y();
 
-        let input_event =
-            convert_slint_pointer_event_to_servo_input_event(&event_str, mouse_x, mouse_y);
+        let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
+
+        let input_event = convert_slint_pointer_event_to_servo_input_event(&event_str, point);
 
         webview.notify_input_event(input_event);
     });
@@ -51,20 +57,17 @@ pub fn on_pointer_event(state: Rc<State>) {
 
 pub fn convert_slint_pointer_event_to_servo_input_event(
     event_str: &str,
-    mouse_x: f32,
-    mouse_y: f32,
+    point: DevicePoint,
 ) -> InputEvent {
-    let point = Point2D::new(mouse_x, mouse_y);
+    let button = get_mouse_button(event_str);
 
     if event_str.contains("kind: Down") {
-        let button = get_mouse_button(event_str);
         return InputEvent::MouseButton(MouseButtonEvent::new(
             MouseButtonAction::Down,
             button,
             point,
         ));
     } else if event_str.contains("kind: Up") {
-        let button = get_mouse_button(event_str);
         return InputEvent::MouseButton(MouseButtonEvent::new(
             MouseButtonAction::Up,
             button,

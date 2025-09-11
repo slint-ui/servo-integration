@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
 use euclid::Scale;
-use smol::channel::{Receiver, Sender};
 use url::Url;
-use winit::dpi;
+use winit::dpi::PhysicalSize;
+
+use smol::channel::{Receiver, Sender};
 
 use slint::{ComponentHandle, winit_030::WinitWindowAccessor};
 
@@ -36,9 +37,11 @@ pub fn init_servo_webview(url_string: String, state: Rc<State>, waker_sender: Se
             let winit_window = state.app.window().winit_window().await.unwrap();
 
             let window_size = winit_window.inner_size();
-            let size = dpi::PhysicalSize::new(window_size.width, window_size.height);
+            let scale_factor = winit_window.scale_factor() as f32;
 
-            let rendering_context = SoftwareRenderingContext::new(size).unwrap();
+            let physical_size = PhysicalSize::new(window_size.width, window_size.height);
+
+            let rendering_context = SoftwareRenderingContext::new(physical_size).unwrap();
             let rendering_context_rc = Rc::new(rendering_context);
 
             let servo = ServoBuilder::new(rendering_context_rc.clone())
@@ -47,11 +50,11 @@ pub fn init_servo_webview(url_string: String, state: Rc<State>, waker_sender: Se
 
             let url = Url::parse(&url_string).unwrap();
             let delegate = Rc::new(AppDelegate::new(state.clone()));
-            let scale = Scale::new(winit_window.scale_factor() as f32);
+            let scale = Scale::new(scale_factor);
 
             let webview = WebViewBuilder::new(&servo)
                 .url(url)
-                // .size(size)
+                .size(physical_size)
                 .delegate(delegate)
                 .hidpi_scale_factor(scale)
                 .build();
@@ -60,6 +63,7 @@ pub fn init_servo_webview(url_string: String, state: Rc<State>, waker_sender: Se
 
             *state.servo.borrow_mut() = Some(servo);
             *state.webview.borrow_mut() = Some(webview);
+            *state.scale_factor.borrow_mut() = scale_factor;
             *state.rendering_context.borrow_mut() = Some(rendering_context_rc.clone());
         }
     })
