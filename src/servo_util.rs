@@ -8,9 +8,11 @@ use smol::channel::{Receiver, Sender};
 
 use slint::{ComponentHandle, winit_030::WinitWindowAccessor};
 
-use servo::{ServoBuilder, SoftwareRenderingContext, WebViewBuilder};
+use servo::{ServoBuilder, WebViewBuilder};
 
-use crate::{delegate::AppDelegate, state::State, waker::Waker};
+use crate::{
+    delegate::AppDelegate, rendering_context::CustomRenderingContext, state::State, waker::Waker,
+};
 
 pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
     let state_weak = Rc::downgrade(&state);
@@ -41,7 +43,8 @@ pub fn init_servo_webview(url_string: String, state: Rc<State>, waker_sender: Se
 
             let physical_size = PhysicalSize::new(window_size.width, window_size.height);
 
-            let rendering_context = SoftwareRenderingContext::new(physical_size).unwrap();
+            let rendering_context = CustomRenderingContext::new(physical_size);
+
             let rendering_context_rc = Rc::new(rendering_context);
 
             let servo = ServoBuilder::new(rendering_context_rc.clone())

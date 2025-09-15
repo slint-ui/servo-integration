@@ -4,6 +4,7 @@ mod on_events;
 mod servo_util;
 mod state;
 mod waker;
+mod rendering_context;
 
 use smol::channel;
 use std::{cell::RefCell, rc::Rc};
@@ -43,9 +44,9 @@ fn main() {
 
     spin_servo_event_loop(state.clone(), waker_receiver);
 
-    // on_scroll_event(state.clone());
+    on_scroll_event(state.clone());
 
-    // on_pointer_event(state.clone());
+    on_pointer_event(state.clone());
 
     state.app.run().unwrap();
 }

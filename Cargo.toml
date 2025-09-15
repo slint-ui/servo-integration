@@ -5,7 +5,7 @@ edition = "2024"
 
 [[bin]]
 name = "servo-integration"
-path = "src/main.rs"
+path = "src/test.rs"
 
 [profile.release]
 opt-level = 3
@@ -17,6 +17,7 @@ panic = "abort"
 opt-level = 3
 
 [dependencies]
+gl = "0.14"
 url = "2.5.2"
 smol = "2.0.2"
 winit = "0.30"
@@ -33,6 +34,10 @@ libservo = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931
 embedder_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b", features = [
     "baked-default-resources",
 ] }
+glow = "0.16.0"
+gleam = "0.15.1"
+surfman = "0.10.0"
+image = "0.25.8"
 
 [build-dependencies]
 slint-build = "1.12.1"

@@ -86,85 +86,85 @@ impl ApplicationHandler {
 }
 
 impl CustomApplicationHandler for ApplicationHandler {
-    fn window_event(
-        &mut self,
-        event_loop: &winit::event_loop::ActiveEventLoop,
-        window_id: winit::window::WindowId,
-        winit_window: Option<&winit::window::Window>,
-        slint_window: Option<&slint::Window>,
-        event: &winit::event::WindowEvent,
-    ) -> EventResult {
-        // println!("{:?}", event);
-        match event {
-            WindowEvent::MouseInput { state, button, .. } => {
-                let servo_button = winit_mouse_button_to_servo(*button);
-                self.handle_mouse(&servo_button, state);
-            }
-            WindowEvent::CursorMoved { position, .. } => {
-                let mut point = winit_position_to_euclid_point(*position).to_f32();
-                // point.y -= (self.toolbar_height() * self.hidpi_scale_factor()).0;
+    // fn window_event(
+    //     &mut self,
+    //     event_loop: &winit::event_loop::ActiveEventLoop,
+    //     window_id: winit::window::WindowId,
+    //     winit_window: Option<&winit::window::Window>,
+    //     slint_window: Option<&slint::Window>,
+    //     event: &winit::event::WindowEvent,
+    // ) -> EventResult {
+    //     // println!("{:?}", event);
+    //     match event {
+    //         WindowEvent::MouseInput { state, button, .. } => {
+    //             let servo_button = winit_mouse_button_to_servo(*button);
+    //             self.handle_mouse(&servo_button, state);
+    //         }
+    //         WindowEvent::CursorMoved { position, .. } => {
+    //             let mut point = winit_position_to_euclid_point(*position).to_f32();
+    //             // point.y -= (self.toolbar_height() * self.hidpi_scale_factor()).0;
 
-                let webview = self.get_webview();
+    //             let webview = self.get_webview();
 
-                let previous_point = self.webview_relative_mouse_point.get();
-                if webview.rect().contains(point) {
-                    webview.notify_input_event(InputEvent::MouseMove(MouseMoveEvent::new(point)));
-                } else if webview.rect().contains(previous_point) {
-                    webview.notify_input_event(InputEvent::MouseLeftViewport(
-                        MouseLeftViewportEvent::default(),
-                    ));
-                }
+    //             let previous_point = self.webview_relative_mouse_point.get();
+    //             if webview.rect().contains(point) {
+    //                 webview.notify_input_event(InputEvent::MouseMove(MouseMoveEvent::new(point)));
+    //             } else if webview.rect().contains(previous_point) {
+    //                 webview.notify_input_event(InputEvent::MouseLeftViewport(
+    //                     MouseLeftViewportEvent::default(),
+    //                 ));
+    //             }
 
-                self.webview_relative_mouse_point.set(point);
-            }
-            WindowEvent::MouseWheel { delta, .. } => {
-                let (mut dx, mut dy, mode) = match delta {
-                    MouseScrollDelta::LineDelta(dx, dy) => (
-                        (dx * LINE_WIDTH) as f64,
-                        (dy * LINE_HEIGHT) as f64,
-                        WheelMode::DeltaLine,
-                    ),
-                    MouseScrollDelta::PixelDelta(position) => {
-                        let position: LogicalPosition<f64> =
-                            position.to_logical(self.device_hidpi_scale_factor().get() as f64);
-                        (
-                            position.x * PIXEL_DELTA_FACTOR,
-                            position.y * PIXEL_DELTA_FACTOR,
-                            WheelMode::DeltaPixel,
-                        )
-                    }
-                };
+    //             self.webview_relative_mouse_point.set(point);
+    //         }
+    //         WindowEvent::MouseWheel { delta, .. } => {
+    //             let (mut dx, mut dy, mode) = match delta {
+    //                 MouseScrollDelta::LineDelta(dx, dy) => (
+    //                     (dx * LINE_WIDTH) as f64,
+    //                     (dy * LINE_HEIGHT) as f64,
+    //                     WheelMode::DeltaLine,
+    //                 ),
+    //                 MouseScrollDelta::PixelDelta(position) => {
+    //                     let position: LogicalPosition<f64> =
+    //                         position.to_logical(self.device_hidpi_scale_factor().get() as f64);
+    //                     (
+    //                         position.x * PIXEL_DELTA_FACTOR,
+    //                         position.y * PIXEL_DELTA_FACTOR,
+    //                         WheelMode::DeltaPixel,
+    //                     )
+    //                 }
+    //             };
 
-                // Create wheel event before snapping to the major axis of movement
-                let delta = WheelDelta {
-                    x: dx,
-                    y: dy,
-                    z: 0.0,
-                    mode,
-                };
-                let point = self.webview_relative_mouse_point.get();
+    //             // Create wheel event before snapping to the major axis of movement
+    //             let delta = WheelDelta {
+    //                 x: dx,
+    //                 y: dy,
+    //                 z: 0.0,
+    //                 mode,
+    //             };
+    //             let point = self.webview_relative_mouse_point.get();
 
-                // Scroll events snap to the major axis of movement, with vertical
-                // preferred over horizontal.
-                if dy.abs() >= dx.abs() {
-                    dx = 0.0;
-                } else {
-                    dy = 0.0;
-                }
+    //             // Scroll events snap to the major axis of movement, with vertical
+    //             // preferred over horizontal.
+    //             if dy.abs() >= dx.abs() {
+    //                 dx = 0.0;
+    //             } else {
+    //                 dy = 0.0;
+    //             }
 
-                let webview = self.get_webview();
+    //             let webview = self.get_webview();
 
-                // Send events
-                webview.notify_input_event(InputEvent::Wheel(WheelEvent::new(delta, point)));
+    //             // Send events
+    //             webview.notify_input_event(InputEvent::Wheel(WheelEvent::new(delta, point)));
 
-                let scroll_location = ScrollLocation::Delta(-Vector2D::new(dx as f32, dy as f32));
+    //             let scroll_location = ScrollLocation::Delta(-Vector2D::new(dx as f32, dy as f32));
 
-                webview.notify_scroll_event(scroll_location, point.to_i32());
-            }
-            _ => (),
-        }
-        return EventResult::Propagate;
-    }
+    //             webview.notify_scroll_event(scroll_location, point.to_i32());
+    //         }
+    //         _ => (),
+    //     }
+    //     return EventResult::Propagate;
+    // }
 }
 
 pub fn winit_position_to_euclid_point<T>(position: PhysicalPosition<T>) -> Point2D<T, DevicePixel> {
