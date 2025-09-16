@@ -42,7 +42,7 @@ pub fn on_pointer_event(state: Rc<State>) {
         let scale_factor = *state.scale_factor.borrow();
 
         let event_str = format!("{:?}", event);
-        // println!("Pointer event: {}", event_str);
+        println!("Pointer event: {event_str:?}");
 
         let mouse_x = state.app.get_mouse_x();
         let mouse_y = state.app.get_mouse_y();
@@ -62,30 +62,26 @@ pub fn convert_slint_pointer_event_to_servo_input_event(
     let button = get_mouse_button(event_str);
 
     if event_str.contains("kind: Down") {
-        return InputEvent::MouseButton(MouseButtonEvent::new(
+        InputEvent::MouseButton(MouseButtonEvent::new(
             MouseButtonAction::Down,
             button,
             point,
-        ));
+        ))
     } else if event_str.contains("kind: Up") {
-        return InputEvent::MouseButton(MouseButtonEvent::new(
-            MouseButtonAction::Up,
-            button,
-            point,
-        ));
+        InputEvent::MouseButton(MouseButtonEvent::new(MouseButtonAction::Up, button, point))
     } else {
-        return InputEvent::MouseMove(MouseMoveEvent::new(point));
+        InputEvent::MouseMove(MouseMoveEvent::new(point))
     }
 }
 
 fn get_mouse_button(event_str: &str) -> MouseButton {
     if event_str.contains("button: Left") {
-        return MouseButton::Left;
+        MouseButton::Left
     } else if event_str.contains("button: Right") {
-        return MouseButton::Right;
+        MouseButton::Right
     } else if event_str.contains("button: Middle") {
-        return MouseButton::Middle;
+        MouseButton::Middle
     } else {
-        return MouseButton::Left;
+        MouseButton::Left
     }
 }

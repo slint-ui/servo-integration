@@ -14,8 +14,6 @@ use surfman::{
     chains::SwapChain,
 };
 
-use crate::rendering_context::frame_buffer::Framebuffer;
-
 /// A rendering context that uses the Surfman library to create and manage
 /// the OpenGL context and surface. This struct provides the default implementation
 /// of the `RenderingContext` trait, handling the creation, management, and destruction
@@ -166,7 +164,7 @@ impl SurfmanRenderingContext {
         let framebuffer_id = self
             .framebuffer()
             .map_or(0, |framebuffer| framebuffer.0.into());
-        Framebuffer::read_framebuffer_to_image(&self.gleam_gl, framebuffer_id, source_rectangle)
+        Self::read_framebuffer_to_image(&self.gleam_gl, framebuffer_id, source_rectangle)
     }
 
     pub fn make_current(&self) -> Result<(), Error> {
@@ -203,5 +201,51 @@ impl SurfmanRenderingContext {
 
     pub fn connection(&self) -> Option<Connection> {
         Some(self.device.borrow().connection())
+    }
+
+    pub fn read_framebuffer_to_image(
+        gl: &Rc<dyn Gl>,
+        framebuffer_id: u32,
+        source_rectangle: DeviceIntRect,
+    ) -> Option<RgbaImage> {
+        gl.bind_framebuffer(gl::FRAMEBUFFER, framebuffer_id);
+
+        // For some reason, OSMesa fails to render on the 3rd
+        // attempt in headless mode, under some conditions.
+        // I think this can only be some kind of synchronization
+        // bug in OSMesa, but explicitly un-binding any vertex
+        // array here seems to work around that bug.
+        // See https://github.com/servo/servo/issues/18606.
+        gl.bind_vertex_array(0);
+
+        let mut pixels = gl.read_pixels(
+            source_rectangle.min.x,
+            source_rectangle.min.y,
+            source_rectangle.width(),
+            source_rectangle.height(),
+            gl::RGBA,
+            gl::UNSIGNED_BYTE,
+        );
+        let gl_error = gl.get_error();
+        if gl_error != gl::NO_ERROR {
+            // warn!("GL error code 0x{gl_error:x} set after read_pixels");
+        }
+
+        // flip image vertically (texture is upside down)
+        let source_rectangle = source_rectangle.to_usize();
+        let orig_pixels = pixels.clone();
+        let stride = source_rectangle.width() * 4;
+        for y in 0..source_rectangle.height() {
+            let dst_start = y * stride;
+            let src_start = (source_rectangle.height() - y - 1) * stride;
+            let src_slice = &orig_pixels[src_start..src_start + stride];
+            pixels[dst_start..dst_start + stride].clone_from_slice(&src_slice[..stride]);
+        }
+
+        RgbaImage::from_raw(
+            source_rectangle.width() as u32,
+            source_rectangle.height() as u32,
+            pixels,
+        )
     }
 }

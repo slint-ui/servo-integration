@@ -1,8 +1,9 @@
 use std::{cell::RefCell, rc::Rc};
 
-
+use euclid::Point2D;
 use servo::{RenderingContext, Servo, WebView};
-use slint::ComponentHandle;
+use slint::{ComponentHandle, Image, SharedPixelBuffer};
+use webrender_api::units::DeviceIntRect;
 
 use crate::{MyApp, rendering_context::CustomRenderingContext};
 
@@ -29,17 +30,18 @@ impl State {
         let rendering_context_ref = self.rendering_context.borrow();
         let rendering_context = rendering_context_ref.as_ref().unwrap();
 
-        let size = rendering_context.size();
+        let size = rendering_context.size2d().to_i32();
 
-        let texture = rendering_context.get_texture();
+        let viewport_rect = DeviceIntRect::from_origin_and_size(Point2D::origin(), size);
 
-        let slint_image = unsafe {
-            slint::BorrowedOpenGLTextureBuilder::new_gl_2d_rgba_texture(
-                texture.0,
-                (size.width, size.height).into(),
-            )
-            .build()
-        };
+        let image_buffer = rendering_context.read_to_image(viewport_rect).unwrap();
+
+        let (width, height) = image_buffer.dimensions();
+        let pixel_slice = image_buffer.into_raw();
+
+        let shared_pixel_buffer = SharedPixelBuffer::clone_from_slice(&pixel_slice, width, height);
+
+        let slint_image = Image::from_rgba8(shared_pixel_buffer);
 
         self.app.set_web_content(slint_image);
         self.app.window().request_redraw();
