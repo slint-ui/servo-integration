@@ -8,7 +8,7 @@ mod waker;
 use smol::channel;
 use std::{cell::RefCell, rc::Rc};
 
-use slint::{BackendSelector, ComponentHandle};
+use slint::ComponentHandle;
 
 use crate::{
     on_events::{on_pointer_event, on_scroll_event},
@@ -25,9 +25,8 @@ fn main() {
 
     let state_placeholder = Rc::new(RefCell::new(None));
 
-    BackendSelector::new().select().unwrap();
-
     let app = MyApp::new().unwrap();
+
     let state = Rc::new(State::new(app));
 
     // Update the placeholder with the actual state

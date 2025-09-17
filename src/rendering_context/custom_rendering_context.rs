@@ -3,13 +3,17 @@ use std::{cell::Cell, rc::Rc, sync::Arc};
 use euclid::default::Size2D;
 
 use image::RgbaImage;
+use objc2::{rc::Retained, runtime::ProtocolObject};
 use servo::RenderingContext;
+use webrender_api::units::DeviceIntRect;
+use winit::dpi::PhysicalSize;
+
+use objc2_metal::{MTLDevice, MTLTexture, MTLTextureDescriptor};
+
 use surfman::{
     Connection, Device, Error, Surface, SurfaceTexture, SurfaceType,
     chains::{PreserveBuffer, SwapChain},
 };
-use webrender_api::units::DeviceIntRect;
-use winit::dpi::PhysicalSize;
 
 use crate::rendering_context::surfman_context::SurfmanRenderingContext;
 
@@ -51,6 +55,34 @@ impl CustomRenderingContext {
             size: Cell::new(size),
             surfman_rendering_info,
             swap_chain,
+        }
+    }
+
+    fn get_metal_texture(&self) -> Retained<ProtocolObject<dyn MTLTexture>> {
+        let device = self.surfman_rendering_info.device.borrow_mut();
+        let mut context = self.surfman_rendering_info.context.borrow_mut();
+
+        let surface = device
+            .unbind_surface_from_context(&mut context)
+            .unwrap()
+            .unwrap();
+
+        let native_surfacce = device.native_surface(&surface);
+
+        let native_device = device.native_device();
+
+        let metal_devicce = native_device.0;
+
+        unsafe {
+            let descriptor = MTLTextureDescriptor::new();
+
+            let iosurface = native_surfacce.0;
+
+            let metal_texture = metal_devicce
+                .newTextureWithDescriptor_iosurface_plane(&descriptor, &iosurface, 0)
+                .unwrap();
+
+            metal_texture
         }
     }
 }

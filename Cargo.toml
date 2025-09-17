@@ -27,8 +27,16 @@ winit = "0.30"
 rustls = "0.23"
 euclid = "0.22.11"
 surfman = "0.10.0"
+objc2 = "0.6.2"
+objc2-metal = { version = "0.3.1", features = [
+    "MTLAllocation",
+    "MTLResource",
+    "MTLTexture",
+    "objc2-io-surface",
+] }
 
 slint = { git = "https://github.com/slint-ui/slint", features = [
+    # "unstable-wgpu-26",
     "unstable-winit-030",
 ] }
 
