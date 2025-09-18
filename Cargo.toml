@@ -35,18 +35,20 @@ objc2-metal = { version = "0.3.1", features = [
     "objc2-io-surface",
 ] }
 
-slint = { git = "https://github.com/slint-ui/slint", features = [
-    # "unstable-wgpu-26",
+# Force newer termcolor to be compatible with naga v26
+termcolor = "1.4"
+
+slint = { git = "https://github.com/slint-ui/slint", rev = "07c2f2569825388ed7927cc56ed8ae1837d0ea49", features = [
+    "unstable-wgpu-26",
     "unstable-winit-030",
 ] }
 
 webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
 
-libservo = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b" }
-embedder_traits = { git = "https://github.com/servo/servo", rev = "b73c81630ab1d1e1a931dca84d70f997c12c286b", features = [
+libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }
+embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
     "baked-default-resources",
 ] }
 
-
 [build-dependencies]
-slint-build = "1.12.1"
+slint-build = { git = "https://github.com/slint-ui/slint", rev = "07c2f2569825388ed7927cc56ed8ae1837d0ea49" }
