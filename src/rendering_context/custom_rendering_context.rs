@@ -5,6 +5,7 @@ use euclid::default::Size2D;
 use image::RgbaImage;
 use objc2::{rc::Retained, runtime::ProtocolObject};
 use servo::RenderingContext;
+use slint::wgpu_26::wgpu;
 use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
 
@@ -84,6 +85,11 @@ impl CustomRenderingContext {
 
             metal_texture
         }
+    }
+
+    pub fn get_hal_texture(device: wgpu::Device) {
+        let metal_hal_device = unsafe { device.as_hal::<wgpu::wgc::api::Metal>().unwrap() };
+        let metal_device_raw = &*metal_hal_device.raw_device().lock();
     }
 }
 
