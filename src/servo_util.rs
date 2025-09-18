@@ -35,8 +35,9 @@ pub fn init_servo_webview(url_string: String, state: Rc<State>, waker_sender: Se
     slint::spawn_local({
         async move {
             let state = state_weak.upgrade().unwrap();
+            let app = state.app.upgrade().unwrap();
 
-            let winit_window = state.app.window().winit_window().await.unwrap();
+            let winit_window = app.window().winit_window().await.unwrap();
 
             let window_size = winit_window.inner_size();
             let scale_factor = winit_window.scale_factor() as f32;

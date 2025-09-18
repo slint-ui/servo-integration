@@ -58,7 +58,7 @@ impl CustomRenderingContext {
         }
     }
 
-    fn get_metal_texture(&self) -> Retained<ProtocolObject<dyn MTLTexture>> {
+    pub fn get_metal_texture(&self) -> Retained<ProtocolObject<dyn MTLTexture>> {
         let device = self.surfman_rendering_info.device.borrow_mut();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 

@@ -2,13 +2,15 @@ use std::{cell::RefCell, rc::Rc};
 
 use euclid::Point2D;
 use servo::{RenderingContext, Servo, WebView};
-use slint::{ComponentHandle, Image, SharedPixelBuffer};
+use slint::{ComponentHandle, Image, SharedPixelBuffer, Weak, wgpu_26::wgpu};
 use webrender_api::units::DeviceIntRect;
 
 use crate::{MyApp, rendering_context::CustomRenderingContext};
 
 pub struct State {
-    pub app: MyApp,
+    pub app: Weak<MyApp>,
+    pub device: RefCell<Option<wgpu::Device>>,
+    pub queue: RefCell<Option<wgpu::Queue>>,
     pub scale_factor: RefCell<f32>,
     pub servo: RefCell<Option<Servo>>,
     pub webview: RefCell<Option<WebView>>,
@@ -16,9 +18,11 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(app: MyApp) -> Self {
+    pub fn new(app: Weak<MyApp>) -> Self {
         Self {
             app,
+            device: RefCell::new(None),
+            queue: RefCell::new(None),
             servo: RefCell::new(None),
             webview: RefCell::new(None),
             scale_factor: RefCell::new(1.0),
@@ -43,7 +47,9 @@ impl State {
 
         let slint_image = Image::from_rgba8(shared_pixel_buffer);
 
-        self.app.set_web_content(slint_image);
-        self.app.window().request_redraw();
+        let app = self.app.upgrade().unwrap();
+
+        app.set_web_content(slint_image);
+        app.window().request_redraw();
     }
 }

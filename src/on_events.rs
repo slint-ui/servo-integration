@@ -10,7 +10,8 @@ use crate::state::State;
 
 pub fn on_scroll_event(state: Rc<State>) {
     let state_weak = Rc::downgrade(&state);
-    state.app.on_scroll_event(move |dx, dy| {
+    let app = state.app.upgrade().unwrap();
+    app.on_scroll_event(move |dx, dy| {
         let state = state_weak.upgrade().unwrap();
 
         let webview_ref = state.webview.borrow();
@@ -18,8 +19,10 @@ pub fn on_scroll_event(state: Rc<State>) {
 
         let scale_factor = *state.scale_factor.borrow();
 
-        let mouse_x = state.app.get_mouse_x();
-        let mouse_y = state.app.get_mouse_y();
+        let app = state.app.upgrade().unwrap();
+
+        let mouse_x = app.get_mouse_x();
+        let mouse_y = app.get_mouse_y();
 
         println!("dx:{dx:?} dy:{dy:?}");
 
@@ -33,7 +36,8 @@ pub fn on_scroll_event(state: Rc<State>) {
 
 pub fn on_pointer_event(state: Rc<State>) {
     let state_weak = Rc::downgrade(&state);
-    state.app.on_pointer_event(move |event| {
+    let app = state.app.upgrade().unwrap();
+    app.on_pointer_event(move |event| {
         let state = state_weak.upgrade().unwrap();
 
         let webview_ref = state.webview.borrow();
@@ -44,8 +48,10 @@ pub fn on_pointer_event(state: Rc<State>) {
         let event_str = format!("{:?}", event);
         println!("Pointer event: {event_str:?}");
 
-        let mouse_x = state.app.get_mouse_x();
-        let mouse_y = state.app.get_mouse_y();
+        let app = state.app.upgrade().unwrap();
+
+        let mouse_x = app.get_mouse_x();
+        let mouse_y = app.get_mouse_y();
 
         let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
