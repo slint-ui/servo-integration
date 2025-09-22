@@ -3,18 +3,18 @@ use std::{cell::Cell, rc::Rc, sync::Arc};
 use euclid::default::Size2D;
 
 use image::RgbaImage;
-use objc2::{rc::Retained, runtime::ProtocolObject};
+use objc2::rc::Retained;
 use servo::RenderingContext;
 use slint::wgpu_26::wgpu;
 use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
 
-use objc2_metal::{MTLDevice, MTLTexture, MTLTextureDescriptor};
-
 use surfman::{
     Connection, Device, Error, Surface, SurfaceTexture, SurfaceType,
     chains::{PreserveBuffer, SwapChain},
 };
+
+use foreign_types_shared::ForeignType;
 
 use crate::rendering_context::surfman_context::SurfmanRenderingContext;
 
@@ -59,37 +59,41 @@ impl CustomRenderingContext {
         }
     }
 
-    pub fn get_metal_texture(&self) -> Retained<ProtocolObject<dyn MTLTexture>> {
-        let device = self.surfman_rendering_info.device.borrow_mut();
+    pub fn get_wgpu_texture_from_metal(&self, wgpu_device: &wgpu::Device) {
+        let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
-        let surface = device
+        let surface = &device
             .unbind_surface_from_context(&mut context)
             .unwrap()
             .unwrap();
 
-        let native_surfacce = device.native_surface(&surface);
+        let size = self.size.get();
 
-        let native_device = device.native_device();
+        let native_surface = device.native_surface(surface);
+        let io_surface = native_surface.0;
 
-        let metal_devicce = native_device.0;
+        let wgpu_descriptor = wgpu::TextureDescriptor {
+            label: Some("Metal IOSurface Texture"),
+            size: wgpu::Extent3d {
+                width: size.width,
+                height: size.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Bgra8Unorm,
+            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[],
+        };
 
         unsafe {
-            let descriptor = MTLTextureDescriptor::new();
-
-            let iosurface = native_surfacce.0;
-
-            let metal_texture = metal_devicce
-                .newTextureWithDescriptor_iosurface_plane(&descriptor, &iosurface, 0)
-                .unwrap();
-
-            metal_texture
-        }
-    }
-
-    pub fn get_hal_texture(device: wgpu::Device) {
-        let metal_hal_device = unsafe { device.as_hal::<wgpu::wgc::api::Metal>().unwrap() };
-        let metal_device_raw = &*metal_hal_device.raw_device().lock();
+            let metal_device = wgpu_device.as_hal::<wgpu::wgc::api::Metal>().unwrap();
+            let device_raw = metal_device.raw_device().lock().clone();
+            let raw_ptr = device_raw.as_ptr();
+            let retained = Retained::retain(raw_ptr).unwrap();
+        };
     }
 }
 

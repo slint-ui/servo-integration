@@ -27,12 +27,16 @@ winit = "0.30"
 rustls = "0.23"
 euclid = "0.22.11"
 surfman = "0.10.0"
+
+wgpu-hal = "26.0.4"
+wgpu = { version = "26.0", features = ["metal"] }
+
 objc2 = "0.6.2"
 objc2-metal = { version = "0.3.1", features = [
     "MTLAllocation",
     "MTLResource",
     "MTLTexture",
-    "objc2-io-surface",
+    "objc2-io-surface"
 ] }
 
 # Force newer termcolor to be compatible with naga v26
@@ -49,6 +53,9 @@ libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3
 embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
     "baked-default-resources",
 ] }
+metal = "0.32.0"
+foreign-types-shared = "0.3.1"
+
 
 [build-dependencies]
 slint-build = { git = "https://github.com/slint-ui/slint", rev = "07c2f2569825388ed7927cc56ed8ae1837d0ea49" }

@@ -40,8 +40,6 @@ impl State {
 
         let image_buffer = rendering_context.read_to_image(viewport_rect).unwrap();
 
-        let metal_texture = rendering_context.get_metal_texture();
-
         let (width, height) = image_buffer.dimensions();
         let pixel_slice = image_buffer.into_raw();
 
