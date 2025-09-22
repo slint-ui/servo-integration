@@ -90,7 +90,7 @@ impl CustomRenderingContext {
 
         unsafe {
             let metal_device = wgpu_device.as_hal::<wgpu::wgc::api::Metal>().unwrap();
-            let device_raw = metal_device.raw_device().lock().clone();
+            let device_raw = metal_device.raw_device().lock();
             let raw_ptr = device_raw.as_ptr();
             let retained = Retained::retain(raw_ptr).unwrap();
         };

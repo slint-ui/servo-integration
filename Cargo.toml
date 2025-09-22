@@ -31,7 +31,7 @@ surfman = "0.10.0"
 wgpu-hal = "26.0.4"
 wgpu = { version = "26.0", features = ["metal"] }
 
-objc2 = "0.6.2"
+objc2 = "=0.6.2"
 objc2-metal = { version = "0.3.1", features = [
     "MTLAllocation",
     "MTLResource",
