@@ -117,9 +117,23 @@ impl CustomRenderingContext {
             let ptr = Retained::into_raw(texture);
 
             // Create the wgpu_hal Metal texture
-            let metal_texture = metal::Texture::from_ptr(ptr);
+            let metal_texture = metal::Texture::from_ptr(ptr as *mut _);
 
-            return wgpu_device.create_texture_from_hal(metal_texture, &wgpu_descriptor);
+            let hal_texture = wgpu::hal::metal::Device::texture_from_raw(
+                metal_texture,
+                wgpu::wgt::TextureFormat::Rgba8Unorm,
+                metal::MTLTextureType::D2,
+                0,
+                0,
+                wgpu::hal::CopyExtent {
+                    width: size.width,
+                    height: size.height,
+                    depth: 0,
+                },
+            );
+
+            return wgpu_device
+                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor);
         };
     }
 }
@@ -129,7 +143,7 @@ unsafe fn create_texture_from_iosurface(
     descriptor: &MTLTextureDescriptor,
     iosurface: &IOSurfaceRef,
     plane: objc2_foundation::NSUInteger,
-) -> Option<Retained<objc2::runtime::ProtocolObject<dyn MTLTexture>>> {
+) -> Option<Retained<objc2::runtime::NSObject>> {
     use objc2::msg_send;
     msg_send![device, newTextureWithDescriptor:descriptor, iosurface:iosurface, plane:plane]
 }
