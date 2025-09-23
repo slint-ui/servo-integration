@@ -67,15 +67,19 @@ impl CustomRenderingContext {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
-        let surface = &device
+        let surface = device
             .unbind_surface_from_context(&mut context)
             .unwrap()
             .unwrap();
 
         let size = self.size.get();
 
-        let native_surface = device.native_surface(surface);
+        let native_surface = device.native_surface(&surface);
         let io_surface = native_surface.0;
+
+        device
+            .bind_surface_to_context(&mut context, surface)
+            .unwrap();
 
         let wgpu_descriptor = wgpu::TextureDescriptor {
             label: Some("Metal IOSurface Texture"),
@@ -87,12 +91,12 @@ impl CustomRenderingContext {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Bgra8Unorm,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         };
 
-        unsafe {
+        let wgpu_texture = unsafe {
             let metal_device = wgpu_device.as_hal::<wgpu::wgc::api::Metal>().unwrap();
             let device_raw = metal_device.raw_device().lock().clone();
 
@@ -132,9 +136,11 @@ impl CustomRenderingContext {
                 },
             );
 
-            return wgpu_device
-                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor);
+            wgpu_device
+                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor)
         };
+
+        return wgpu_texture;
     }
 }
 

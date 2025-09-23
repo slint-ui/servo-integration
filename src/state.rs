@@ -45,14 +45,15 @@ impl State {
 
         // let shared_pixel_buffer = SharedPixelBuffer::clone_from_slice(&pixel_slice, width, height);
 
-         // let slint_image = Image::from_rgba8(shared_pixel_buffer);
+        // let slint_image = Image::from_rgba8(shared_pixel_buffer);
 
         let wgpu_device = self.device.borrow();
         let wgpu_device = wgpu_device.as_ref().unwrap();
 
         let texture = rendering_context.get_wgpu_texture_from_metal(wgpu_device);
 
-        let slint_image =slint::Image::try_from(texture).unwrap();
+        let slint_image = slint::Image::try_from(texture)
+            .expect("Failed to create slint image from wgpu texture");
 
         let app = self.app.upgrade().unwrap();
 
