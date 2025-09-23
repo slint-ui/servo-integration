@@ -24,7 +24,7 @@ pub fn on_scroll_event(state: Rc<State>) {
         let mouse_x = app.get_mouse_x();
         let mouse_y = app.get_mouse_y();
 
-        println!("dx:{dx:?} dy:{dy:?}");
+        // println!("dx:{dx:?} dy:{dy:?}");
 
         let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
@@ -46,7 +46,7 @@ pub fn on_pointer_event(state: Rc<State>) {
         let scale_factor = *state.scale_factor.borrow();
 
         let event_str = format!("{:?}", event);
-        println!("Pointer event: {event_str:?}");
+        // println!("Pointer event: {event_str:?}");
 
         let app = state.app.upgrade().unwrap();
 

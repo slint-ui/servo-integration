@@ -34,18 +34,25 @@ impl State {
         let rendering_context_ref = self.rendering_context.borrow();
         let rendering_context = rendering_context_ref.as_ref().unwrap();
 
-        let size = rendering_context.size2d().to_i32();
+        // let size = rendering_context.size2d().to_i32();
 
-        let viewport_rect = DeviceIntRect::from_origin_and_size(Point2D::origin(), size);
+        // let viewport_rect = DeviceIntRect::from_origin_and_size(Point2D::origin(), size);
 
-        let image_buffer = rendering_context.read_to_image(viewport_rect).unwrap();
+        // let image_buffer = rendering_context.read_to_image(viewport_rect).unwrap();
 
-        let (width, height) = image_buffer.dimensions();
-        let pixel_slice = image_buffer.into_raw();
+        // let (width, height) = image_buffer.dimensions();
+        // let pixel_slice = image_buffer.into_raw();
 
-        let shared_pixel_buffer = SharedPixelBuffer::clone_from_slice(&pixel_slice, width, height);
+        // let shared_pixel_buffer = SharedPixelBuffer::clone_from_slice(&pixel_slice, width, height);
 
-        let slint_image = Image::from_rgba8(shared_pixel_buffer);
+         // let slint_image = Image::from_rgba8(shared_pixel_buffer);
+
+        let wgpu_device = self.device.borrow();
+        let wgpu_device = wgpu_device.as_ref().unwrap();
+
+        let texture = rendering_context.get_wgpu_texture_from_metal(wgpu_device);
+
+        let slint_image =slint::Image::try_from(texture).unwrap();
 
         let app = self.app.upgrade().unwrap();
 

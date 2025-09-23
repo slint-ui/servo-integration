@@ -4,9 +4,9 @@ use euclid::default::Size2D;
 
 use image::RgbaImage;
 use objc2::rc::Retained;
-use objc2_io_surface::{IOSurface, IOSurfaceRef};
+use objc2_io_surface::IOSurfaceRef;
 use objc2_metal::{
-    MTLDevice, MTLPixelFormat, MTLTexture, MTLTextureDescriptor, MTLTextureType, MTLTextureUsage,
+    MTLPixelFormat, MTLTexture, MTLTextureDescriptor, MTLTextureType, MTLTextureUsage,
 };
 use servo::RenderingContext;
 use slint::wgpu_26::wgpu;
@@ -63,7 +63,7 @@ impl CustomRenderingContext {
         }
     }
 
-    pub fn get_wgpu_texture_from_metal(&self, wgpu_device: &wgpu::Device) {
+    pub fn get_wgpu_texture_from_metal(&self, wgpu_device: &wgpu::Device) -> wgpu::Texture {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
@@ -94,7 +94,7 @@ impl CustomRenderingContext {
 
         unsafe {
             let metal_device = wgpu_device.as_hal::<wgpu::wgc::api::Metal>().unwrap();
-            let device_raw = metal_device.raw_device().lock();
+            let device_raw = metal_device.raw_device().lock().clone();
 
             let texture_descriptor = MTLTextureDescriptor::new();
             texture_descriptor.setDepth(1);
@@ -111,8 +111,15 @@ impl CustomRenderingContext {
                 &texture_descriptor,
                 &io_surface,
                 0,
-            );
-            todo!()
+            )
+            .unwrap();
+
+            let ptr = Retained::into_raw(texture);
+
+            // Create the wgpu_hal Metal texture
+            let metal_texture = metal::Texture::from_ptr(ptr);
+
+            return wgpu_device.create_texture_from_hal(metal_texture, &wgpu_descriptor);
         };
     }
 }
