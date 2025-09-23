@@ -4,6 +4,10 @@ use euclid::default::Size2D;
 
 use image::RgbaImage;
 use objc2::rc::Retained;
+use objc2_io_surface::{IOSurface, IOSurfaceRef};
+use objc2_metal::{
+    MTLDevice, MTLPixelFormat, MTLTexture, MTLTextureDescriptor, MTLTextureType, MTLTextureUsage,
+};
 use servo::RenderingContext;
 use slint::wgpu_26::wgpu;
 use webrender_api::units::DeviceIntRect;
@@ -91,10 +95,36 @@ impl CustomRenderingContext {
         unsafe {
             let metal_device = wgpu_device.as_hal::<wgpu::wgc::api::Metal>().unwrap();
             let device_raw = metal_device.raw_device().lock();
-            let raw_ptr = device_raw.as_ptr();
-            let retained = Retained::retain(raw_ptr).unwrap();
+
+            let texture_descriptor = MTLTextureDescriptor::new();
+            texture_descriptor.setDepth(1);
+            texture_descriptor.setMipmapLevelCount(1);
+            texture_descriptor.setSampleCount(1);
+            texture_descriptor.setUsage(MTLTextureUsage::ShaderRead);
+            texture_descriptor.setPixelFormat(MTLPixelFormat::RGBA8Unorm);
+            texture_descriptor.setTextureType(MTLTextureType::Type2D);
+            texture_descriptor.setWidth(size.width as usize);
+            texture_descriptor.setHeight(size.height as usize);
+
+            let texture = create_texture_from_iosurface(
+                &*(device_raw.as_ptr() as *mut objc2::runtime::NSObject),
+                &texture_descriptor,
+                &io_surface,
+                0,
+            );
+            todo!()
         };
     }
+}
+
+unsafe fn create_texture_from_iosurface(
+    device: &objc2::runtime::NSObject,
+    descriptor: &MTLTextureDescriptor,
+    iosurface: &IOSurfaceRef,
+    plane: objc2_foundation::NSUInteger,
+) -> Option<Retained<objc2::runtime::ProtocolObject<dyn MTLTexture>>> {
+    use objc2::msg_send;
+    msg_send![device, newTextureWithDescriptor:descriptor, iosurface:iosurface, plane:plane]
 }
 
 impl RenderingContext for CustomRenderingContext {
