@@ -11,7 +11,7 @@ use slint::{ComponentHandle, winit_030::WinitWindowAccessor};
 use servo::{ServoBuilder, WebViewBuilder};
 
 use crate::{
-    delegate::AppDelegate, rendering_context::CustomRenderingContext, state::State, waker::Waker,
+    constants, delegate::AppDelegate, rendering_context::CustomRenderingContext, state::State, waker::Waker
 };
 
 pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
@@ -30,7 +30,7 @@ pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
     .unwrap();
 }
 
-pub fn init_servo_webview(url_string: String, state: Rc<State>, waker_sender: Sender<()>) {
+pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
     let state_weak = Rc::downgrade(&state);
     slint::spawn_local({
         async move {
@@ -52,7 +52,7 @@ pub fn init_servo_webview(url_string: String, state: Rc<State>, waker_sender: Se
                 .event_loop_waker(Box::new(Waker::new(waker_sender)))
                 .build();
 
-            let url = Url::parse(&url_string).unwrap();
+            let url = Url::parse(constants::DEFAULT_URL).unwrap();
             let delegate = Rc::new(AppDelegate::new(state.clone()));
             let scale = Scale::new(scale_factor);
 

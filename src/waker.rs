@@ -1,5 +1,5 @@
-use smol::channel::Sender;
 use servo::EventLoopWaker;
+use smol::channel::Sender;
 
 #[derive(Clone)]
 pub struct Waker(Sender<()>);

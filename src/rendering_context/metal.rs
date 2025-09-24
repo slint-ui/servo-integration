@@ -62,17 +62,16 @@ impl WPGPUTextureFromMetal {
             texture_descriptor.setWidth(self.size.width as usize);
             texture_descriptor.setHeight(self.size.height as usize);
 
-            let native_surface = surfman_device.native_surface(&surfman_surface);
+            let native_surface = surfman_device.native_surface(surfman_surface);
             let io_surface = native_surface.0;
 
-            return self
-                .create_texture_from_iosurface(
-                    &*(device_raw.as_ptr() as *mut objc2::runtime::NSObject),
-                    &texture_descriptor,
-                    &io_surface,
-                    0,
-                )
-                .unwrap();
+            self.create_texture_from_iosurface(
+                &*(device_raw.as_ptr() as *mut objc2::runtime::NSObject),
+                &texture_descriptor,
+                &io_surface,
+                0,
+            )
+            .unwrap()
         }
     }
 
@@ -112,9 +111,11 @@ impl WPGPUTextureFromMetal {
             "#.into()),
         });
 
-        let fragment_shader_module = wgpu_device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Fragment Shader"),
-            source: wgpu::ShaderSource::Wgsl(r#"
+        let fragment_shader_module =
+            wgpu_device.create_shader_module(wgpu::ShaderModuleDescriptor {
+                label: Some("Fragment Shader"),
+                source: wgpu::ShaderSource::Wgsl(
+                    r#"
                 @group(0) @binding(0) var source_texture: texture_2d<f32>;
                 @group(0) @binding(1) var source_sampler: sampler;
 
@@ -129,8 +130,10 @@ impl WPGPUTextureFromMetal {
                     // Swap R and B channels since we changed from BGRA to RGBA format
                     return vec4<f32>(color.b, color.g, color.r, color.a);  // Swap R and B channels
                 }
-            "#.into()),
-        });
+            "#
+                    .into(),
+                ),
+            });
 
         // Create texture views
         let source_view = source_texture.create_view(&wgpu::TextureViewDescriptor::default());
@@ -153,27 +156,28 @@ impl WPGPUTextureFromMetal {
         });
 
         // Create bind group layout
-        let bind_group_layout = wgpu_device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            label: Some("Texture Bind Group Layout"),
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        multisampled: false,
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
+        let bind_group_layout =
+            wgpu_device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                label: Some("Texture Bind Group Layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            multisampled: false,
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-        });
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
 
         // Create bind group
         let bind_group = wgpu_device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -314,8 +318,8 @@ impl WPGPUTextureFromMetal {
                 view_formats: &[],
             };
 
-            return wgpu_device
-                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor);
-        };
+            wgpu_device
+                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor)
+        }
     }
 }

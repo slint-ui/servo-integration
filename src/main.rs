@@ -1,3 +1,4 @@
+mod constants;
 mod delegate;
 mod on_events;
 mod rendering_context;
@@ -22,7 +23,6 @@ use crate::{
 slint::include_modules!();
 
 fn main() {
-    let url_string = "https://slint.dev/";
 
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
@@ -30,14 +30,14 @@ fn main() {
 
     let mut wgpu_settings = WGPUSettings::default();
     wgpu_settings.device_required_features = wgpu::Features::PUSH_CONSTANTS;
-    wgpu_settings.device_required_limits.max_push_constant_size = 16;
+    wgpu_settings.device_required_limits.max_push_constant_size = constants::MAX_PUSH_CONSTANT_SIZE;
 
     slint::BackendSelector::new()
         .require_wgpu_26(WGPUConfiguration::Automatic(wgpu_settings))
         .select()
-        .unwrap();
+        .expect("Failed to create Slint backend with WGPU based renderer - ensure your system supports WGPU");
 
-    let app = MyApp::new().unwrap();
+    let app = MyApp::new().expect("Failed to create Slint application - check UI resources");
 
     let app_weak = app.as_weak();
 
@@ -51,14 +51,13 @@ fn main() {
 
             match state {
                 slint::RenderingState::RenderingSetup => {
-                    match graphics_api {
-                        slint::GraphicsAPI::WGPU26 { device, queue, .. } => {
-                            let state = state_weak.upgrade().unwrap();
+                    if let slint::GraphicsAPI::WGPU26 { device, queue, .. } = graphics_api {
+                        if let Some(state) = state_weak.upgrade() {
                             *state.device.borrow_mut() = Some(device.clone());
                             *state.queue.borrow_mut() = Some(queue.clone());
+                            println!("WGPU device and queue initialized successfully");
                         }
-                        _ => return,
-                    };
+                    }
                 }
                 slint::RenderingState::BeforeRendering => {}
                 slint::RenderingState::AfterRendering => {}
@@ -66,12 +65,12 @@ fn main() {
                 _ => {}
             }
         })
-        .expect("Unable to set rendering notifier");
+        .expect("Failed to set rendering notifier - WGPU integration may not be available");
 
     // Update the placeholder with the actual state
     *state_placeholder.borrow_mut() = Some(state.clone());
 
-    init_servo_webview(url_string.to_string(), state.clone(), waker_sender);
+    init_servo_webview(state.clone(), waker_sender);
 
     spin_servo_event_loop(state.clone(), waker_receiver);
 
@@ -79,5 +78,6 @@ fn main() {
 
     on_pointer_event(state.clone());
 
-    app.run().unwrap();
+    app.run()
+        .expect("Application failed to run - check for runtime errors");
 }

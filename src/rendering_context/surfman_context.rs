@@ -107,6 +107,7 @@ impl SurfmanRenderingContext {
         SwapChain::create_attached(device, context, SurfaceAccess::GPUOnly)
     }
 
+    #[allow(dead_code)] // May be used in future for dynamic resizing
     pub fn resize_surface(&self, size: PhysicalSize<u32>) -> Result<(), Error> {
         let size = Size2D::new(size.width as i32, size.height as i32);
         let device = &mut self.device.borrow_mut();
@@ -122,6 +123,7 @@ impl SurfmanRenderingContext {
             })
     }
 
+    #[allow(dead_code)] // May be used in future for explicit presentation control
     pub fn present_bound_surface(&self) -> Result<(), Error> {
         let device = &self.device.borrow();
         let context = &mut self.context.borrow_mut();

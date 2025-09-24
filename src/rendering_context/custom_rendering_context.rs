@@ -58,7 +58,11 @@ impl CustomRenderingContext {
         }
     }
 
-    pub fn get_wgpu_texture_from_metal(&self, wgpu_device: &wgpu::Device, wgpu_queue: &wgpu::Queue) -> wgpu::Texture {
+    pub fn get_wgpu_texture_from_metal(
+        &self,
+        wgpu_device: &wgpu::Device,
+        wgpu_queue: &wgpu::Queue,
+    ) -> wgpu::Texture {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
@@ -66,16 +70,17 @@ impl CustomRenderingContext {
             .unbind_surface_from_context(&mut context)
             .unwrap()
             .unwrap();
-        
+
         let size = self.size.get();
 
-        let wgpu_texture = WPGPUTextureFromMetal::new(size).get(wgpu_device, wgpu_queue, &device, &surface);
+        let wgpu_texture =
+            WPGPUTextureFromMetal::new(size).get(wgpu_device, wgpu_queue, device, &surface);
 
         device
             .bind_surface_to_context(&mut context, surface)
             .unwrap();
 
-        return wgpu_texture;
+        wgpu_texture
     }
 }
 
