@@ -49,8 +49,11 @@ impl State {
 
         let wgpu_device = self.device.borrow();
         let wgpu_device = wgpu_device.as_ref().unwrap();
+        
+        let wgpu_queue = self.queue.borrow();
+        let wgpu_queue = wgpu_queue.as_ref().unwrap();
 
-        let texture = rendering_context.get_wgpu_texture_from_metal(wgpu_device);
+        let texture = rendering_context.get_wgpu_texture_from_metal(wgpu_device, wgpu_queue);
 
         let slint_image = slint::Image::try_from(texture)
             .expect("Failed to create slint image from wgpu texture");
