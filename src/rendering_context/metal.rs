@@ -124,7 +124,10 @@ impl WPGPUTextureFromMetal {
                     let uv = position.xy / vec2<f32>(f32(size.x), f32(size.y));
                     // Flip vertically by inverting the V coordinate
                     let flipped_uv = vec2<f32>(uv.x, 1.0 - uv.y);
-                    return textureSample(source_texture, source_sampler, flipped_uv);
+                    let color = textureSample(source_texture, source_sampler, flipped_uv);
+                    
+                    // Swap R and B channels since we changed from BGRA to RGBA format
+                    return vec4<f32>(color.b, color.g, color.r, color.a);  // Swap R and B channels
                 }
             "#.into()),
         });

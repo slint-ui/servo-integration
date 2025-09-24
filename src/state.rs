@@ -1,9 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
-use euclid::Point2D;
-use servo::{RenderingContext, Servo, WebView};
-use slint::{ComponentHandle, Image, SharedPixelBuffer, Weak, wgpu_26::wgpu};
-use webrender_api::units::DeviceIntRect;
+use servo::{Servo, WebView};
+use slint::{ComponentHandle, Weak, wgpu_26::wgpu};
 
 use crate::{MyApp, rendering_context::CustomRenderingContext};
 

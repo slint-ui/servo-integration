@@ -177,7 +177,7 @@ impl SurfmanRenderingContext {
         let device = &self.device.borrow();
         let context = &mut self.context.borrow_mut();
         let SurfaceInfo {
-            id: front_buffer_id,
+            id: _front_buffer_id,
             size,
             ..
         } = device.surface_info(&surface);
