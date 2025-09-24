@@ -49,7 +49,10 @@ impl WPGPUTextureFromMetal {
         surfman_surface: &surfman::Surface,
     ) -> Retained<NSObject> {
         unsafe {
-            let metal_device = wgpu_device.as_hal::<wgpu::wgc::api::Metal>().unwrap();
+            let metal_device = wgpu_device
+                .as_hal::<wgpu::wgc::api::Metal>()
+                .expect("Failed to get Metal device from WGPU device");
+
             let device_raw = metal_device.raw_device().lock().clone();
 
             let texture_descriptor = MTLTextureDescriptor::new();
@@ -71,7 +74,7 @@ impl WPGPUTextureFromMetal {
                 &io_surface,
                 0,
             )
-            .unwrap()
+            .expect("Failed to create Metal texture from IOSurface")
         }
     }
 

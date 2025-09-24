@@ -113,7 +113,9 @@ impl SurfmanRenderingContext {
         let device = &mut self.device.borrow_mut();
         let context = &mut self.context.borrow_mut();
 
-        let mut surface = device.unbind_surface_from_context(context)?.unwrap();
+        let mut surface = device
+            .unbind_surface_from_context(context)?
+            .expect("Failed to unbind surface from context during resize");
         device.resize_surface(context, &mut surface, size)?;
         device
             .bind_surface_to_context(context, surface)
@@ -128,7 +130,9 @@ impl SurfmanRenderingContext {
         let device = &self.device.borrow();
         let context = &mut self.context.borrow_mut();
 
-        let mut surface = device.unbind_surface_from_context(context)?.unwrap();
+        let mut surface = device
+            .unbind_surface_from_context(context)?
+            .expect("Failed to unbind surface from context for presentation");
         device.present_surface(context, &mut surface)?;
         device
             .bind_surface_to_context(context, surface)
@@ -178,23 +182,29 @@ impl SurfmanRenderingContext {
     pub fn create_texture(&self, surface: Surface) -> Option<(SurfaceTexture, u32, Size2D<i32>)> {
         let device = &self.device.borrow();
         let context = &mut self.context.borrow_mut();
+
         let SurfaceInfo {
             id: _front_buffer_id,
             size,
             ..
         } = device.surface_info(&surface);
         // debug!("... getting texture for surface {:?}", front_buffer_id);
-        let surface_texture = device.create_surface_texture(context, surface).unwrap();
+        let surface_texture = device
+            .create_surface_texture(context, surface)
+            .expect("Failed to create surface texture");
+
         let gl_texture = device
             .surface_texture_object(&surface_texture)
             .map(|tex| tex.0.get())
             .unwrap_or(0);
+
         Some((surface_texture, gl_texture, size))
     }
 
     pub fn destroy_texture(&self, surface_texture: SurfaceTexture) -> Option<Surface> {
         let device = &self.device.borrow();
         let context = &mut self.context.borrow_mut();
+
         device
             .destroy_surface_texture(context, surface_texture)
             .map_err(|(error, _)| error)

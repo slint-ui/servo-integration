@@ -33,23 +33,32 @@ impl Drop for CustomRenderingContext {
 
 impl CustomRenderingContext {
     pub fn new(size: PhysicalSize<u32>) -> Self {
-        let connection = Connection::new().unwrap();
+        let connection = Connection::new().expect("Failed to create surfman connection");
 
-        let adapter = connection.create_adapter().unwrap();
+        let adapter = connection
+            .create_adapter()
+            .expect("Failed to create surfman adapter");
 
-        let surfman_rendering_info = SurfmanRenderingContext::new(&connection, &adapter).unwrap();
+        let surfman_rendering_info = SurfmanRenderingContext::new(&connection, &adapter)
+            .expect("Failed to create surfman rendering context");
 
         let surfman_size = Size2D::new(size.width as i32, size.height as i32);
 
         let surface = surfman_rendering_info
             .create_surface(SurfaceType::Generic { size: surfman_size })
-            .unwrap();
+            .expect("Failed to create generic surface");
 
-        surfman_rendering_info.bind_surface(surface).unwrap();
+        surfman_rendering_info
+            .bind_surface(surface)
+            .expect("Failed to bind surface to context");
 
-        surfman_rendering_info.make_current().unwrap();
+        surfman_rendering_info
+            .make_current()
+            .expect("Failed to make rendering context current");
 
-        let swap_chain = surfman_rendering_info.create_attached_swap_chain().unwrap();
+        let swap_chain = surfman_rendering_info
+            .create_attached_swap_chain()
+            .expect("Failed to create attached swap chain");
 
         CustomRenderingContext {
             size: Cell::new(size),
@@ -68,8 +77,8 @@ impl CustomRenderingContext {
 
         let surface = device
             .unbind_surface_from_context(&mut context)
-            .unwrap()
-            .unwrap();
+            .expect("Failed to unbind surface from context")
+            .expect("No surface was bound to context");
 
         let size = self.size.get();
 
@@ -78,7 +87,7 @@ impl CustomRenderingContext {
 
         device
             .bind_surface_to_context(&mut context, surface)
-            .unwrap();
+            .expect("Failed to bind surface to context after WGPU texture creation");
 
         wgpu_texture
     }

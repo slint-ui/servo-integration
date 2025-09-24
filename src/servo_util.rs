@@ -11,14 +11,17 @@ use slint::{ComponentHandle, winit_030::WinitWindowAccessor};
 use servo::{ServoBuilder, WebViewBuilder};
 
 use crate::{
-    constants, delegate::AppDelegate, rendering_context::CustomRenderingContext, state::State, waker::Waker
+    constants, delegate::AppDelegate, rendering_context::CustomRenderingContext, state::State,
+    waker::Waker,
 };
 
 pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
     let state_weak = Rc::downgrade(&state);
     slint::spawn_local({
         async move {
-            let state = state_weak.upgrade().unwrap();
+            let state = state_weak
+                .upgrade()
+                .expect("Failed to upgrade state weak reference in servo event loop");
             loop {
                 let _ = waker_receiver.recv().await;
                 if let Some(ref servo) = *state.servo.borrow() {
@@ -27,17 +30,26 @@ pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
             }
         }
     })
-    .unwrap();
+    .expect("Failed to spawn servo event loop task");
 }
 
 pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
     let state_weak = Rc::downgrade(&state);
     slint::spawn_local({
         async move {
-            let state = state_weak.upgrade().unwrap();
-            let app = state.app.upgrade().unwrap();
+            let state = state_weak
+                .upgrade()
+                .expect("Failed to upgrade state weak reference in servo init");
+            let app = state
+                .app
+                .upgrade()
+                .expect("Failed to upgrade app weak reference in servo init");
 
-            let winit_window = app.window().winit_window().await.unwrap();
+            let winit_window = app
+                .window()
+                .winit_window()
+                .await
+                .expect("Failed to get winit window");
 
             let window_size = winit_window.inner_size();
             let scale_factor = winit_window.scale_factor() as f32;
@@ -52,7 +64,7 @@ pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
                 .event_loop_waker(Box::new(Waker::new(waker_sender)))
                 .build();
 
-            let url = Url::parse(constants::DEFAULT_URL).unwrap();
+            let url = Url::parse(constants::DEFAULT_URL).expect("Failed to parse default URL");
             let delegate = Rc::new(AppDelegate::new(state.clone()));
             let scale = Scale::new(scale_factor);
 
@@ -71,5 +83,5 @@ pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
             *state.rendering_context.borrow_mut() = Some(rendering_context_rc.clone());
         }
     })
-    .unwrap();
+    .expect("Failed to spawn servo initialization task");
 }

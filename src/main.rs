@@ -23,7 +23,6 @@ use crate::{
 slint::include_modules!();
 
 fn main() {
-
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
     let state_placeholder = Rc::new(RefCell::new(None));
