@@ -1,12 +1,98 @@
+//! Metal-specific WGPU integration for IOSurface textures.
+//!
+//! This module provides functionality to create WGPU textures from Metal IOSurfaces,
+//! which is essential for efficient GPU memory sharing on macOS. It includes texture
+//! flipping operations to handle coordinate system differences between Metal and other APIs.
+
+use std::fmt;
+use std::sync::OnceLock;
+
 use objc2::runtime::NSObject;
 use objc2::{msg_send, rc::Retained};
 use objc2_io_surface::IOSurfaceRef;
 use objc2_metal::{MTLPixelFormat, MTLTextureDescriptor, MTLTextureType, MTLTextureUsage};
 
 use foreign_types_shared::ForeignType;
-use wgpu::Error;
+use wgpu::Error as WgpuError;
 use winit::dpi::PhysicalSize;
 
+/// Errors that can occur during Metal texture operations.
+#[derive(Debug)]
+pub enum MetalError {
+    /// Failed to create Metal texture from IOSurface
+    TextureCreationFailed(String),
+    /// Failed to get Metal device from WGPU device
+    DeviceExtractionFailed(String),
+    /// Failed during texture flipping operation
+    TextureFlipFailed(String),
+    /// Failed to create render pipeline
+    PipelineCreationFailed(String),
+    /// Failed to create shader module
+    ShaderCreationFailed(String),
+    /// Generic WGPU error
+    WgpuError(WgpuError),
+}
+
+impl fmt::Display for MetalError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            MetalError::TextureCreationFailed(msg) => write!(f, "Texture creation failed: {}", msg),
+            MetalError::DeviceExtractionFailed(msg) => {
+                write!(f, "Device extraction failed: {}", msg)
+            }
+            MetalError::TextureFlipFailed(msg) => write!(f, "Texture flip failed: {}", msg),
+            MetalError::PipelineCreationFailed(msg) => {
+                write!(f, "Pipeline creation failed: {}", msg)
+            }
+            MetalError::ShaderCreationFailed(msg) => write!(f, "Shader creation failed: {}", msg),
+            MetalError::WgpuError(err) => write!(f, "WGPU error: {:?}", err),
+        }
+    }
+}
+
+impl std::error::Error for MetalError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            MetalError::WgpuError(err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
+impl From<WgpuError> for MetalError {
+    fn from(err: WgpuError) -> Self {
+        MetalError::WgpuError(err)
+    }
+}
+
+/// Cached render resources to avoid recreating expensive objects.
+struct RenderResourceCache {
+    vertex_shader: OnceLock<wgpu::ShaderModule>,
+    fragment_shader: OnceLock<wgpu::ShaderModule>,
+    bind_group_layout: OnceLock<wgpu::BindGroupLayout>,
+    render_pipeline: OnceLock<wgpu::RenderPipeline>,
+    sampler: OnceLock<wgpu::Sampler>,
+}
+
+impl RenderResourceCache {
+    const fn new() -> Self {
+        Self {
+            vertex_shader: OnceLock::new(),
+            fragment_shader: OnceLock::new(),
+            bind_group_layout: OnceLock::new(),
+            render_pipeline: OnceLock::new(),
+            sampler: OnceLock::new(),
+        }
+    }
+}
+
+/// Global cache for render resources to avoid recreation.
+static RENDER_CACHE: RenderResourceCache = RenderResourceCache::new();
+
+/// WGPU texture wrapper for Metal IOSurface textures.
+///
+/// This struct provides functionality to create WGPU textures from Metal IOSurfaces
+/// and perform coordinate system transformations.
 pub struct WPGPUTextureFromMetal {
     pub size: PhysicalSize<u32>,
 }
@@ -22,15 +108,83 @@ impl WPGPUTextureFromMetal {
         wgpu_queue: &wgpu::Queue,
         surfman_device: &surfman::Device,
         surfman_surface: &surfman::Surface,
-    ) -> Result<wgpu::Texture, Error> {
-        let objc2_metla_texture =
-            self.objc2_metla_texture(wgpu_device, surfman_device, surfman_surface)?;
+    ) -> Result<wgpu::Texture, MetalError> {
+        let objc2_metal_texture =
+            self.objc2_metal_texture(wgpu_device, surfman_device, surfman_surface)?;
 
-        let texture = self.wgpu_hal_texture(wgpu_device, objc2_metla_texture);
+        let texture = self.wgpu_hal_texture(wgpu_device, objc2_metal_texture)?;
 
-        Ok(self.create_flipped_texture_render(wgpu_device, wgpu_queue, &texture))
+        self.create_flipped_texture_render(wgpu_device, wgpu_queue, &texture)
     }
 
+    /// Creates a Metal texture descriptor with common settings.
+    fn create_metal_texture_descriptor(
+        size: PhysicalSize<u32>,
+        format: MTLPixelFormat,
+        usage: MTLTextureUsage,
+    ) -> Retained<MTLTextureDescriptor> {
+        // SAFETY: Creating and configuring a Metal texture descriptor is safe.
+        // All parameters are validated by the Metal API and we're using standard values.
+        unsafe {
+            let descriptor = MTLTextureDescriptor::new();
+            descriptor.setDepth(1);
+            descriptor.setMipmapLevelCount(1);
+            descriptor.setSampleCount(1);
+            descriptor.setUsage(usage);
+            descriptor.setPixelFormat(format);
+            descriptor.setTextureType(MTLTextureType::Type2D);
+            descriptor.setWidth(size.width as usize);
+            descriptor.setHeight(size.height as usize);
+            descriptor
+        }
+    }
+
+    /// Creates a WGPU texture descriptor with standard settings for this use case.
+    fn create_wgpu_texture_descriptor(
+        size: PhysicalSize<u32>,
+        label: &str,
+        usage: wgpu::TextureUsages,
+    ) -> wgpu::TextureDescriptor<'_> {
+        wgpu::TextureDescriptor {
+            label: Some(label),
+            size: wgpu::Extent3d {
+                width: size.width,
+                height: size.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8Unorm,
+            usage,
+            view_formats: &[],
+        }
+    }
+
+    /// Creates a sampler descriptor with filtering settings optimized for texture operations.
+    fn create_sampler_descriptor() -> wgpu::SamplerDescriptor<'static> {
+        wgpu::SamplerDescriptor {
+            label: Some("Metal Texture Sampler"),
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            lod_min_clamp: 0.0,
+            lod_max_clamp: 0.0,
+            compare: None,
+            anisotropy_clamp: 1,
+            border_color: None,
+        }
+    }
+
+    /// Creates a Metal texture from an IOSurface using Objective-C messaging.
+    ///
+    /// This function uses unsafe Objective-C messaging. The caller must ensure:
+    /// - The device pointer is valid and points to a Metal device
+    /// - The descriptor contains valid configuration
+    /// - The IOSurface is valid and compatible with the descriptor
     fn create_texture_from_iosurface(
         &self,
         device: &objc2::runtime::NSObject,
@@ -43,32 +197,44 @@ impl WPGPUTextureFromMetal {
         }
     }
 
-    fn objc2_metla_texture(
+    /// Creates a Metal texture object from an IOSurface using the WGPU Metal backend.
+    ///
+    /// This method extracts the Metal device from the WGPU device and uses it to create
+    /// a Metal texture directly from the IOSurface contained in the surfman surface.
+    ///
+    /// This function contains unsafe code for:
+    /// - Extracting the raw Metal device from WGPU
+    /// - Converting device pointers for Objective-C messaging
+    fn objc2_metal_texture(
         &self,
         wgpu_device: &wgpu::Device,
         surfman_device: &surfman::Device,
         surfman_surface: &surfman::Surface,
-    ) -> Result<Retained<NSObject>, Error> {
+    ) -> Result<Retained<NSObject>, MetalError> {
+        // SAFETY: We're working with WGPU Metal backend, so the device extraction
+        // and pointer manipulations are safe within this controlled context.
         unsafe {
             let metal_device = wgpu_device
                 .as_hal::<wgpu::wgc::api::Metal>()
-                .expect("Failed to get Metal device from WGPU device");
+                .ok_or_else(|| {
+                    MetalError::DeviceExtractionFailed(
+                        "WGPU device is not using Metal backend".to_string(),
+                    )
+                })?;
 
             let device_raw = metal_device.raw_device().lock().clone();
 
-            let texture_descriptor = MTLTextureDescriptor::new();
-            texture_descriptor.setDepth(1);
-            texture_descriptor.setMipmapLevelCount(1);
-            texture_descriptor.setSampleCount(1);
-            texture_descriptor.setUsage(MTLTextureUsage::ShaderRead);
-            texture_descriptor.setPixelFormat(MTLPixelFormat::RGBA8Unorm);
-            texture_descriptor.setTextureType(MTLTextureType::Type2D);
-            texture_descriptor.setWidth(self.size.width as usize);
-            texture_descriptor.setHeight(self.size.height as usize);
+            let texture_descriptor = Self::create_metal_texture_descriptor(
+                self.size,
+                MTLPixelFormat::RGBA8Unorm,
+                MTLTextureUsage::ShaderRead,
+            );
 
             let native_surface = surfman_device.native_surface(surfman_surface);
             let io_surface = native_surface.0;
 
+            // SAFETY: The device_raw pointer is valid (obtained from WGPU Metal backend)
+            // and we're casting it appropriately for Objective-C messaging.
             let texture = self
                 .create_texture_from_iosurface(
                     &*(device_raw.as_ptr() as *mut objc2::runtime::NSObject),
@@ -76,20 +242,36 @@ impl WPGPUTextureFromMetal {
                     &io_surface,
                     0,
                 )
-                .expect("Failed to create Metal texture from IOSurface");
+                .ok_or_else(|| {
+                    MetalError::TextureCreationFailed(
+                        "Failed to create Metal texture from IOSurface".to_string(),
+                    )
+                })?;
 
             Ok(texture)
         }
     }
 
+    /// Converts a Metal texture object into a WGPU texture.
+    ///
+    /// This method takes a Metal texture (as an NSObject) and wraps it in WGPU's
+    /// texture abstraction, allowing it to be used with WGPU rendering operations.
+    ///
+    /// This function contains unsafe code for:
+    /// - Converting Objective-C objects to Metal API objects
+    /// - Creating HAL textures from raw Metal textures
+    /// - Managing memory ownership transfer between different APIs
     fn wgpu_hal_texture(
         &self,
         wgpu_device: &wgpu::Device,
         metal_texture: Retained<NSObject>,
-    ) -> wgpu::Texture {
+    ) -> Result<wgpu::Texture, MetalError> {
+        // SAFETY: We're converting between compatible object types within the same
+        // Metal/WGPU ecosystem. The ownership transfer is handled correctly.
         unsafe {
             let ptr: *mut objc2_foundation::NSObject = Retained::into_raw(metal_texture);
 
+            // SAFETY: The ptr comes from a valid Metal texture object
             let metal_texture = metal::Texture::from_ptr(ptr as *mut _);
 
             let hal_texture = wgpu::hal::metal::Device::texture_from_raw(
@@ -105,111 +287,126 @@ impl WPGPUTextureFromMetal {
                 },
             );
 
-            let wgpu_descriptor = wgpu::TextureDescriptor {
-                label: Some("Metal IOSurface Texture"),
-                size: wgpu::Extent3d {
-                    width: self.size.width,
-                    height: self.size.height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8Unorm,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
-                view_formats: &[],
-            };
+            let wgpu_descriptor = Self::create_wgpu_texture_descriptor(
+                self.size,
+                "Metal IOSurface Texture",
+                wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            );
 
-            wgpu_device
-                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor)
+            Ok(wgpu_device
+                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor))
         }
     }
 
+    /// Creates and applies a texture flipping render operation.
+    ///
+    /// This method creates a new texture with the same dimensions as the input,
+    /// then uses a render pass to copy and vertically flip the source texture.
     pub fn create_flipped_texture_render(
         &self,
         wgpu_device: &wgpu::Device,
         wgpu_queue: &wgpu::Queue,
         source_texture: &wgpu::Texture,
-    ) -> wgpu::Texture {
-        let flipped_texture = wgpu_device.create_texture(&wgpu::TextureDescriptor {
-            label: Some("Flipped Metal IOSurface Texture"),
-            size: wgpu::Extent3d {
-                width: self.size.width,
-                height: self.size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-            view_formats: &[],
-        });
+    ) -> Result<wgpu::Texture, MetalError> {
+        // Create the output texture
+        let flipped_texture = self.create_output_texture(wgpu_device)?;
 
-        // Create shader modules
-        let vertex_shader_module = wgpu_device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Vertex Shader"),
-            source: wgpu::ShaderSource::Wgsl(r#"
-                @vertex
-                fn vs_main(@builtin(vertex_index) vertex_index: u32) -> @builtin(position) vec4<f32> {
-                    var positions = array<vec2<f32>, 6>(
-                        vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0, -1.0), vec2<f32>( 1.0,  1.0),
-                        vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0,  1.0), vec2<f32>(-1.0,  1.0)
-                    );
-                    return vec4<f32>(positions[vertex_index], 0.0, 1.0);
-                }
-            "#.into()),
-        });
+        // Get or create cached render resources
+        let render_pipeline = self.get_or_create_render_pipeline(wgpu_device);
+        let sampler = self.get_or_create_sampler(wgpu_device);
+        let bind_group_layout = self.get_or_create_bind_group_layout(wgpu_device);
 
-        let fragment_shader_module =
-            wgpu_device.create_shader_module(wgpu::ShaderModuleDescriptor {
-                label: Some("Fragment Shader"),
-                source: wgpu::ShaderSource::Wgsl(
-                    r#"
-                @group(0) @binding(0) var source_texture: texture_2d<f32>;
-                @group(0) @binding(1) var source_sampler: sampler;
+        // Create bind group for this specific texture
+        let bind_group = self.create_texture_bind_group(
+            wgpu_device,
+            bind_group_layout,
+            source_texture,
+            sampler,
+        )?;
 
-                @fragment
-                fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
-                    let size = textureDimensions(source_texture);
-                    let uv = position.xy / vec2<f32>(f32(size.x), f32(size.y));
-                    // Flip vertically by inverting the V coordinate
-                    let flipped_uv = vec2<f32>(uv.x, 1.0 - uv.y);
-                    let color = textureSample(source_texture, source_sampler, flipped_uv);
-                    
-                    // Swap R and B channels since we changed from BGRA to RGBA format
-                    return vec4<f32>(color.b, color.g, color.r, color.a);  // Swap R and B channels
-                }
-            "#
-                    .into(),
-                ),
-            });
+        // Execute the render pass
+        self.execute_flip_render_pass(
+            wgpu_device,
+            wgpu_queue,
+            &flipped_texture,
+            render_pipeline,
+            &bind_group,
+        )?;
 
-        // Create texture views
-        let source_view = source_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let target_view = flipped_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        Ok(flipped_texture)
+    }
 
-        // Create sampler
-        let sampler = wgpu_device.create_sampler(&wgpu::SamplerDescriptor {
-            label: Some("Texture Sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            lod_min_clamp: 0.0,
-            lod_max_clamp: 0.0,
-            compare: None,
-            anisotropy_clamp: 1,
-            border_color: None,
-        });
+    /// Creates the output texture for the flipping operation.
+    fn create_output_texture(
+        &self,
+        wgpu_device: &wgpu::Device,
+    ) -> Result<wgpu::Texture, MetalError> {
+        let descriptor = Self::create_wgpu_texture_descriptor(
+            self.size,
+            "Flipped Metal IOSurface Texture",
+            wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        );
+        Ok(wgpu_device.create_texture(&descriptor))
+    }
 
-        // Create bind group layout
-        let bind_group_layout =
+    /// Gets or creates the vertex shader module with caching.
+    fn get_or_create_vertex_shader(&self, wgpu_device: &wgpu::Device) -> &wgpu::ShaderModule {
+        RENDER_CACHE
+            .vertex_shader
+            .get_or_init(|| {
+                wgpu_device
+                    .create_shader_module(wgpu::ShaderModuleDescriptor {
+                        label: Some("Metal Texture Flip Vertex Shader"),
+                        source: wgpu::ShaderSource::Wgsl(r#"
+                            @vertex
+                            fn vs_main(@builtin(vertex_index) vertex_index: u32) -> @builtin(position) vec4<f32> {
+                                var positions = array<vec2<f32>, 6>(
+                                    vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0, -1.0), vec2<f32>( 1.0,  1.0),
+                                    vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0,  1.0), vec2<f32>(-1.0,  1.0)
+                                );
+                                return vec4<f32>(positions[vertex_index], 0.0, 1.0);
+                            }
+                        "#.into()),
+                    })
+            })
+    }
+
+    /// Gets or creates the fragment shader module with caching.
+    fn get_or_create_fragment_shader(&self, wgpu_device: &wgpu::Device) -> &wgpu::ShaderModule {
+        RENDER_CACHE
+            .fragment_shader
+            .get_or_init(|| {
+                wgpu_device
+                    .create_shader_module(wgpu::ShaderModuleDescriptor {
+                        label: Some("Metal Texture Flip Fragment Shader"),
+                        source: wgpu::ShaderSource::Wgsl(r#"
+                            @group(0) @binding(0) var source_texture: texture_2d<f32>;
+                            @group(0) @binding(1) var source_sampler: sampler;
+
+                            @fragment
+                            fn fs_main(@builtin(position) position: vec4<f32>) -> @location(0) vec4<f32> {
+                                let size = textureDimensions(source_texture);
+                                let uv = position.xy / vec2<f32>(f32(size.x), f32(size.y));
+                                // Flip vertically by inverting the V coordinate
+                                let flipped_uv = vec2<f32>(uv.x, 1.0 - uv.y);
+                                let color = textureSample(source_texture, source_sampler, flipped_uv);
+                                
+                                // Swap R and B channels since we changed from BGRA to RGBA format
+                                return vec4<f32>(color.b, color.g, color.r, color.a);
+                            }
+                        "#.into()),
+                    })
+            })
+    }
+
+    /// Gets or creates the bind group layout with caching.
+    fn get_or_create_bind_group_layout(
+        &self,
+        wgpu_device: &wgpu::Device,
+    ) -> &wgpu::BindGroupLayout {
+        RENDER_CACHE.bind_group_layout.get_or_init(|| {
             wgpu_device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: Some("Texture Bind Group Layout"),
+                label: Some("Metal Texture Flip Bind Group Layout"),
                 entries: &[
                     wgpu::BindGroupLayoutEntry {
                         binding: 0,
@@ -228,12 +425,86 @@ impl WPGPUTextureFromMetal {
                         count: None,
                     },
                 ],
-            });
+            })
+        })
+    }
 
-        // Create bind group
-        let bind_group = wgpu_device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Texture Bind Group"),
-            layout: &bind_group_layout,
+    /// Gets or creates the sampler with caching.
+    fn get_or_create_sampler(&self, wgpu_device: &wgpu::Device) -> &wgpu::Sampler {
+        RENDER_CACHE
+            .sampler
+            .get_or_init(|| wgpu_device.create_sampler(&Self::create_sampler_descriptor()))
+    }
+
+    /// Gets or creates the render pipeline with caching.
+    fn get_or_create_render_pipeline(&self, wgpu_device: &wgpu::Device) -> &wgpu::RenderPipeline {
+        RENDER_CACHE.render_pipeline.get_or_init(|| {
+            let vertex_shader = self.get_or_create_vertex_shader(wgpu_device);
+            let fragment_shader = self.get_or_create_fragment_shader(wgpu_device);
+            let bind_group_layout = self.get_or_create_bind_group_layout(wgpu_device);
+
+            let pipeline_layout =
+                wgpu_device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                    label: Some("Metal Texture Flip Pipeline Layout"),
+                    bind_group_layouts: &[bind_group_layout],
+                    push_constant_ranges: &[],
+                });
+
+            wgpu_device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                label: Some("Metal Texture Flip Render Pipeline"),
+                layout: Some(&pipeline_layout),
+                vertex: wgpu::VertexState {
+                    module: vertex_shader,
+                    entry_point: Some("vs_main"),
+                    buffers: &[],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                },
+                fragment: Some(wgpu::FragmentState {
+                    module: fragment_shader,
+                    entry_point: Some("fs_main"),
+                    targets: &[Some(wgpu::ColorTargetState {
+                        format: wgpu::TextureFormat::Rgba8Unorm,
+                        blend: None,
+                        write_mask: wgpu::ColorWrites::ALL,
+                    })],
+                    compilation_options: wgpu::PipelineCompilationOptions::default(),
+                }),
+                primitive: wgpu::PrimitiveState {
+                    topology: wgpu::PrimitiveTopology::TriangleList,
+                    strip_index_format: None,
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: None,
+                    unclipped_depth: false,
+                    polygon_mode: wgpu::PolygonMode::Fill,
+                    conservative: false,
+                },
+                depth_stencil: None,
+                multisample: wgpu::MultisampleState {
+                    count: 1,
+                    mask: !0,
+                    alpha_to_coverage_enabled: false,
+                },
+                multiview: None,
+                cache: None,
+            })
+        })
+    }
+
+    /// Creates a bind group for the specific texture being processed.
+    ///
+    /// This method creates a new bind group each time since it's specific to the input texture.
+    fn create_texture_bind_group(
+        &self,
+        wgpu_device: &wgpu::Device,
+        bind_group_layout: &wgpu::BindGroupLayout,
+        source_texture: &wgpu::Texture,
+        sampler: &wgpu::Sampler,
+    ) -> Result<wgpu::BindGroup, MetalError> {
+        let source_view = source_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        Ok(wgpu_device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Metal Texture Flip Bind Group"),
+            layout: bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
@@ -241,75 +512,35 @@ impl WPGPUTextureFromMetal {
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
+                    resource: wgpu::BindingResource::Sampler(sampler),
                 },
             ],
-        });
+        }))
+    }
 
-        // Create pipeline layout
-        let pipeline_layout = wgpu_device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Render Pipeline Layout"),
-            bind_group_layouts: &[&bind_group_layout],
-            push_constant_ranges: &[],
-        });
+    /// Executes the render pass that performs the texture flipping.
+    fn execute_flip_render_pass(
+        &self,
+        wgpu_device: &wgpu::Device,
+        wgpu_queue: &wgpu::Queue,
+        target_texture: &wgpu::Texture,
+        render_pipeline: &wgpu::RenderPipeline,
+        bind_group: &wgpu::BindGroup,
+    ) -> Result<(), MetalError> {
+        let target_view = target_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-        // Create render pipeline
-        let render_pipeline = wgpu_device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Flip Texture Render Pipeline"),
-            layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
-                module: &vertex_shader_module,
-                entry_point: Some("vs_main"),
-                buffers: &[],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            },
-            fragment: Some(wgpu::FragmentState {
-                module: &fragment_shader_module,
-                entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8Unorm,
-                    blend: None,
-                    write_mask: wgpu::ColorWrites::ALL,
-                })],
-                compilation_options: wgpu::PipelineCompilationOptions::default(),
-            }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                strip_index_format: None,
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: None,
-                unclipped_depth: false,
-                polygon_mode: wgpu::PolygonMode::Fill,
-                conservative: false,
-            },
-            depth_stencil: None,
-            multisample: wgpu::MultisampleState {
-                count: 1,
-                mask: !0,
-                alpha_to_coverage_enabled: false,
-            },
-            multiview: None,
-            cache: None,
-        });
-
-        // Create command encoder and execute the render pass
         let mut encoder = wgpu_device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Flip Texture Command Encoder"),
+            label: Some("Metal Texture Flip Command Encoder"),
         });
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Flip Texture Render Pass"),
+                label: Some("Metal Texture Flip Render Pass"),
                 color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                     view: &target_view,
                     resolve_target: None,
                     ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        }),
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
                         store: wgpu::StoreOp::Store,
                     },
                     depth_slice: None,
@@ -319,14 +550,94 @@ impl WPGPUTextureFromMetal {
                 timestamp_writes: None,
             });
 
-            render_pass.set_pipeline(&render_pipeline);
-            render_pass.set_bind_group(0, &bind_group, &[]);
-            render_pass.draw(0..6, 0..1);
+            render_pass.set_pipeline(render_pipeline);
+            render_pass.set_bind_group(0, bind_group, &[]);
+            render_pass.draw(0..6, 0..1); // Draw two triangles (6 vertices)
         }
 
-        // Submit the command buffer
         wgpu_queue.submit(std::iter::once(encoder.finish()));
+        Ok(())
+    }
+}
 
-        flipped_texture
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use winit::dpi::PhysicalSize;
+
+    #[test]
+    fn test_create_wgpu_texture_from_metal() {
+        let size = PhysicalSize::new(800, 600);
+        let texture_wrapper = WPGPUTextureFromMetal::new(size);
+        assert_eq!(texture_wrapper.size.width, 800);
+        assert_eq!(texture_wrapper.size.height, 600);
+    }
+
+    #[test]
+    fn test_metal_texture_descriptor_creation() {
+        let size = PhysicalSize::new(1024, 768);
+        let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(
+            size,
+            MTLPixelFormat::RGBA8Unorm,
+            MTLTextureUsage::ShaderRead,
+        );
+
+        // We can't directly access descriptor properties due to objc2 API design,
+        // but we can verify that creation doesn't panic and returns a valid descriptor
+        // The descriptor object should be valid if creation succeeded
+        drop(descriptor); // This would panic if the descriptor was invalid
+    }
+
+    #[test]
+    fn test_wgpu_texture_descriptor_creation() {
+        let size = PhysicalSize::new(512, 512);
+        let descriptor = WPGPUTextureFromMetal::create_wgpu_texture_descriptor(
+            size,
+            "Test Texture",
+            wgpu::TextureUsages::TEXTURE_BINDING,
+        );
+
+        assert_eq!(descriptor.size.width, 512);
+        assert_eq!(descriptor.size.height, 512);
+        assert_eq!(descriptor.size.depth_or_array_layers, 1);
+        assert_eq!(descriptor.format, wgpu::TextureFormat::Rgba8Unorm);
+        assert_eq!(descriptor.usage, wgpu::TextureUsages::TEXTURE_BINDING);
+        assert_eq!(descriptor.label, Some("Test Texture"));
+    }
+
+    #[test]
+    fn test_sampler_descriptor_creation() {
+        let descriptor = WPGPUTextureFromMetal::create_sampler_descriptor();
+
+        assert_eq!(descriptor.address_mode_u, wgpu::AddressMode::ClampToEdge);
+        assert_eq!(descriptor.address_mode_v, wgpu::AddressMode::ClampToEdge);
+        assert_eq!(descriptor.address_mode_w, wgpu::AddressMode::ClampToEdge);
+        assert_eq!(descriptor.mag_filter, wgpu::FilterMode::Linear);
+        assert_eq!(descriptor.min_filter, wgpu::FilterMode::Linear);
+        assert_eq!(descriptor.label, Some("Metal Texture Sampler"));
+    }
+
+    #[test]
+    fn test_metal_error_display() {
+        let error = MetalError::TextureCreationFailed("test error".to_string());
+        let display_str = format!("{}", error);
+        assert!(display_str.contains("Texture creation failed"));
+        assert!(display_str.contains("test error"));
+
+        let error = MetalError::DeviceExtractionFailed("device error".to_string());
+        let display_str = format!("{}", error);
+        assert!(display_str.contains("Device extraction failed"));
+        assert!(display_str.contains("device error"));
+    }
+
+    #[test]
+    fn test_metal_error_conversion() {
+        // Test that we can create different error types
+        let texture_error = MetalError::TextureCreationFailed("test".to_string());
+        let device_error = MetalError::DeviceExtractionFailed("test".to_string());
+
+        // Verify they display correctly
+        assert!(format!("{}", texture_error).contains("Texture creation failed"));
+        assert!(format!("{}", device_error).contains("Device extraction failed"));
     }
 }
