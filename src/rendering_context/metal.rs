@@ -82,6 +82,50 @@ impl WPGPUTextureFromMetal {
         }
     }
 
+    fn wgpu_hal_texture(
+        &self,
+        wgpu_device: &wgpu::Device,
+        metal_texture: Retained<NSObject>,
+    ) -> wgpu::Texture {
+        unsafe {
+            let ptr: *mut objc2_foundation::NSObject = Retained::into_raw(metal_texture);
+
+            let metal_texture = metal::Texture::from_ptr(ptr as *mut _);
+
+            let hal_texture = wgpu::hal::metal::Device::texture_from_raw(
+                metal_texture,
+                wgpu::wgt::TextureFormat::Rgba8Unorm,
+                metal::MTLTextureType::D2,
+                0,
+                0,
+                wgpu::hal::CopyExtent {
+                    width: self.size.width,
+                    height: self.size.height,
+                    depth: 0,
+                },
+            );
+
+            let wgpu_descriptor = wgpu::TextureDescriptor {
+                label: Some("Metal IOSurface Texture"),
+                size: wgpu::Extent3d {
+                    width: self.size.width,
+                    height: self.size.height,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgpu::TextureDimension::D2,
+                format: wgpu::TextureFormat::Rgba8Unorm,
+                usage: wgpu::TextureUsages::TEXTURE_BINDING
+                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                view_formats: &[],
+            };
+
+            wgpu_device
+                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor)
+        }
+    }
+
     pub fn create_flipped_texture_render(
         &self,
         wgpu_device: &wgpu::Device,
@@ -284,49 +328,5 @@ impl WPGPUTextureFromMetal {
         wgpu_queue.submit(std::iter::once(encoder.finish()));
 
         flipped_texture
-    }
-
-    fn wgpu_hal_texture(
-        &self,
-        wgpu_device: &wgpu::Device,
-        metal_texture: Retained<NSObject>,
-    ) -> wgpu::Texture {
-        unsafe {
-            let ptr: *mut objc2_foundation::NSObject = Retained::into_raw(metal_texture);
-
-            let metal_texture = metal::Texture::from_ptr(ptr as *mut _);
-
-            let hal_texture = wgpu::hal::metal::Device::texture_from_raw(
-                metal_texture,
-                wgpu::wgt::TextureFormat::Rgba8Unorm,
-                metal::MTLTextureType::D2,
-                0,
-                0,
-                wgpu::hal::CopyExtent {
-                    width: self.size.width,
-                    height: self.size.height,
-                    depth: 0,
-                },
-            );
-
-            let wgpu_descriptor = wgpu::TextureDescriptor {
-                label: Some("Metal IOSurface Texture"),
-                size: wgpu::Extent3d {
-                    width: self.size.width,
-                    height: self.size.height,
-                    depth_or_array_layers: 1,
-                },
-                mip_level_count: 1,
-                sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8Unorm,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
-                view_formats: &[],
-            };
-
-            wgpu_device
-                .create_texture_from_hal::<wgpu::wgc::api::Metal>(hal_texture, &wgpu_descriptor)
-        }
     }
 }
