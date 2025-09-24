@@ -32,64 +32,55 @@ impl Drop for CustomRenderingContext {
 }
 
 impl CustomRenderingContext {
-    pub fn new(size: PhysicalSize<u32>) -> Self {
-        let connection = Connection::new().expect("Failed to create surfman connection");
+    pub fn new(size: PhysicalSize<u32>) -> Result<Self, Error> {
+        let connection = Connection::new()?;
 
-        let adapter = connection
-            .create_adapter()
-            .expect("Failed to create surfman adapter");
+        let adapter = connection.create_adapter()?;
 
-        let surfman_rendering_info = SurfmanRenderingContext::new(&connection, &adapter)
-            .expect("Failed to create surfman rendering context");
+        let surfman_rendering_info = SurfmanRenderingContext::new(&connection, &adapter)?;
 
         let surfman_size = Size2D::new(size.width as i32, size.height as i32);
 
-        let surface = surfman_rendering_info
-            .create_surface(SurfaceType::Generic { size: surfman_size })
-            .expect("Failed to create generic surface");
+        let surface =
+            surfman_rendering_info.create_surface(SurfaceType::Generic { size: surfman_size })?;
 
-        surfman_rendering_info
-            .bind_surface(surface)
-            .expect("Failed to bind surface to context");
+        surfman_rendering_info.bind_surface(surface)?;
 
-        surfman_rendering_info
-            .make_current()
-            .expect("Failed to make rendering context current");
+        surfman_rendering_info.make_current()?;
 
-        let swap_chain = surfman_rendering_info
-            .create_attached_swap_chain()
-            .expect("Failed to create attached swap chain");
+        let swap_chain = surfman_rendering_info.create_attached_swap_chain()?;
 
-        CustomRenderingContext {
+        Ok(Self {
             size: Cell::new(size),
             surfman_rendering_info,
             swap_chain,
-        }
+        })
     }
 
     pub fn get_wgpu_texture_from_metal(
         &self,
         wgpu_device: &wgpu::Device,
         wgpu_queue: &wgpu::Queue,
-    ) -> wgpu::Texture {
+    ) -> Result<wgpu::Texture, Error> {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
-        let surface = device
-            .unbind_surface_from_context(&mut context)
-            .expect("Failed to unbind surface from context")
-            .expect("No surface was bound to context");
+        let surface = device.unbind_surface_from_context(&mut context)?.unwrap();
 
         let size = self.size.get();
 
-        let wgpu_texture =
-            WPGPUTextureFromMetal::new(size).get(wgpu_device, wgpu_queue, device, &surface);
+        let wgpu_texture = WPGPUTextureFromMetal::new(size)
+            .get(wgpu_device, wgpu_queue, device, &surface)
+            .expect("Failed to get WGPU texture from Metal texture");
 
-        device
+        let _ = device
             .bind_surface_to_context(&mut context, surface)
-            .expect("Failed to bind surface to context after WGPU texture creation");
+            .map_err(|(err, mut surface)| {
+                let _ = device.destroy_surface(&mut context, &mut surface);
+                err
+            });
 
-        wgpu_texture
+        Ok(wgpu_texture)
     }
 }
 
@@ -127,7 +118,7 @@ impl RenderingContext for CustomRenderingContext {
             .swap_buffers(&mut *device, &mut *context, PreserveBuffer::No);
     }
 
-    fn make_current(&self) -> Result<(), Error> {
+    fn make_current(&self) -> std::result::Result<(), surfman::Error> {
         self.surfman_rendering_info.make_current()
     }
 

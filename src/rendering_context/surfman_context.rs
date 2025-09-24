@@ -4,13 +4,12 @@ use euclid::default::Size2D;
 use gleam::gl::{self, Gl};
 use glow::NativeFramebuffer;
 use image::RgbaImage;
-use winit::dpi::PhysicalSize;
 
 use webrender_api::units::DeviceIntRect;
 
 use surfman::{
     Adapter, Connection, Context, ContextAttributeFlags, ContextAttributes, Device, Error, GLApi,
-    NativeContext, NativeWidget, Surface, SurfaceAccess, SurfaceInfo, SurfaceTexture, SurfaceType,
+    NativeWidget, Surface, SurfaceAccess, SurfaceInfo, SurfaceTexture, SurfaceType,
     chains::SwapChain,
 };
 
@@ -107,48 +106,6 @@ impl SurfmanRenderingContext {
         SwapChain::create_attached(device, context, SurfaceAccess::GPUOnly)
     }
 
-    #[allow(dead_code)] // May be used in future for dynamic resizing
-    pub fn resize_surface(&self, size: PhysicalSize<u32>) -> Result<(), Error> {
-        let size = Size2D::new(size.width as i32, size.height as i32);
-        let device = &mut self.device.borrow_mut();
-        let context = &mut self.context.borrow_mut();
-
-        let mut surface = device
-            .unbind_surface_from_context(context)?
-            .expect("Failed to unbind surface from context during resize");
-        device.resize_surface(context, &mut surface, size)?;
-        device
-            .bind_surface_to_context(context, surface)
-            .map_err(|(err, mut surface)| {
-                let _ = device.destroy_surface(context, &mut surface);
-                err
-            })
-    }
-
-    #[allow(dead_code)] // May be used in future for explicit presentation control
-    pub fn present_bound_surface(&self) -> Result<(), Error> {
-        let device = &self.device.borrow();
-        let context = &mut self.context.borrow_mut();
-
-        let mut surface = device
-            .unbind_surface_from_context(context)?
-            .expect("Failed to unbind surface from context for presentation");
-        device.present_surface(context, &mut surface)?;
-        device
-            .bind_surface_to_context(context, surface)
-            .map_err(|(err, mut surface)| {
-                let _ = device.destroy_surface(context, &mut surface);
-                err
-            })
-    }
-
-    #[allow(dead_code)]
-    pub fn native_context(&self) -> NativeContext {
-        let device = &self.device.borrow();
-        let context = &self.context.borrow();
-        device.native_context(context)
-    }
-
     pub fn framebuffer(&self) -> Option<NativeFramebuffer> {
         let device = &self.device.borrow();
         let context = &self.context.borrow();
@@ -189,9 +146,7 @@ impl SurfmanRenderingContext {
             ..
         } = device.surface_info(&surface);
         // debug!("... getting texture for surface {:?}", front_buffer_id);
-        let surface_texture = device
-            .create_surface_texture(context, surface)
-            .expect("Failed to create surface texture");
+        let surface_texture = device.create_surface_texture(context, surface).ok()?;
 
         let gl_texture = device
             .surface_texture_object(&surface_texture)

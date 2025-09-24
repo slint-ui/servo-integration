@@ -56,7 +56,9 @@ pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
 
             let physical_size = PhysicalSize::new(window_size.width, window_size.height);
 
-            let rendering_context = CustomRenderingContext::new(physical_size);
+            let rendering_context = CustomRenderingContext::new(physical_size).expect(
+                "Failed to create custom rendering context - ensure your system supports Metal",
+            );
 
             let rendering_context_rc = Rc::new(rendering_context);
 

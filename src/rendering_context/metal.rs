@@ -4,6 +4,7 @@ use objc2_io_surface::IOSurfaceRef;
 use objc2_metal::{MTLPixelFormat, MTLTextureDescriptor, MTLTextureType, MTLTextureUsage};
 
 use foreign_types_shared::ForeignType;
+use wgpu::Error;
 use winit::dpi::PhysicalSize;
 
 pub struct WPGPUTextureFromMetal {
@@ -21,13 +22,13 @@ impl WPGPUTextureFromMetal {
         wgpu_queue: &wgpu::Queue,
         surfman_device: &surfman::Device,
         surfman_surface: &surfman::Surface,
-    ) -> wgpu::Texture {
+    ) -> Result<wgpu::Texture, Error> {
         let objc2_metla_texture =
-            self.objc2_metla_texture(wgpu_device, surfman_device, surfman_surface);
+            self.objc2_metla_texture(wgpu_device, surfman_device, surfman_surface)?;
 
         let texture = self.wgpu_hal_texture(wgpu_device, objc2_metla_texture);
 
-        self.create_flipped_texture_render(wgpu_device, wgpu_queue, &texture)
+        Ok(self.create_flipped_texture_render(wgpu_device, wgpu_queue, &texture))
     }
 
     fn create_texture_from_iosurface(
@@ -47,7 +48,7 @@ impl WPGPUTextureFromMetal {
         wgpu_device: &wgpu::Device,
         surfman_device: &surfman::Device,
         surfman_surface: &surfman::Surface,
-    ) -> Retained<NSObject> {
+    ) -> Result<Retained<NSObject>, Error> {
         unsafe {
             let metal_device = wgpu_device
                 .as_hal::<wgpu::wgc::api::Metal>()
@@ -68,13 +69,16 @@ impl WPGPUTextureFromMetal {
             let native_surface = surfman_device.native_surface(surfman_surface);
             let io_surface = native_surface.0;
 
-            self.create_texture_from_iosurface(
-                &*(device_raw.as_ptr() as *mut objc2::runtime::NSObject),
-                &texture_descriptor,
-                &io_surface,
-                0,
-            )
-            .expect("Failed to create Metal texture from IOSurface")
+            let texture = self
+                .create_texture_from_iosurface(
+                    &*(device_raw.as_ptr() as *mut objc2::runtime::NSObject),
+                    &texture_descriptor,
+                    &io_surface,
+                    0,
+                )
+                .expect("Failed to create Metal texture from IOSurface");
+
+            Ok(texture)
         }
     }
 
