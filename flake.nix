@@ -16,6 +16,7 @@
             uv
             pkg-config
             clang
+            gdb
           ];
           buildInputs = [
             fontconfig
