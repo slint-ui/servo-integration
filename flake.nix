@@ -22,6 +22,35 @@
             libclang
             stdenv.cc.cc
             glslang
+            wayland
+            libxkbcommon
+            # Not strictly required, but helps with
+            # https://github.com/NixOS/nixpkgs/issues/370494
+            rust-jemalloc-sys
+            # Merge the qt packages together to make a lighter version of qt6.full
+            (symlinkJoin {
+              name = "qt packages";
+              paths = [
+                qt6.qtbase
+                # Required for 'QT_QPA_PLATFORM=wayland' to work
+                qt6.qtwayland
+              ];
+            })
+            openssl
+            pkg-config
+            udev
+            libGL
+            seatd
+            libgbm
+            libinput
+            freetype
+            nodejs
+            pnpm
+            xorg.libX11
+            xorg.libXcursor
+            xorg.libXi
+            xorg.libXrandr # To use the x11 feature
+            vulkan-loader
           ];
           LD_LIBRARY_PATH = lib.makeLibraryPath buildInputs;
         };
