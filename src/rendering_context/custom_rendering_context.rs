@@ -14,7 +14,7 @@ use surfman::{
 };
 
 use crate::rendering_context::{
-    metal::WPGPUTextureFromMetal, surfman_context::SurfmanRenderingContext,
+    surfman_context::SurfmanRenderingContext,
 };
 
 pub struct CustomRenderingContext {
@@ -57,6 +57,15 @@ impl CustomRenderingContext {
         })
     }
 
+    pub fn get_wgpu_texture_from_vulkan(
+        &self,
+        wgpu_device: &wgpu::Device,
+        wgpu_queue: &wgpu::Queue,
+    ) -> Result<wgpu::Texture, Error> { 
+        panic!()
+    }
+    
+    /*
     pub fn get_wgpu_texture_from_metal(
         &self,
         wgpu_device: &wgpu::Device,
@@ -69,7 +78,7 @@ impl CustomRenderingContext {
 
         let size = self.size.get();
 
-        let wgpu_texture = WPGPUTextureFromMetal::new(size)
+        let wgpu_texture = crate::rendering_context::metal::WPGPUTextureFromMetal::new(size)
             .get(wgpu_device, wgpu_queue, device, &surface)
             .expect("Failed to get WGPU texture from Metal texture");
 
@@ -82,6 +91,7 @@ impl CustomRenderingContext {
 
         Ok(wgpu_texture)
     }
+    */
 }
 
 impl RenderingContext for CustomRenderingContext {
