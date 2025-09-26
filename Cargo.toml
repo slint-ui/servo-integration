@@ -31,16 +31,16 @@ surfman = "0.10.0"
 wgpu-hal = "26.0.4"
 wgpu = { version = "26.0", features = ["metal"] }
 
-objc2 = "0.6.2"
+objc2 = { version = "0.6.2", optional = true}
 objc2-metal = { version = "0.3.1", features = [
     "MTLDevice",
     "MTLAllocation",
     "MTLResource",
     "MTLTexture",
     "objc2-io-surface"
-] }
-objc2-io-surface = { version = "0.3.1" }
-objc2-foundation = { version = "0.3.1" }
+], optional = true }
+objc2-io-surface = { version = "0.3.1", optional = true }
+objc2-foundation = { version = "0.3.1", optional = true }
 
 # Force newer termcolor to be compatible with naga v26
 termcolor = "1.4"
@@ -56,7 +56,7 @@ libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3
 embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
     "baked-default-resources",
 ] }
-metal = "0.32.0"
+metal = { version = "0.32.0", optional = true }
 foreign-types-shared = "0.3.1"
 wgpu-core = "26.0.1"
 
