@@ -13,9 +13,9 @@ use surfman::{
     chains::{PreserveBuffer, SwapChain},
 };
 
-use crate::rendering_context::{
-    surfman_context::SurfmanRenderingContext,
-};
+use crate::rendering_context::surfman_context::SurfmanRenderingContext;
+
+mod dma_buf;
 
 pub struct CustomRenderingContext {
     pub size: Cell<PhysicalSize<u32>>,
@@ -83,12 +83,14 @@ impl CustomRenderingContext {
 
         let size = self.size.get();
 
+        /*
         let _ = device
             .bind_surface_to_context(&mut context, surface)
             .map_err(|(err, mut surface)| {
                 let _ = device.destroy_surface(&mut context, &mut surface);
                 err
             });
+            */
 
         let texture_usage =
             wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT;
@@ -104,6 +106,11 @@ impl CustomRenderingContext {
             height: size.height,
             depth_or_array_layers: 1,
         };
+
+        let egl_image = info.id.0 as khronos_egl::EGLImage;
+        let dma_buffers = dma_buf::DMABuffersForSurface::try_from(egl_image).unwrap();
+
+        eprintln!("exported {:#?}", dma_buffers);
 
         // todo
         let file_descriptor = todo!();
@@ -169,7 +176,7 @@ impl CustomRenderingContext {
             )
         }
     }
-    
+
     /*
     pub fn get_wgpu_texture_from_metal(
         &self,
