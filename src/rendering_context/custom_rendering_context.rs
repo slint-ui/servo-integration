@@ -61,8 +61,106 @@ impl CustomRenderingContext {
         &self,
         wgpu_device: &wgpu::Device,
         wgpu_queue: &wgpu::Queue,
-    ) -> Result<wgpu::Texture, Error> { 
-        panic!()
+    ) -> Result<wgpu::Texture, Error> {
+        let device = &self.surfman_rendering_info.device.borrow();
+        let mut context = self.surfman_rendering_info.context.borrow_mut();
+
+        let surface = device.unbind_surface_from_context(&mut context)?.unwrap();
+
+        let info = device.surface_info(&surface);
+
+        dbg!(
+            device.surface_gl_texture_target(),
+            info.size,
+            info.id,
+            device.surface_texture_object(&surface)
+        );
+
+        dbg!(&device.native_device());
+
+        let size = self.size.get();
+
+        let _ = device
+            .bind_surface_to_context(&mut context, surface)
+            .map_err(|(err, mut surface)| {
+                let _ = device.destroy_surface(&mut context, &mut surface);
+                err
+            });
+
+        let texture_usage =
+            wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT;
+
+        let mip_level_count = 1;
+        let sample_count = 1;
+        let dimension = wgpu::wgt::TextureDimension::D2;
+        let format = wgpu::wgt::TextureFormat::Rgba8Unorm;
+        let label = None;
+        let size = self.size.get();
+        let size = wgpu::Extent3d {
+            width: size.width,
+            height: size.height,
+            depth_or_array_layers: 1,
+        };
+
+        // todo
+        let file_descriptor = todo!();
+
+        let mut memory_import = ash::vk::ImportMemoryFdInfoKHR::builder()
+            .handle_type(ash::vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT)
+            .fd(file_descriptor);
+
+        unsafe {
+            let vulkan_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
+
+            let ash_device = vulka_device.raw_device();
+
+            let memory = ash_device.allocate_memory(
+                // todo: fill out
+                ash::vk::MemoryAllocateInfo::builder().push_next(&mut memory_import),
+                None,
+            );
+
+            let image = ash_device.create_image(
+                // todo: fill out
+                &ash::vk::ImageCreateInfo::builder(), None);
+            // todo
+            let offset = 0;
+            ash_device.bind_image_memory(image, memory, offset);
+
+            let hal_texture = vulkan_device.texture_from_raw(
+                image,
+                &wgpu::hal::TextureDescriptor {
+                    label,
+                    size,
+                    mip_level_count,
+                    sample_count,
+                    dimension,
+                    format,
+                    usage: wgpu::wgt::TextureUses::COLOR_TARGET,
+                    // todo: complete
+                    memory_flags: wgpu_hal::MemoryFlags::empty(),
+                    view_formats: vec![],
+                },
+                None,
+            );
+
+            Ok(
+                wgpu_device.create_texture_from_hal::<wgpu::wgc::api::Vulkan>(
+                    hal_texture,
+                    &wgpu::TextureDescriptor {
+                        mip_level_count,
+                        sample_count,
+                        dimension,
+                        format,
+                        label,
+                        size,
+                        usage: wgpu::TextureUsages::TEXTURE_BINDING,
+                        // todo
+                        view_formats: &[],
+                    },
+                ),
+            )
+        }
     }
     
     /*
