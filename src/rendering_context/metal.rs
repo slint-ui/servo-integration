@@ -23,12 +23,6 @@ pub enum MetalError {
     TextureCreationFailed(String),
     /// Failed to get Metal device from WGPU device
     DeviceExtractionFailed(String),
-    /// Failed during texture flipping operation
-    TextureFlipFailed(String),
-    /// Failed to create render pipeline
-    PipelineCreationFailed(String),
-    /// Failed to create shader module
-    ShaderCreationFailed(String),
     /// Generic WGPU error
     WgpuError(WgpuError),
 }
@@ -40,11 +34,6 @@ impl fmt::Display for MetalError {
             MetalError::DeviceExtractionFailed(msg) => {
                 write!(f, "Device extraction failed: {}", msg)
             }
-            MetalError::TextureFlipFailed(msg) => write!(f, "Texture flip failed: {}", msg),
-            MetalError::PipelineCreationFailed(msg) => {
-                write!(f, "Pipeline creation failed: {}", msg)
-            }
-            MetalError::ShaderCreationFailed(msg) => write!(f, "Shader creation failed: {}", msg),
             MetalError::WgpuError(err) => write!(f, "WGPU error: {:?}", err),
         }
     }
@@ -566,14 +555,6 @@ mod tests {
     use winit::dpi::PhysicalSize;
 
     #[test]
-    fn test_create_wgpu_texture_from_metal() {
-        let size = PhysicalSize::new(800, 600);
-        let texture_wrapper = WPGPUTextureFromMetal::new(size);
-        assert_eq!(texture_wrapper.size.width, 800);
-        assert_eq!(texture_wrapper.size.height, 600);
-    }
-
-    #[test]
     fn test_metal_texture_descriptor_creation() {
         let size = PhysicalSize::new(1024, 768);
         let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(
@@ -603,18 +584,6 @@ mod tests {
         assert_eq!(descriptor.format, wgpu::TextureFormat::Rgba8Unorm);
         assert_eq!(descriptor.usage, wgpu::TextureUsages::TEXTURE_BINDING);
         assert_eq!(descriptor.label, Some("Test Texture"));
-    }
-
-    #[test]
-    fn test_sampler_descriptor_creation() {
-        let descriptor = WPGPUTextureFromMetal::create_sampler_descriptor();
-
-        assert_eq!(descriptor.address_mode_u, wgpu::AddressMode::ClampToEdge);
-        assert_eq!(descriptor.address_mode_v, wgpu::AddressMode::ClampToEdge);
-        assert_eq!(descriptor.address_mode_w, wgpu::AddressMode::ClampToEdge);
-        assert_eq!(descriptor.mag_filter, wgpu::FilterMode::Linear);
-        assert_eq!(descriptor.min_filter, wgpu::FilterMode::Linear);
-        assert_eq!(descriptor.label, Some("Metal Texture Sampler"));
     }
 
     #[test]
