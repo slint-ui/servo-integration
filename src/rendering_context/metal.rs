@@ -215,7 +215,7 @@ impl WPGPUTextureFromMetal {
 
             let texture_descriptor = Self::create_metal_texture_descriptor(
                 self.size,
-                MTLPixelFormat::RGBA8Unorm,
+                MTLPixelFormat::RGBA8Unorm_sRGB,
                 MTLTextureUsage::ShaderRead,
             );
 
@@ -559,7 +559,7 @@ mod tests {
         let size = PhysicalSize::new(1024, 768);
         let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(
             size,
-            MTLPixelFormat::RGBA8Unorm,
+            MTLPixelFormat::RGBA8Unorm_sRGB,
             MTLTextureUsage::ShaderRead,
         );
 
