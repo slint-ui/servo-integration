@@ -144,7 +144,7 @@ impl WPGPUTextureFromMetal {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
             usage,
             view_formats: &[],
         }
@@ -265,7 +265,7 @@ impl WPGPUTextureFromMetal {
 
             let hal_texture = wgpu::hal::metal::Device::texture_from_raw(
                 metal_texture,
-                wgpu::wgt::TextureFormat::Rgba8Unorm,
+                wgpu::TextureFormat::Rgba8UnormSrgb,
                 metal::MTLTextureType::D2,
                 0,
                 0,
@@ -452,7 +452,7 @@ impl WPGPUTextureFromMetal {
                     module: fragment_shader,
                     entry_point: Some("fs_main"),
                     targets: &[Some(wgpu::ColorTargetState {
-                        format: wgpu::TextureFormat::Rgba8Unorm,
+                        format: wgpu::TextureFormat::Rgba8UnormSrgb,
                         blend: None,
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
@@ -581,7 +581,7 @@ mod tests {
         assert_eq!(descriptor.size.width, 512);
         assert_eq!(descriptor.size.height, 512);
         assert_eq!(descriptor.size.depth_or_array_layers, 1);
-        assert_eq!(descriptor.format, wgpu::TextureFormat::Rgba8Unorm);
+        assert_eq!(descriptor.format, wgpu::TextureFormat::Rgba8UnormSrgb);
         assert_eq!(descriptor.usage, wgpu::TextureUsages::TEXTURE_BINDING);
         assert_eq!(descriptor.label, Some("Test Texture"));
     }
