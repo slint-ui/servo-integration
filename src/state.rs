@@ -45,11 +45,10 @@ impl State {
             .as_ref()
             .expect("WGPU queue not initialized - ensure rendering setup completed");
 
-        let texture = rendering_context
-            .get_wgpu_texture_from_vulkan(wgpu_device, wgpu_queue)
-            .expect(
-                "Failed to get WGPU texture from Vulkan texture - ensure rendering context is valid",
-            );
+        let texture = rendering_context.get_wgpu_texture_from_vulkan(wgpu_device, wgpu_queue);
+        //.expect(
+        //    "Failed to get WGPU texture from Vulkan texture - ensure rendering context is valid",
+        //);
 
         let slint_image = slint::Image::try_from(texture).expect(
             "Failed to create Slint image from WGPU texture - check texture format compatibility",

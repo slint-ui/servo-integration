@@ -61,22 +61,25 @@ impl CustomRenderingContext {
         &self,
         wgpu_device: &wgpu::Device,
         wgpu_queue: &wgpu::Queue,
-    ) -> Result<wgpu::Texture, Error> {
+    ) -> wgpu::Texture {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
-        let surface = device.unbind_surface_from_context(&mut context)?.unwrap();
+        let surface = device
+            .unbind_surface_from_context(&mut context)
+            .unwrap()
+            .unwrap();
 
         let info = device.surface_info(&surface);
 
-        dbg!(
-            device.surface_gl_texture_target(),
-            info.size,
-            info.id,
-            device.surface_texture_object(&surface)
-        );
-
-        dbg!(&device.native_device());
+        //dbg!(
+        //    device.surface_gl_texture_target(),
+        //    info.size,
+        //    info.id,
+        //    device.surface_texture_object(&surface)
+        //);
+        //
+        //dbg!(&device.native_device());
 
         let size = self.size.get();
 
@@ -105,24 +108,30 @@ impl CustomRenderingContext {
         // todo
         let file_descriptor = todo!();
 
-        let mut memory_import = ash::vk::ImportMemoryFdInfoKHR::builder()
+        let mut memory_import = ash::vk::ImportMemoryFdInfoKHR::default()
             .handle_type(ash::vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT)
             .fd(file_descriptor);
 
         unsafe {
             let vulkan_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
 
-            let ash_device = vulka_device.raw_device();
+            let ash_device = vulkan_device.raw_device();
 
-            let memory = ash_device.allocate_memory(
-                // todo: fill out
-                ash::vk::MemoryAllocateInfo::builder().push_next(&mut memory_import),
-                None,
-            );
+            let memory = ash_device
+                .allocate_memory(
+                    // todo: fill out
+                    &ash::vk::MemoryAllocateInfo::default().push_next(&mut memory_import),
+                    None,
+                )
+                .unwrap();
 
-            let image = ash_device.create_image(
-                // todo: fill out
-                &ash::vk::ImageCreateInfo::builder(), None);
+            let image = ash_device
+                .create_image(
+                    // todo: fill out
+                    &ash::vk::ImageCreateInfo::default(),
+                    None,
+                )
+                .unwrap();
             // todo
             let offset = 0;
             ash_device.bind_image_memory(image, memory, offset);
@@ -144,21 +153,19 @@ impl CustomRenderingContext {
                 None,
             );
 
-            Ok(
-                wgpu_device.create_texture_from_hal::<wgpu::wgc::api::Vulkan>(
-                    hal_texture,
-                    &wgpu::TextureDescriptor {
-                        mip_level_count,
-                        sample_count,
-                        dimension,
-                        format,
-                        label,
-                        size,
-                        usage: wgpu::TextureUsages::TEXTURE_BINDING,
-                        // todo
-                        view_formats: &[],
-                    },
-                ),
+            wgpu_device.create_texture_from_hal::<wgpu::wgc::api::Vulkan>(
+                hal_texture,
+                &wgpu::TextureDescriptor {
+                    mip_level_count,
+                    sample_count,
+                    dimension,
+                    format,
+                    label,
+                    size,
+                    usage: wgpu::TextureUsages::TEXTURE_BINDING,
+                    // todo
+                    view_formats: &[],
+                },
             )
         }
     }
@@ -188,8 +195,7 @@ impl CustomRenderingContext {
             });
 
         Ok(wgpu_texture)
-    }
-    */
+        }*/
 }
 
 impl RenderingContext for CustomRenderingContext {
