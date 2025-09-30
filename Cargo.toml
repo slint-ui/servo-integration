@@ -19,7 +19,7 @@ rustls = "0.23"
 euclid = "0.22.11"
 surfman = "0.10.0"
 
-wgpu-hal = "26.0.4"
+wgpu-hal = "26.0.1"
 wgpu-core = "26.0.1"
 wgpu = { version = "26.0", features = ["metal"] }
 
@@ -58,3 +58,9 @@ khronos-egl = { version = "6.0.0" }
 
 [build-dependencies]
 slint-build = { git = "https://github.com/slint-ui/slint", rev = "07c2f2569825388ed7927cc56ed8ae1837d0ea49" }
+
+[patch.crates-io]
+wgpu = { path = "../wgpu/wgpu" }
+wgpu-hal = { path = "../wgpu/wgpu-hal" }
+wgpu-core = { path = "../wgpu/wgpu-core" }
+wgpu-types = { path = "../wgpu/wgpu-types" }
