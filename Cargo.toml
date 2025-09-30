@@ -7,15 +7,6 @@ edition = "2024"
 name = "servo-integration"
 path = "src/main.rs"
 
-[profile.release]
-opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
-
-[profile.dev]
-opt-level = 3
-
 [dependencies]
 gl = "0.14"
 url = "2.5.2"
@@ -29,18 +20,22 @@ euclid = "0.22.11"
 surfman = "0.10.0"
 
 wgpu-hal = "26.0.4"
+wgpu-core = "26.0.1"
 wgpu = { version = "26.0", features = ["metal"] }
 
+metal = { version = "0.32.0", optional = true }
+foreign-types-shared = "0.3.1"
+
 objc2 = { version = "0.6.2", optional = true}
+objc2-io-surface = { version = "0.3.1", optional = true }
+objc2-foundation = { version = "0.3.1", optional = true }
 objc2-metal = { version = "0.3.1", features = [
     "MTLDevice",
     "MTLAllocation",
     "MTLResource",
     "MTLTexture",
-    "objc2-io-surface"
+    "objc2-io-surface",
 ], optional = true }
-objc2-io-surface = { version = "0.3.1", optional = true }
-objc2-foundation = { version = "0.3.1", optional = true }
 
 # Force newer termcolor to be compatible with naga v26
 termcolor = "1.4"
@@ -56,9 +51,6 @@ libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3
 embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
     "baked-default-resources",
 ] }
-metal = { version = "0.32.0", optional = true }
-foreign-types-shared = "0.3.1"
-wgpu-core = "26.0.1"
 ash = "0.38.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
