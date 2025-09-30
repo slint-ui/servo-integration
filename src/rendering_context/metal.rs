@@ -107,11 +107,7 @@ impl WPGPUTextureFromMetal {
     }
 
     /// Creates a Metal texture descriptor with common settings.
-    fn create_metal_texture_descriptor(
-        size: PhysicalSize<u32>,
-        format: MTLPixelFormat,
-        usage: MTLTextureUsage,
-    ) -> Retained<MTLTextureDescriptor> {
+    fn create_metal_texture_descriptor(size: PhysicalSize<u32>) -> Retained<MTLTextureDescriptor> {
         // SAFETY: Creating and configuring a Metal texture descriptor is safe.
         // All parameters are validated by the Metal API and we're using standard values.
         unsafe {
@@ -119,8 +115,8 @@ impl WPGPUTextureFromMetal {
             descriptor.setDepth(1);
             descriptor.setMipmapLevelCount(1);
             descriptor.setSampleCount(1);
-            descriptor.setUsage(usage);
-            descriptor.setPixelFormat(format);
+            descriptor.setUsage(MTLTextureUsage::ShaderRead);
+            descriptor.setPixelFormat(MTLPixelFormat::BGR10A2Unorm);
             descriptor.setTextureType(MTLTextureType::Type2D);
             descriptor.setWidth(size.width as usize);
             descriptor.setHeight(size.height as usize);
@@ -213,11 +209,7 @@ impl WPGPUTextureFromMetal {
 
             let device_raw = metal_device.raw_device().lock().clone();
 
-            let texture_descriptor = Self::create_metal_texture_descriptor(
-                self.size,
-                MTLPixelFormat::RGBA8Unorm_sRGB,
-                MTLTextureUsage::ShaderRead,
-            );
+            let texture_descriptor = Self::create_metal_texture_descriptor(self.size);
 
             let native_surface = surfman_device.native_surface(surfman_surface);
             let io_surface = native_surface.0;
@@ -377,9 +369,7 @@ impl WPGPUTextureFromMetal {
                                 // Flip vertically by inverting the V coordinate
                                 let flipped_uv = vec2<f32>(uv.x, 1.0 - uv.y);
                                 let color = textureSample(source_texture, source_sampler, flipped_uv);
-                                
-                                // Swap R and B channels since we changed from BGRA to RGBA format
-                                return vec4<f32>(color.b, color.g, color.r, color.a);
+                                return color;
                             }
                         "#.into()),
                     })
@@ -555,11 +545,7 @@ mod tests {
     #[test]
     fn test_metal_texture_descriptor_creation() {
         let size = PhysicalSize::new(1024, 768);
-        let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(
-            size,
-            MTLPixelFormat::RGBA8Unorm_sRGB,
-            MTLTextureUsage::ShaderRead,
-        );
+        let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(size);
 
         // We can't directly access descriptor properties due to objc2 API design,
         // but we can verify that creation doesn't panic and returns a valid descriptor
