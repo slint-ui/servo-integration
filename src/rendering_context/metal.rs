@@ -116,7 +116,7 @@ impl WPGPUTextureFromMetal {
             descriptor.setMipmapLevelCount(1);
             descriptor.setSampleCount(1);
             descriptor.setUsage(MTLTextureUsage::ShaderRead);
-            descriptor.setPixelFormat(MTLPixelFormat::BGR10A2Unorm);
+            descriptor.setPixelFormat(MTLPixelFormat::BGRA8Unorm);
             descriptor.setTextureType(MTLTextureType::Type2D);
             descriptor.setWidth(size.width as usize);
             descriptor.setHeight(size.height as usize);
@@ -257,7 +257,7 @@ impl WPGPUTextureFromMetal {
 
             let hal_texture = wgpu::hal::metal::Device::texture_from_raw(
                 metal_texture,
-                wgpu::TextureFormat::Rgba8UnormSrgb,
+                wgpu::TextureFormat::Bgra8Unorm,
                 metal::MTLTextureType::D2,
                 0,
                 0,
