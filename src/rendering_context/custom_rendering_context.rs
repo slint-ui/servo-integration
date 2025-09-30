@@ -109,9 +109,16 @@ impl CustomRenderingContext {
             let instance = vulkan_device.shared_instance().raw_instance();
             let phys_device = vulkan_device.raw_physical_device();
 
-            let drm_modifiers = [0];
-            let mut drm_info = vk::ImageDrmFormatModifierListCreateInfoEXT::default()
-                .drm_format_modifiers(&drm_modifiers);
+            let plane_layouts = &[vk::SubresourceLayout {
+                row_pitch: dma_buffers.strides[0] as _,
+                offset: dma_buffers.offsets[0] as _,
+                array_pitch: 0,
+                depth_pitch: 0,
+                size: 0,
+            }];
+            let mut drm_info = vk::ImageDrmFormatModifierExplicitCreateInfoEXT::default()
+                .drm_format_modifier(0)
+                .plane_layouts(plane_layouts);
 
             let mut external_image_info = vk::ExternalMemoryImageCreateInfo::default()
                 .handle_types(vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT);
