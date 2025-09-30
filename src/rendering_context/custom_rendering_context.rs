@@ -61,7 +61,7 @@ impl CustomRenderingContext {
     pub fn get_wgpu_texture_from_vulkan(
         &self,
         wgpu_device: &wgpu::Device,
-        wgpu_queue: &wgpu::Queue,
+        _wgpu_queue: &wgpu::Queue,
     ) -> wgpu::Texture {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
@@ -72,11 +72,6 @@ impl CustomRenderingContext {
             .unwrap();
 
         let info = device.surface_info(&surface);
-
-        let size = self.size.get();
-
-        let texture_usage =
-            wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT;
 
         let mip_level_count = 1;
         let sample_count = 1;
@@ -94,11 +89,22 @@ impl CustomRenderingContext {
         let dma_buffers = dma_buf::DMABuffersForSurface::try_from(egl_image).unwrap();
 
         eprintln!("exported {:#?}", dma_buffers);
+
+        assert_eq!(dma_buffers.num_planes, 1);
+        let fd = dma_buffers.fds[0];
+        let _modifier = dma_buffers.modifiers[0];
+        let stride = dma_buffers.strides[0] as u64;
+        let offset = dma_buffers.offsets[0] as u64;
+
         let vk_format = match dma_buffers.fourcc_format {
             // equal to AB24 which is DRM_FORMAT_ABGR8888
             // https://github.com/torvalds/linux/blob/30d4efb2f5a515a60fe6b0ca85362cbebea21e2f/include/uapi/drm/drm_fourcc.h#L199C9-L199C28
             875708993 => vk::Format::R8G8B8A8_UNORM,
-            other => panic!("Unknown: {} (str: {:?})", other, std::str::from_utf8(&other.to_le_bytes()))
+            other => panic!(
+                "Unknown: {} (str: {:?})",
+                other,
+                std::str::from_utf8(&other.to_le_bytes())
+            ),
         };
 
         let texture = unsafe {
@@ -106,12 +112,9 @@ impl CustomRenderingContext {
 
             let ash_device = vulkan_device.raw_device();
 
-            let instance = vulkan_device.shared_instance().raw_instance();
-            let phys_device = vulkan_device.raw_physical_device();
-
             let plane_layouts = &[vk::SubresourceLayout {
-                row_pitch: dma_buffers.strides[0] as _,
-                offset: dma_buffers.offsets[0] as _,
+                row_pitch: stride,
+                offset,
                 array_pitch: 0,
                 depth_pitch: 0,
                 size: 0,
@@ -148,15 +151,12 @@ impl CustomRenderingContext {
 
             let mut dedicated_info = vk::MemoryDedicatedAllocateInfo::default().image(image);
 
-            let file_descriptor = dma_buffers.fds[0];
-    
             let mut memory_import = ash::vk::ImportMemoryFdInfoKHR::default()
                 .handle_type(ash::vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT)
-                .fd(file_descriptor);
-            
+                .fd(fd);
+
             let memory = ash_device
                 .allocate_memory(
-                    // todo: fill out
                     &ash::vk::MemoryAllocateInfo::default()
                         .allocation_size(requirements.size)
                         .push_next(&mut memory_import)
@@ -165,8 +165,6 @@ impl CustomRenderingContext {
                 )
                 .unwrap();
 
-            // todo
-            let offset = 0;
             ash_device.bind_image_memory(image, memory, offset).unwrap();
 
             let hal_texture = vulkan_device.texture_from_raw(
@@ -179,7 +177,6 @@ impl CustomRenderingContext {
                     dimension,
                     format,
                     usage: wgpu::wgt::TextureUses::COLOR_TARGET,
-                    // todo: complete
                     memory_flags: wgpu_hal::MemoryFlags::empty(),
                     view_formats: vec![],
                 },
@@ -197,7 +194,6 @@ impl CustomRenderingContext {
                     size,
                     usage: wgpu::TextureUsages::TEXTURE_BINDING
                         | wgpu::TextureUsages::RENDER_ATTACHMENT,
-                    // todo
                     view_formats: &[],
                 },
             )
