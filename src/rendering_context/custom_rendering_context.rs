@@ -120,7 +120,7 @@ impl CustomRenderingContext {
                 size: 0,
             }];
             let mut drm_info = vk::ImageDrmFormatModifierExplicitCreateInfoEXT::default()
-                .drm_format_modifier(0)
+                //.drm_format_modifier(0)
                 .plane_layouts(plane_layouts);
 
             let mut external_image_info = vk::ExternalMemoryImageCreateInfo::default()
@@ -141,6 +141,8 @@ impl CustomRenderingContext {
                         .array_layers(1)
                         .image_type(vk::ImageType::TYPE_2D)
                         .tiling(vk::ImageTiling::DRM_FORMAT_MODIFIER_EXT)
+                        .initial_layout(vk::ImageLayout::UNDEFINED)
+                        .sharing_mode(vk::SharingMode::EXCLUSIVE)
                         .push_next(&mut external_image_info)
                         .push_next(&mut drm_info),
                     None,
@@ -176,7 +178,7 @@ impl CustomRenderingContext {
                     sample_count,
                     dimension,
                     format,
-                    usage: wgpu::wgt::TextureUses::COLOR_TARGET,
+                    usage: wgpu::wgt::TextureUses::UNKNOWN,
                     memory_flags: wgpu_hal::MemoryFlags::empty(),
                     view_formats: vec![],
                 },
