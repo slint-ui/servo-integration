@@ -129,6 +129,7 @@ impl WPGPUTextureFromMetal {
         size: PhysicalSize<u32>,
         label: &str,
         usage: wgpu::TextureUsages,
+        format: wgpu::TextureFormat,
     ) -> wgpu::TextureDescriptor<'_> {
         wgpu::TextureDescriptor {
             label: Some(label),
@@ -140,7 +141,7 @@ impl WPGPUTextureFromMetal {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            format,
             usage,
             view_formats: &[],
         }
@@ -272,6 +273,7 @@ impl WPGPUTextureFromMetal {
                 self.size,
                 "Metal IOSurface Texture",
                 wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                wgpu::TextureFormat::Bgra8Unorm,
             );
 
             Ok(wgpu_device
@@ -326,6 +328,7 @@ impl WPGPUTextureFromMetal {
             self.size,
             "Flipped Metal IOSurface Texture",
             wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            wgpu::TextureFormat::Rgba8Unorm,
         );
         Ok(wgpu_device.create_texture(&descriptor))
     }
@@ -440,7 +443,7 @@ impl WPGPUTextureFromMetal {
                     module: fragment_shader,
                     entry_point: Some("fs_main"),
                     targets: &[Some(wgpu::ColorTargetState {
-                        format: wgpu::TextureFormat::Rgba8UnormSrgb,
+                        format: wgpu::TextureFormat::Rgba8Unorm,
                         blend: None,
                         write_mask: wgpu::ColorWrites::ALL,
                     })],
