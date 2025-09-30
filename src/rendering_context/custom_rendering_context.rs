@@ -94,13 +94,12 @@ impl CustomRenderingContext {
         let dma_buffers = dma_buf::DMABuffersForSurface::try_from(egl_image).unwrap();
 
         eprintln!("exported {:#?}", dma_buffers);
-
-        // todo
-        let file_descriptor = dma_buffers.fds[0];
-
-        let mut memory_import = ash::vk::ImportMemoryFdInfoKHR::default()
-            .handle_type(ash::vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT)
-            .fd(file_descriptor);
+        let vk_format = match dma_buffers.fourcc_format {
+            // equal to AB24 which is DRM_FORMAT_ABGR8888
+            // https://github.com/torvalds/linux/blob/30d4efb2f5a515a60fe6b0ca85362cbebea21e2f/include/uapi/drm/drm_fourcc.h#L199C9-L199C28
+            875708993 => vk::Format::R8G8B8A8_UNORM,
+            other => panic!("Unknown: {} (str: {:?})", other, std::str::from_utf8(&other.to_le_bytes()))
+        };
 
         let texture = unsafe {
             let vulkan_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
@@ -125,12 +124,12 @@ impl CustomRenderingContext {
                             height: size.height,
                             depth: 1,
                         })
+                        .format(vk_format)
                         .samples(vk::SampleCountFlags::TYPE_1)
                         .usage(vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::COLOR_ATTACHMENT)
                         .mip_levels(1)
                         .array_layers(1)
                         .image_type(vk::ImageType::TYPE_2D)
-                        .format(vk::Format::R8G8B8A8_UNORM)
                         .tiling(vk::ImageTiling::DRM_FORMAT_MODIFIER_EXT)
                         .push_next(&mut external_image_info)
                         .push_next(&mut drm_info),
@@ -142,6 +141,12 @@ impl CustomRenderingContext {
 
             let mut dedicated_info = vk::MemoryDedicatedAllocateInfo::default().image(image);
 
+            let file_descriptor = dma_buffers.fds[0];
+    
+            let mut memory_import = ash::vk::ImportMemoryFdInfoKHR::default()
+                .handle_type(ash::vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT)
+                .fd(file_descriptor);
+            
             let memory = ash_device
                 .allocate_memory(
                     // todo: fill out
