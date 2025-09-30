@@ -1,5 +1,6 @@
 use std::{cell::Cell, rc::Rc, sync::Arc};
 
+use ash::vk;
 use euclid::default::Size2D;
 
 use image::RgbaImage;
@@ -72,25 +73,7 @@ impl CustomRenderingContext {
 
         let info = device.surface_info(&surface);
 
-        //dbg!(
-        //    device.surface_gl_texture_target(),
-        //    info.size,
-        //    info.id,
-        //    device.surface_texture_object(&surface)
-        //);
-        //
-        //dbg!(&device.native_device());
-
         let size = self.size.get();
-
-        /*
-        let _ = device
-            .bind_surface_to_context(&mut context, surface)
-            .map_err(|(err, mut surface)| {
-                let _ = device.destroy_surface(&mut context, &mut surface);
-                err
-            });
-            */
 
         let texture_usage =
             wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT;
@@ -113,35 +96,66 @@ impl CustomRenderingContext {
         eprintln!("exported {:#?}", dma_buffers);
 
         // todo
-        let file_descriptor = todo!();
+        let file_descriptor = dma_buffers.fds[0];
 
         let mut memory_import = ash::vk::ImportMemoryFdInfoKHR::default()
             .handle_type(ash::vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT)
             .fd(file_descriptor);
 
-        unsafe {
+        let texture = unsafe {
             let vulkan_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
 
             let ash_device = vulkan_device.raw_device();
 
-            let memory = ash_device
-                .allocate_memory(
-                    // todo: fill out
-                    &ash::vk::MemoryAllocateInfo::default().push_next(&mut memory_import),
+            let instance = vulkan_device.shared_instance().raw_instance();
+            let phys_device = vulkan_device.raw_physical_device();
+
+            let drm_modifiers = [0];
+            let mut drm_info = vk::ImageDrmFormatModifierListCreateInfoEXT::default()
+                .drm_format_modifiers(&drm_modifiers);
+
+            let mut external_image_info = vk::ExternalMemoryImageCreateInfo::default()
+                .handle_types(vk::ExternalMemoryHandleTypeFlags::DMA_BUF_EXT);
+
+            let image = ash_device
+                .create_image(
+                    &ash::vk::ImageCreateInfo::default()
+                        .extent(ash::vk::Extent3D {
+                            width: size.width,
+                            height: size.height,
+                            depth: 1,
+                        })
+                        .samples(vk::SampleCountFlags::TYPE_1)
+                        .usage(vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::COLOR_ATTACHMENT)
+                        .mip_levels(1)
+                        .array_layers(1)
+                        .image_type(vk::ImageType::TYPE_2D)
+                        .format(vk::Format::R8G8B8A8_UNORM)
+                        .tiling(vk::ImageTiling::DRM_FORMAT_MODIFIER_EXT)
+                        .push_next(&mut external_image_info)
+                        .push_next(&mut drm_info),
                     None,
                 )
                 .unwrap();
 
-            let image = ash_device
-                .create_image(
+            let requirements = ash_device.get_image_memory_requirements(image);
+
+            let mut dedicated_info = vk::MemoryDedicatedAllocateInfo::default().image(image);
+
+            let memory = ash_device
+                .allocate_memory(
                     // todo: fill out
-                    &ash::vk::ImageCreateInfo::default(),
+                    &ash::vk::MemoryAllocateInfo::default()
+                        .allocation_size(requirements.size)
+                        .push_next(&mut memory_import)
+                        .push_next(&mut dedicated_info),
                     None,
                 )
                 .unwrap();
+
             // todo
             let offset = 0;
-            ash_device.bind_image_memory(image, memory, offset);
+            ash_device.bind_image_memory(image, memory, offset).unwrap();
 
             let hal_texture = vulkan_device.texture_from_raw(
                 image,
@@ -169,12 +183,22 @@ impl CustomRenderingContext {
                     format,
                     label,
                     size,
-                    usage: wgpu::TextureUsages::TEXTURE_BINDING,
+                    usage: wgpu::TextureUsages::TEXTURE_BINDING
+                        | wgpu::TextureUsages::RENDER_ATTACHMENT,
                     // todo
                     view_formats: &[],
                 },
             )
-        }
+        };
+
+        let _ = device
+            .bind_surface_to_context(&mut context, surface)
+            .map_err(|(err, mut surface)| {
+                let _ = device.destroy_surface(&mut context, &mut surface);
+                err
+            });
+
+        texture
     }
 
     /*
