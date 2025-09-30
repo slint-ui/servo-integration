@@ -349,11 +349,9 @@ impl WPGPUTextureFromMetal {
                         source: wgpu::ShaderSource::Wgsl(r#"
                             @vertex
                             fn vs_main(@builtin(vertex_index) vertex_index: u32) -> @builtin(position) vec4<f32> {
-                                var positions = array<vec2<f32>, 6>(
-                                    vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0, -1.0), vec2<f32>( 1.0,  1.0),
-                                    vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0,  1.0), vec2<f32>(-1.0,  1.0)
-                                );
-                                return vec4<f32>(positions[vertex_index], 0.0, 1.0);
+                                let uv = vec2<f32>(f32(vertex_index >> 1u), f32(vertex_index & 1u)) * 2.0;
+                                return vec4<f32>(uv * vec2<f32>(2.0, -2.0) + vec2<f32>(-1.0, 1.0), 0.0, 1.0);
+                                
                             }
                         "#.into()),
                     })
@@ -541,7 +539,7 @@ impl WPGPUTextureFromMetal {
 
             render_pass.set_pipeline(render_pipeline);
             render_pass.set_bind_group(0, bind_group, &[]);
-            render_pass.draw(0..6, 0..1); // Draw two triangles (6 vertices)
+            render_pass.draw(0..3, 0..1); // Draw a fullscreen triangle
         }
 
         wgpu_queue.submit(std::iter::once(encoder.finish()));
