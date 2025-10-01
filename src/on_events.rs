@@ -1,30 +1,12 @@
-use std::{io::Write, rc::Rc};
+use std::rc::Rc;
 
 use euclid::Vector2D;
-use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 use webrender_api::{ScrollLocation, units::DevicePoint};
 
 use servo::{InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent};
 
 use crate::state::State;
-
-pub fn print_time(str: &str, color: Color) {
-    let now = time_now::now_as_millis();
-    let last_6_digits = now % 1_000_000;
-
-    let mut stdout = StandardStream::stdout(ColorChoice::Always);
-
-    // Print the string in the specified color
-    stdout
-        .set_color(ColorSpec::new().set_fg(Some(color)))
-        .unwrap();
-    write!(&mut stdout, "{:<30} {} ms", str, last_6_digits).unwrap();
-
-    // Reset color and add newline
-    stdout.reset().unwrap();
-    writeln!(&mut stdout).unwrap();
-}
 
 pub fn on_scroll_event(state: Rc<State>) {
     let state_weak = Rc::downgrade(&state);
@@ -37,7 +19,6 @@ pub fn on_scroll_event(state: Rc<State>) {
     app.on_scroll_event(move |dx, dy| {
         println!("");
         println!("");
-        print_time("on_scroll_event", Color::Green);
 
         let state = state_weak
             .upgrade()
@@ -64,11 +45,6 @@ pub fn on_scroll_event(state: Rc<State>) {
         let servo_delta = -moved_by;
 
         webview.notify_scroll_event(ScrollLocation::Delta(servo_delta), point.to_i32());
-        print_time("notify_scroll_event", Color::Blue);
-        
-        // Force the servo event loop to wake up
-        // let _ = state.waker_sender.try_send(());
-        // print_time("Manual wake sent", Color::Magenta);
     });
 }
 

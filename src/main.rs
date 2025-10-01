@@ -1,5 +1,6 @@
 mod application_handler;
 mod constants;
+mod debug_helper;
 mod delegate;
 mod on_events;
 mod rendering_context;
