@@ -10,10 +10,12 @@ use crate::state::State;
 
 pub fn on_scroll_event(state: Rc<State>) {
     let state_weak = Rc::downgrade(&state);
+
     let app = state
         .app
         .upgrade()
         .expect("Failed to upgrade app weak reference");
+
     app.on_scroll_event(move |dx, dy| {
         let state = state_weak
             .upgrade()
@@ -46,17 +48,19 @@ pub fn on_scroll_event(state: Rc<State>) {
 
 pub fn on_pointer_event(state: Rc<State>) {
     let state_weak = Rc::downgrade(&state);
+
     let app = state
         .app
         .upgrade()
         .expect("Failed to upgrade app weak reference for pointer events");
+
     app.on_pointer_event(move |event| {
         let state = state_weak
             .upgrade()
             .expect("Failed to upgrade state weak reference in pointer event");
 
-        let webview_ref = state.webview.borrow();
-        let webview = webview_ref
+        let webview = state.webview.borrow();
+        let webview = webview
             .as_ref()
             .expect("Webview not initialized for pointer event");
 

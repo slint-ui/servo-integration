@@ -17,11 +17,13 @@ use crate::{
 
 pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
     let state_weak = Rc::downgrade(&state);
+
     slint::spawn_local({
         async move {
             let state = state_weak
                 .upgrade()
                 .expect("Failed to upgrade state weak reference in servo event loop");
+
             loop {
                 let _ = waker_receiver.recv().await;
                 if let Some(ref servo) = *state.servo.borrow() {
@@ -35,11 +37,13 @@ pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
 
 pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
     let state_weak = Rc::downgrade(&state);
+
     slint::spawn_local({
         async move {
             let state = state_weak
                 .upgrade()
                 .expect("Failed to upgrade state weak reference in servo init");
+
             let app = state
                 .app
                 .upgrade()
