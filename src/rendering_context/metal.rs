@@ -291,13 +291,35 @@ impl WPGPUTextureFromMetal {
         });
 
         // Execute the render pass
-        self.execute_flip_render_pass(
-            wgpu_device,
-            wgpu_queue,
-            &flipped_texture,
-            render_pipeline,
-            &bind_group,
-        )?;
+        let target_view = &flipped_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let mut encoder = wgpu_device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+            label: Some("Metal Texture Flip Command Encoder"),
+        });
+
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Metal Texture Flip Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &target_view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                        store: wgpu::StoreOp::Store,
+                    },
+                    depth_slice: None,
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
+
+            render_pass.set_pipeline(render_pipeline);
+            render_pass.set_bind_group(0, &bind_group, &[]);
+            render_pass.draw(0..3, 0..1); // Draw a fullscreen triangle
+        }
+
+        wgpu_queue.submit(std::iter::once(encoder.finish()));
 
         Ok(flipped_texture)
     }
@@ -466,46 +488,5 @@ impl WPGPUTextureFromMetal {
                 cache: None,
             })
         })
-    }
-
-    /// Executes the render pass that performs the texture flipping.
-    fn execute_flip_render_pass(
-        &self,
-        wgpu_device: &wgpu::Device,
-        wgpu_queue: &wgpu::Queue,
-        target_texture: &wgpu::Texture,
-        render_pipeline: &wgpu::RenderPipeline,
-        bind_group: &wgpu::BindGroup,
-    ) -> Result<(), MetalError> {
-        let target_view = target_texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        let mut encoder = wgpu_device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Metal Texture Flip Command Encoder"),
-        });
-
-        {
-            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Metal Texture Flip Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &target_view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
-                    },
-                    depth_slice: None,
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
-
-            render_pass.set_pipeline(render_pipeline);
-            render_pass.set_bind_group(0, bind_group, &[]);
-            render_pass.draw(0..3, 0..1); // Draw a fullscreen triangle
-        }
-
-        wgpu_queue.submit(std::iter::once(encoder.finish()));
-        Ok(())
     }
 }
