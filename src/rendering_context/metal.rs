@@ -273,13 +273,22 @@ impl WPGPUTextureFromMetal {
         let sampler = self.get_or_create_sampler(wgpu_device);
         let bind_group_layout = self.get_or_create_bind_group_layout(wgpu_device);
 
-        // Create bind group for this specific texture
-        let bind_group = self.create_texture_bind_group(
-            wgpu_device,
-            bind_group_layout,
-            source_texture,
-            sampler,
-        )?;
+        let source_view = source_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+        let bind_group = wgpu_device.create_bind_group(&wgpu::BindGroupDescriptor {
+            label: Some("Metal Texture Flip Bind Group"),
+            layout: bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&source_view),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(sampler),
+                },
+            ],
+        });
 
         // Execute the render pass
         self.execute_flip_render_pass(
@@ -457,34 +466,6 @@ impl WPGPUTextureFromMetal {
                 cache: None,
             })
         })
-    }
-
-    /// Creates a bind group for the specific texture being processed.
-    ///
-    /// This method creates a new bind group each time since it's specific to the input texture.
-    fn create_texture_bind_group(
-        &self,
-        wgpu_device: &wgpu::Device,
-        bind_group_layout: &wgpu::BindGroupLayout,
-        source_texture: &wgpu::Texture,
-        sampler: &wgpu::Sampler,
-    ) -> Result<wgpu::BindGroup, MetalError> {
-        let source_view = source_texture.create_view(&wgpu::TextureViewDescriptor::default());
-
-        Ok(wgpu_device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: Some("Metal Texture Flip Bind Group"),
-            layout: bind_group_layout,
-            entries: &[
-                wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&source_view),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(sampler),
-                },
-            ],
-        }))
     }
 
     /// Executes the render pass that performs the texture flipping.
