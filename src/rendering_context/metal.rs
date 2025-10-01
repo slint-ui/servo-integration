@@ -129,24 +129,6 @@ impl WPGPUTextureFromMetal {
         }
     }
 
-    /// Creates a sampler descriptor with filtering settings optimized for texture operations.
-    fn create_sampler_descriptor() -> wgpu::SamplerDescriptor<'static> {
-        wgpu::SamplerDescriptor {
-            label: Some("Metal Texture Sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            lod_min_clamp: 0.0,
-            lod_max_clamp: 0.0,
-            compare: None,
-            anisotropy_clamp: 1,
-            border_color: None,
-        }
-    }
-
     /// Creates a Metal texture from an IOSurface using Objective-C messaging.
     ///
     /// This function uses unsafe Objective-C messaging. The caller must ensure:
@@ -403,9 +385,24 @@ impl WPGPUTextureFromMetal {
 
     /// Gets or creates the sampler with caching.
     fn get_or_create_sampler(&self, wgpu_device: &wgpu::Device) -> &wgpu::Sampler {
+        let descriptior = wgpu::SamplerDescriptor {
+            label: Some("Metal Texture Sampler"),
+            compare: None,
+            border_color: None,
+            lod_min_clamp: 0.0,
+            lod_max_clamp: 0.0,
+            anisotropy_clamp: 1,
+            mag_filter: wgpu::FilterMode::Linear,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+        };
+
         RENDER_CACHE
             .sampler
-            .get_or_init(|| wgpu_device.create_sampler(&Self::create_sampler_descriptor()))
+            .get_or_init(|| wgpu_device.create_sampler(&descriptior))
     }
 
     /// Gets or creates the render pipeline with caching.
