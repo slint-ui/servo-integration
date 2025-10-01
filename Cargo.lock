@@ -7568,6 +7568,7 @@ dependencies = [
  "euclid",
  "foreign-types-shared",
  "gl",
+ "gl_generator",
  "gleam",
  "glow",
  "image",
