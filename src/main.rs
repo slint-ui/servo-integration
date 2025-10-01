@@ -1,3 +1,4 @@
+mod application_handler;
 mod constants;
 mod delegate;
 mod on_events;
@@ -15,6 +16,7 @@ use slint::{
 };
 
 use crate::{
+    application_handler::ApplicationHandler,
     on_events::{on_pointer_event, on_scroll_event},
     servo_util::{init_servo_webview, spin_servo_event_loop},
     state::State,
@@ -27,12 +29,15 @@ fn main() {
 
     let state_placeholder = Rc::new(RefCell::new(None));
 
+    let application_handler = ApplicationHandler::new(state_placeholder.clone());
+
     let mut wgpu_settings = WGPUSettings::default();
     wgpu_settings.device_required_features = wgpu::Features::PUSH_CONSTANTS;
     wgpu_settings.device_required_limits.max_push_constant_size = constants::MAX_PUSH_CONSTANT_SIZE;
 
     slint::BackendSelector::new()
         .require_wgpu_26(WGPUConfiguration::Automatic(wgpu_settings))
+        .with_winit_custom_application_handler(application_handler)
         .select()
         .expect("Failed to create Slint backend with WGPU based renderer - ensure your system supports WGPU");
 

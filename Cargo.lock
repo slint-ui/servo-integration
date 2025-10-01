@@ -284,9 +284,9 @@ dependencies = [
 
 [[package]]
 name = "anstyle"
-version = "1.0.11"
+version = "1.0.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "862ed96ca487e809f1c8e5a8447f6ee2cf102f846893800b20cebdf541fc6bbd"
+checksum = "5192cca8006f1fd4f7237516f40fa183bb07f8fbdfedaa0036de5ea9b0b45e78"
 
 [[package]]
 name = "anstyle-parse"
@@ -426,9 +426,9 @@ dependencies = [
 
 [[package]]
 name = "async-compression"
-version = "0.4.30"
+version = "0.4.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "977eb15ea9efd848bb8a4a1a2500347ed7f0bf794edf0dc3ddcf439f43d36b23"
+checksum = "5a89bce6054c720275ac2432fbba080a66a2106a44a1b804553930ca6909f4e0"
 dependencies = [
  "compression-codecs",
  "compression-core",
@@ -1092,9 +1092,9 @@ dependencies = [
 
 [[package]]
 name = "camino"
-version = "1.2.0"
+version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1de8bc0aa9e9385ceb3bf0c152e3a9b9544f6c4a912c8ae504e80c1f0368603"
+checksum = "276a59bf2b2c967788139340c9f0c5b12d7fd6630315c15c217e559de85d2609"
 dependencies = [
  "serde_core",
 ]
@@ -1444,9 +1444,9 @@ dependencies = [
 
 [[package]]
 name = "compression-codecs"
-version = "0.4.30"
+version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "485abf41ac0c8047c07c87c72c8fb3eb5197f6e9d7ded615dfd1a00ae00a0f64"
+checksum = "ef8a506ec4b81c460798f572caead636d57d3d7e940f998160f52bd254bf2d23"
 dependencies = [
  "brotli",
  "compression-core",
@@ -1510,7 +1510,7 @@ dependencies = [
  "fonts",
  "gaol",
  "ipc-channel",
- "keyboard-types 0.8.1",
+ "keyboard-types 0.8.2",
  "layout_api",
  "log",
  "media",
@@ -2265,7 +2265,7 @@ dependencies = [
  "http 1.3.1",
  "hyper_serde",
  "ipc-channel",
- "keyboard-types 0.8.1",
+ "keyboard-types 0.8.2",
  "log",
  "malloc_size_of_derive",
  "num-derive",
@@ -4738,9 +4738,9 @@ dependencies = [
 
 [[package]]
 name = "keyboard-types"
-version = "0.8.1"
+version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53cea01d04c8251f945a9f16c5364da6cdb8bce69a61382663302c62f4186d13"
+checksum = "ec565a935632f47329ed84336b468fb957e8f10a8ddc614937f0dc1e61765e99"
 dependencies = [
  "bitflags 2.9.4",
  "serde",
@@ -4946,7 +4946,7 @@ dependencies = [
  "gaol",
  "gleam",
  "ipc-channel",
- "keyboard-types 0.8.1",
+ "keyboard-types 0.8.2",
  "layout",
  "layout_api",
  "log",
@@ -7232,7 +7232,7 @@ dependencies = [
  "ipc-channel",
  "itertools 0.14.0",
  "jstraceable_derive",
- "keyboard-types 0.8.1",
+ "keyboard-types 0.8.2",
  "kurbo",
  "layout_api",
  "libc",
@@ -7311,7 +7311,7 @@ dependencies = [
  "html5ever",
  "indexmap",
  "jstraceable_derive",
- "keyboard-types 0.8.1",
+ "keyboard-types 0.8.2",
  "libc",
  "log",
  "malloc_size_of_derive",
@@ -7349,7 +7349,7 @@ dependencies = [
  "embedder_traits",
  "euclid",
  "ipc-channel",
- "keyboard-types 0.8.1",
+ "keyboard-types 0.8.2",
  "log",
  "malloc_size_of_derive",
  "media",
@@ -7448,9 +7448,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.225"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fd6c24dee235d0da097043389623fb913daddf92c76e9f5a1db88607a0bcbd1d"
+checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
  "serde_derive",
@@ -7490,18 +7490,18 @@ dependencies = [
 
 [[package]]
 name = "serde_core"
-version = "1.0.225"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "659356f9a0cb1e529b24c01e43ad2bdf520ec4ceaf83047b83ddcc2251f96383"
+checksum = "41d385c7d4ca58e59fc732af25c3983b67ac852c1a25000afe1175de458b67ad"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.225"
+version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ea936adf78b1f766949a4977b91d2f5595825bd6ec079aa9543ad2685fc4516"
+checksum = "d540f220d3187173da220f885ab66608367b6574e925011a9353e4badda91d79"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7597,7 +7597,7 @@ dependencies = [
 [[package]]
 name = "servo-media"
 version = "0.1.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 dependencies = [
  "once_cell",
  "servo-media-audio",
@@ -7610,7 +7610,7 @@ dependencies = [
 [[package]]
 name = "servo-media-audio"
 version = "0.2.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 dependencies = [
  "byte-slice-cast",
  "euclid",
@@ -7631,7 +7631,7 @@ dependencies = [
 [[package]]
 name = "servo-media-derive"
 version = "0.1.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7641,7 +7641,7 @@ dependencies = [
 [[package]]
 name = "servo-media-dummy"
 version = "0.1.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 dependencies = [
  "ipc-channel",
  "servo-media",
@@ -7655,7 +7655,7 @@ dependencies = [
 [[package]]
 name = "servo-media-player"
 version = "0.1.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 dependencies = [
  "ipc-channel",
  "serde",
@@ -7667,7 +7667,7 @@ dependencies = [
 [[package]]
 name = "servo-media-streams"
 version = "0.1.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 dependencies = [
  "uuid",
 ]
@@ -7675,12 +7675,12 @@ dependencies = [
 [[package]]
 name = "servo-media-traits"
 version = "0.1.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 
 [[package]]
 name = "servo-media-webrtc"
 version = "0.1.0"
-source = "git+https://github.com/servo/media#de1ebef5833ba90374da0bbb6f5cd6c862cc131f"
+source = "git+https://github.com/servo/media#9186e6abf483233b8d42ade583099b606ef68350"
 dependencies = [
  "log",
  "servo-media-streams",
@@ -7767,7 +7767,7 @@ dependencies = [
  "http 1.3.1",
  "indexmap",
  "ipc-channel",
- "keyboard-types 0.8.1",
+ "keyboard-types 0.8.2",
  "markup5ever",
  "mime",
  "parking_lot",
@@ -8831,9 +8831,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-rustls"
-version = "0.26.3"
+version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "05f63835928ca123f1bef57abbcd23bb2ba0ac9ae1235f1e65bda0d06e7786bd"
+checksum = "1729aa945f29d91ba541258c8df89027d5792d85a8841fb65e8bf0f4ede4ef61"
 dependencies = [
  "rustls",
  "tokio",
