@@ -65,6 +65,10 @@ pub fn on_scroll_event(state: Rc<State>) {
 
         webview.notify_scroll_event(ScrollLocation::Delta(servo_delta), point.to_i32());
         print_time("notify_scroll_event", Color::Blue);
+        
+        // Force the servo event loop to wake up
+        let _ = state.waker_sender.try_send(());
+        print_time("Manual wake sent", Color::Magenta);
     });
 }
 

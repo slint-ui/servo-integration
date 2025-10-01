@@ -2,11 +2,13 @@ use std::{cell::RefCell, rc::Rc};
 
 use servo::{Servo, WebView};
 use slint::{ComponentHandle, Weak, wgpu_26::wgpu};
+use smol::channel::Sender;
 
 use crate::{MyApp, rendering_context::CustomRenderingContext};
 
 pub struct State {
     pub app: Weak<MyApp>,
+    pub waker_sender: Sender<()>,
     pub device: RefCell<Option<wgpu::Device>>,
     pub queue: RefCell<Option<wgpu::Queue>>,
     pub scale_factor: RefCell<f32>,
@@ -16,10 +18,11 @@ pub struct State {
 }
 
 impl State {
-    pub fn new(app: Weak<MyApp>) -> Self {
+    pub fn new(app: Weak<MyApp>, waker_sender: Sender<()>) -> Self {
         println!("Creating new application state");
         Self {
             app,
+            waker_sender,
             device: RefCell::new(None),
             queue: RefCell::new(None),
             servo: RefCell::new(None),

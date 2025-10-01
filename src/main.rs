@@ -40,7 +40,7 @@ fn main() {
 
     let app_weak = app.as_weak();
 
-    let state = Rc::new(State::new(app_weak));
+    let state = Rc::new(State::new(app_weak, waker_sender.clone()));
 
     let state_weak = Rc::downgrade(&state);
 
