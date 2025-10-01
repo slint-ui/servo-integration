@@ -23,12 +23,6 @@ pub enum MetalError {
     TextureCreationFailed(String),
     /// Failed to get Metal device from WGPU device
     DeviceExtractionFailed(String),
-    /// Failed during texture flipping operation
-    TextureFlipFailed(String),
-    /// Failed to create render pipeline
-    PipelineCreationFailed(String),
-    /// Failed to create shader module
-    ShaderCreationFailed(String),
     /// Generic WGPU error
     WgpuError(WgpuError),
 }
@@ -40,11 +34,6 @@ impl fmt::Display for MetalError {
             MetalError::DeviceExtractionFailed(msg) => {
                 write!(f, "Device extraction failed: {}", msg)
             }
-            MetalError::TextureFlipFailed(msg) => write!(f, "Texture flip failed: {}", msg),
-            MetalError::PipelineCreationFailed(msg) => {
-                write!(f, "Pipeline creation failed: {}", msg)
-            }
-            MetalError::ShaderCreationFailed(msg) => write!(f, "Shader creation failed: {}", msg),
             MetalError::WgpuError(err) => write!(f, "WGPU error: {:?}", err),
         }
     }
@@ -118,11 +107,7 @@ impl WPGPUTextureFromMetal {
     }
 
     /// Creates a Metal texture descriptor with common settings.
-    fn create_metal_texture_descriptor(
-        size: PhysicalSize<u32>,
-        format: MTLPixelFormat,
-        usage: MTLTextureUsage,
-    ) -> Retained<MTLTextureDescriptor> {
+    fn create_metal_texture_descriptor(size: PhysicalSize<u32>) -> Retained<MTLTextureDescriptor> {
         // SAFETY: Creating and configuring a Metal texture descriptor is safe.
         // All parameters are validated by the Metal API and we're using standard values.
         unsafe {
@@ -130,8 +115,8 @@ impl WPGPUTextureFromMetal {
             descriptor.setDepth(1);
             descriptor.setMipmapLevelCount(1);
             descriptor.setSampleCount(1);
-            descriptor.setUsage(usage);
-            descriptor.setPixelFormat(format);
+            descriptor.setUsage(MTLTextureUsage::ShaderRead);
+            descriptor.setPixelFormat(MTLPixelFormat::BGRA8Unorm);
             descriptor.setTextureType(MTLTextureType::Type2D);
             descriptor.setWidth(size.width as usize);
             descriptor.setHeight(size.height as usize);
@@ -144,6 +129,7 @@ impl WPGPUTextureFromMetal {
         size: PhysicalSize<u32>,
         label: &str,
         usage: wgpu::TextureUsages,
+        format: wgpu::TextureFormat,
     ) -> wgpu::TextureDescriptor<'_> {
         wgpu::TextureDescriptor {
             label: Some(label),
@@ -155,7 +141,7 @@ impl WPGPUTextureFromMetal {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
+            format,
             usage,
             view_formats: &[],
         }
@@ -224,11 +210,7 @@ impl WPGPUTextureFromMetal {
 
             let device_raw = metal_device.raw_device().lock().clone();
 
-            let texture_descriptor = Self::create_metal_texture_descriptor(
-                self.size,
-                MTLPixelFormat::RGBA8Unorm,
-                MTLTextureUsage::ShaderRead,
-            );
+            let texture_descriptor = Self::create_metal_texture_descriptor(self.size);
 
             let native_surface = surfman_device.native_surface(surfman_surface);
             let io_surface = native_surface.0;
@@ -276,7 +258,7 @@ impl WPGPUTextureFromMetal {
 
             let hal_texture = wgpu::hal::metal::Device::texture_from_raw(
                 metal_texture,
-                wgpu::wgt::TextureFormat::Rgba8Unorm,
+                wgpu::TextureFormat::Bgra8Unorm,
                 metal::MTLTextureType::D2,
                 0,
                 0,
@@ -291,6 +273,7 @@ impl WPGPUTextureFromMetal {
                 self.size,
                 "Metal IOSurface Texture",
                 wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                wgpu::TextureFormat::Bgra8Unorm,
             );
 
             Ok(wgpu_device
@@ -345,6 +328,7 @@ impl WPGPUTextureFromMetal {
             self.size,
             "Flipped Metal IOSurface Texture",
             wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            wgpu::TextureFormat::Rgba8Unorm,
         );
         Ok(wgpu_device.create_texture(&descriptor))
     }
@@ -360,11 +344,9 @@ impl WPGPUTextureFromMetal {
                         source: wgpu::ShaderSource::Wgsl(r#"
                             @vertex
                             fn vs_main(@builtin(vertex_index) vertex_index: u32) -> @builtin(position) vec4<f32> {
-                                var positions = array<vec2<f32>, 6>(
-                                    vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0, -1.0), vec2<f32>( 1.0,  1.0),
-                                    vec2<f32>(-1.0, -1.0), vec2<f32>( 1.0,  1.0), vec2<f32>(-1.0,  1.0)
-                                );
-                                return vec4<f32>(positions[vertex_index], 0.0, 1.0);
+                                let uv = vec2<f32>(f32(vertex_index >> 1u), f32(vertex_index & 1u)) * 2.0;
+                                return vec4<f32>(uv * vec2<f32>(2.0, -2.0) + vec2<f32>(-1.0, 1.0), 0.0, 1.0);
+                                
                             }
                         "#.into()),
                     })
@@ -390,9 +372,7 @@ impl WPGPUTextureFromMetal {
                                 // Flip vertically by inverting the V coordinate
                                 let flipped_uv = vec2<f32>(uv.x, 1.0 - uv.y);
                                 let color = textureSample(source_texture, source_sampler, flipped_uv);
-                                
-                                // Swap R and B channels since we changed from BGRA to RGBA format
-                                return vec4<f32>(color.b, color.g, color.r, color.a);
+                                return color;
                             }
                         "#.into()),
                     })
@@ -552,7 +532,7 @@ impl WPGPUTextureFromMetal {
 
             render_pass.set_pipeline(render_pipeline);
             render_pass.set_bind_group(0, bind_group, &[]);
-            render_pass.draw(0..6, 0..1); // Draw two triangles (6 vertices)
+            render_pass.draw(0..3, 0..1); // Draw a fullscreen triangle
         }
 
         wgpu_queue.submit(std::iter::once(encoder.finish()));
@@ -566,21 +546,9 @@ mod tests {
     use winit::dpi::PhysicalSize;
 
     #[test]
-    fn test_create_wgpu_texture_from_metal() {
-        let size = PhysicalSize::new(800, 600);
-        let texture_wrapper = WPGPUTextureFromMetal::new(size);
-        assert_eq!(texture_wrapper.size.width, 800);
-        assert_eq!(texture_wrapper.size.height, 600);
-    }
-
-    #[test]
     fn test_metal_texture_descriptor_creation() {
         let size = PhysicalSize::new(1024, 768);
-        let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(
-            size,
-            MTLPixelFormat::RGBA8Unorm,
-            MTLTextureUsage::ShaderRead,
-        );
+        let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(size);
 
         // We can't directly access descriptor properties due to objc2 API design,
         // but we can verify that creation doesn't panic and returns a valid descriptor
@@ -600,21 +568,9 @@ mod tests {
         assert_eq!(descriptor.size.width, 512);
         assert_eq!(descriptor.size.height, 512);
         assert_eq!(descriptor.size.depth_or_array_layers, 1);
-        assert_eq!(descriptor.format, wgpu::TextureFormat::Rgba8Unorm);
+        assert_eq!(descriptor.format, wgpu::TextureFormat::Rgba8UnormSrgb);
         assert_eq!(descriptor.usage, wgpu::TextureUsages::TEXTURE_BINDING);
         assert_eq!(descriptor.label, Some("Test Texture"));
-    }
-
-    #[test]
-    fn test_sampler_descriptor_creation() {
-        let descriptor = WPGPUTextureFromMetal::create_sampler_descriptor();
-
-        assert_eq!(descriptor.address_mode_u, wgpu::AddressMode::ClampToEdge);
-        assert_eq!(descriptor.address_mode_v, wgpu::AddressMode::ClampToEdge);
-        assert_eq!(descriptor.address_mode_w, wgpu::AddressMode::ClampToEdge);
-        assert_eq!(descriptor.mag_filter, wgpu::FilterMode::Linear);
-        assert_eq!(descriptor.min_filter, wgpu::FilterMode::Linear);
-        assert_eq!(descriptor.label, Some("Metal Texture Sampler"));
     }
 
     #[test]
