@@ -106,24 +106,6 @@ impl WPGPUTextureFromMetal {
         self.create_flipped_texture_render(wgpu_device, wgpu_queue, &texture)
     }
 
-    /// Creates a Metal texture descriptor with common settings.
-    fn create_metal_texture_descriptor(size: PhysicalSize<u32>) -> Retained<MTLTextureDescriptor> {
-        // SAFETY: Creating and configuring a Metal texture descriptor is safe.
-        // All parameters are validated by the Metal API and we're using standard values.
-        unsafe {
-            let descriptor = MTLTextureDescriptor::new();
-            descriptor.setDepth(1);
-            descriptor.setMipmapLevelCount(1);
-            descriptor.setSampleCount(1);
-            descriptor.setUsage(MTLTextureUsage::ShaderRead);
-            descriptor.setPixelFormat(MTLPixelFormat::BGRA8Unorm);
-            descriptor.setTextureType(MTLTextureType::Type2D);
-            descriptor.setWidth(size.width as usize);
-            descriptor.setHeight(size.height as usize);
-            descriptor
-        }
-    }
-
     /// Creates a WGPU texture descriptor with standard settings for this use case.
     fn create_wgpu_texture_descriptor(
         size: PhysicalSize<u32>,
@@ -210,7 +192,17 @@ impl WPGPUTextureFromMetal {
 
             let device_raw = metal_device.raw_device().lock().clone();
 
-            let texture_descriptor = Self::create_metal_texture_descriptor(self.size);
+            let descriptor = MTLTextureDescriptor::new();
+            descriptor.setDepth(1);
+            descriptor.setMipmapLevelCount(1);
+            descriptor.setSampleCount(1);
+            descriptor.setUsage(MTLTextureUsage::ShaderRead);
+            descriptor.setPixelFormat(MTLPixelFormat::BGRA8Unorm);
+            descriptor.setTextureType(MTLTextureType::Type2D);
+            descriptor.setWidth(self.size.width as usize);
+            descriptor.setHeight(self.size.height as usize);
+
+            // let texture_descriptor = Self::create_metal_texture_descriptor(self.size);
 
             let native_surface = surfman_device.native_surface(surfman_surface);
             let io_surface = native_surface.0;
@@ -220,7 +212,7 @@ impl WPGPUTextureFromMetal {
             let texture = self
                 .create_texture_from_iosurface(
                     &*(device_raw.as_ptr() as *mut objc2::runtime::NSObject),
-                    &texture_descriptor,
+                    &descriptor,
                     &io_surface,
                     0,
                 )
@@ -544,17 +536,6 @@ impl WPGPUTextureFromMetal {
 mod tests {
     use super::*;
     use winit::dpi::PhysicalSize;
-
-    #[test]
-    fn test_metal_texture_descriptor_creation() {
-        let size = PhysicalSize::new(1024, 768);
-        let descriptor = WPGPUTextureFromMetal::create_metal_texture_descriptor(size);
-
-        // We can't directly access descriptor properties due to objc2 API design,
-        // but we can verify that creation doesn't panic and returns a valid descriptor
-        // The descriptor object should be valid if creation succeeded
-        drop(descriptor); // This would panic if the descriptor was invalid
-    }
 
     #[test]
     fn test_wgpu_texture_descriptor_creation() {
