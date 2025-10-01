@@ -106,29 +106,6 @@ impl WPGPUTextureFromMetal {
         self.create_flipped_texture_render(wgpu_device, wgpu_queue, &texture)
     }
 
-    /// Creates a WGPU texture descriptor with standard settings for this use case.
-    fn create_wgpu_texture_descriptor(
-        size: PhysicalSize<u32>,
-        label: &str,
-        usage: wgpu::TextureUsages,
-        format: wgpu::TextureFormat,
-    ) -> wgpu::TextureDescriptor<'_> {
-        wgpu::TextureDescriptor {
-            label: Some(label),
-            size: wgpu::Extent3d {
-                width: size.width,
-                height: size.height,
-                depth_or_array_layers: 1,
-            },
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format,
-            usage,
-            view_formats: &[],
-        }
-    }
-
     /// Creates a Metal texture from an IOSurface using Objective-C messaging.
     ///
     /// This function uses unsafe Objective-C messaging. The caller must ensure:
@@ -208,6 +185,29 @@ impl WPGPUTextureFromMetal {
         }
     }
 
+    /// Creates a WGPU texture descriptor with standard settings for this use case.
+    fn create_wgpu_texture_descriptor(
+        size: PhysicalSize<u32>,
+        label: &str,
+        usage: wgpu::TextureUsages,
+        format: wgpu::TextureFormat,
+    ) -> wgpu::TextureDescriptor<'_> {
+        wgpu::TextureDescriptor {
+            label: Some(label),
+            size: wgpu::Extent3d {
+                width: size.width,
+                height: size.height,
+                depth_or_array_layers: 1,
+            },
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format,
+            usage,
+            view_formats: &[],
+        }
+    }
+
     /// Converts a Metal texture object into a WGPU texture.
     ///
     /// This method takes a Metal texture (as an NSObject) and wraps it in WGPU's
@@ -266,7 +266,14 @@ impl WPGPUTextureFromMetal {
         source_texture: &wgpu::Texture,
     ) -> Result<wgpu::Texture, MetalError> {
         // Create the output texture
-        let flipped_texture = self.create_output_texture(wgpu_device)?;
+        let descriptor = Self::create_wgpu_texture_descriptor(
+            self.size,
+            "Flipped Metal IOSurface Texture",
+            wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            wgpu::TextureFormat::Rgba8Unorm,
+        );
+
+        let flipped_texture = wgpu_device.create_texture(&descriptor);
 
         // Get or create cached render resources
         let render_pipeline = self.get_or_create_render_pipeline(wgpu_device);
@@ -322,20 +329,6 @@ impl WPGPUTextureFromMetal {
         wgpu_queue.submit(std::iter::once(encoder.finish()));
 
         Ok(flipped_texture)
-    }
-
-    /// Creates the output texture for the flipping operation.
-    fn create_output_texture(
-        &self,
-        wgpu_device: &wgpu::Device,
-    ) -> Result<wgpu::Texture, MetalError> {
-        let descriptor = Self::create_wgpu_texture_descriptor(
-            self.size,
-            "Flipped Metal IOSurface Texture",
-            wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::RENDER_ATTACHMENT,
-            wgpu::TextureFormat::Rgba8Unorm,
-        );
-        Ok(wgpu_device.create_texture(&descriptor))
     }
 
     /// Gets or creates the vertex shader module with caching.
