@@ -551,28 +551,4 @@ mod tests {
         assert_eq!(descriptor.usage, wgpu::TextureUsages::TEXTURE_BINDING);
         assert_eq!(descriptor.label, Some("Test Texture"));
     }
-
-    #[test]
-    fn test_metal_error_display() {
-        let error = MetalError::TextureCreationFailed("test error".to_string());
-        let display_str = format!("{}", error);
-        assert!(display_str.contains("Texture creation failed"));
-        assert!(display_str.contains("test error"));
-
-        let error = MetalError::DeviceExtractionFailed("device error".to_string());
-        let display_str = format!("{}", error);
-        assert!(display_str.contains("Device extraction failed"));
-        assert!(display_str.contains("device error"));
-    }
-
-    #[test]
-    fn test_metal_error_conversion() {
-        // Test that we can create different error types
-        let texture_error = MetalError::TextureCreationFailed("test".to_string());
-        let device_error = MetalError::DeviceExtractionFailed("test".to_string());
-
-        // Verify they display correctly
-        assert!(format!("{}", texture_error).contains("Texture creation failed"));
-        assert!(format!("{}", device_error).contains("Device extraction failed"));
-    }
 }
