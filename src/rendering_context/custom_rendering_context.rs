@@ -3,6 +3,7 @@ use std::{cell::Cell, rc::Rc, sync::Arc};
 use euclid::default::Size2D;
 
 use crate::gl_bindings as gl;
+use glow::HasContext;
 use image::RgbaImage;
 use servo::RenderingContext;
 use slint::wgpu_26::wgpu;
@@ -59,29 +60,28 @@ impl CustomRenderingContext {
     pub fn get_wgpu_texture_from_vulkan(
         &self,
         wgpu_device: &wgpu::Device,
-        wgpu_queue: &wgpu::Queue,
+        _wgpu_queue: &wgpu::Queue,
     ) -> Result<wgpu::Texture, Error> {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
         let surface = device.unbind_surface_from_context(&mut context)?.unwrap();
 
-        let tex_size = self.size.get();
-        let height = tex_size.height as i32;
+        let surface_info = device.surface_info(&surface);
 
-        let width = tex_size.width as i32;
+        let size = self.size.get();
+        let height = size.height as i32;
+        let width = size.width as i32;
 
         let texture = unsafe {
-            use glow::HasContext;
-
             let vulkan_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
 
-            let (vulkan_texture, memory_handle, size) = vulkan_device
-                .texture_funky(&wgpu_hal::TextureDescriptor {
+            let (vulkan_texture, memory_handle, allocation_size) = vulkan_device
+                .create_shareable_texture(&wgpu_hal::TextureDescriptor {
                     label: None,
                     size: wgpu::Extent3d {
-                        width: tex_size.width,
-                        height: tex_size.height,
+                        width: size.width,
+                        height: size.height,
                         depth_or_array_layers: 1,
                     },
                     format: wgpu::TextureFormat::Rgba8UnormSrgb,
@@ -102,15 +102,20 @@ impl CustomRenderingContext {
             let mut memory_object = 0;
             gl_with_extensions.CreateMemoryObjectsEXT(1, &mut memory_object);
             // We're using a dedicated allocation.
-            gl_with_extensions.MemoryObjectParameterivEXT(memory_object, gl::DEDICATED_MEMORY_OBJECT_EXT, &1);
+            // todo: taken from https://bxt.rs/blog/fast-half-life-video-recording-with-vulkan/, not sure if required.
+            gl_with_extensions.MemoryObjectParameterivEXT(
+                memory_object,
+                gl::DEDICATED_MEMORY_OBJECT_EXT,
+                &1,
+            );
             gl_with_extensions.ImportMemoryFdEXT(
                 memory_object,
-                size,
+                allocation_size,
                 gl::HANDLE_TYPE_OPAQUE_FD_EXT,
                 memory_handle,
             );
             // Create a texture and bind it to the imported memory.
-            let mut texture = gl.create_texture().unwrap();
+            let texture = gl.create_texture().unwrap();
             gl.bind_texture(gl::TEXTURE_2D, Some(texture));
             gl_with_extensions.TexStorageMem2DEXT(
                 gl::TEXTURE_2D,
@@ -122,29 +127,42 @@ impl CustomRenderingContext {
                 0,
             );
 
-
-            let mut framebuffer = gl.create_framebuffer().unwrap();
-            // Bind a destination framebuffer targeting our texture.
-            gl.bind_framebuffer(gl::FRAMEBUFFER, Some(framebuffer));
+            let draw_framebuffer = gl.create_framebuffer().unwrap();
+            let read_framebuffer = surface_info.framebuffer_object.unwrap();
+            // todo: tried using gl.named_framebuffer_texture instead but it errored.
+            gl.bind_framebuffer(gl::DRAW_FRAMEBUFFER, Some(draw_framebuffer));
             gl.framebuffer_texture_2d(
-                gl::FRAMEBUFFER,
+                gl::DRAW_FRAMEBUFFER,
                 gl::COLOR_ATTACHMENT0,
                 gl::TEXTURE_2D,
                 Some(texture),
                 0,
             );
-            gl.clear_color(0.7, 0.6, 0.5, 1.0);
-            gl.clear(gl::COLOR_BUFFER_BIT);
-            gl.flush();
 
+            gl.blit_named_framebuffer(
+                Some(read_framebuffer),
+                Some(draw_framebuffer),
+                0,
+                0,
+                width,
+                height,
+                // flipped upside down
+                0,
+                height,
+                width,
+                0,
+                gl::COLOR_BUFFER_BIT,
+                gl::NEAREST,
+            );
+            gl.flush();
 
             wgpu_device.create_texture_from_hal::<wgpu::wgc::api::Vulkan>(
                 vulkan_texture,
                 &wgpu::TextureDescriptor {
                     label: None,
                     size: wgpu::Extent3d {
-                        width: tex_size.width,
-                        height: tex_size.height,
+                        width: size.width,
+                        height: size.height,
                         depth_or_array_layers: 1,
                     },
                     format: wgpu::TextureFormat::Rgba8UnormSrgb,

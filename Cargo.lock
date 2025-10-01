@@ -2405,7 +2405,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.0",
 ]
 
 [[package]]
@@ -5427,6 +5427,7 @@ dependencies = [
 [[package]]
 name = "naga"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "arrayvec",
  "bit-set",
@@ -7075,7 +7076,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.11.0",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.0",
 ]
 
 [[package]]
@@ -8540,7 +8541,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix 1.1.2",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.0",
 ]
 
 [[package]]
@@ -9883,6 +9884,7 @@ checksum = "a751b3277700db47d3e574514de2eced5e54dc8a5436a3bf7a0b248b2cee16f3"
 [[package]]
 name = "wgpu"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "arrayvec",
  "bitflags 2.9.4",
@@ -9910,6 +9912,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "arrayvec",
  "bit-set",
@@ -9940,6 +9943,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core-deps-apple"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "wgpu-hal",
 ]
@@ -9947,6 +9951,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core-deps-emscripten"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "wgpu-hal",
 ]
@@ -9954,6 +9959,7 @@ dependencies = [
 [[package]]
 name = "wgpu-core-deps-windows-linux-android"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "wgpu-hal",
 ]
@@ -9961,6 +9967,7 @@ dependencies = [
 [[package]]
 name = "wgpu-hal"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "android_system_properties",
  "arrayvec",
@@ -10007,6 +10014,7 @@ dependencies = [
 [[package]]
 name = "wgpu-types"
 version = "26.0.4"
+source = "git+https://github.com/expenses/wgpu?branch=create_shareable_texture#42aebd865b34306909c5965d457e1cff399b6272"
 dependencies = [
  "bitflags 2.9.4",
  "bytemuck",
@@ -10039,7 +10047,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.0",
 ]
 
 [[package]]
