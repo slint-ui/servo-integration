@@ -22,8 +22,8 @@ pub fn on_scroll_event(state: Rc<State>) {
             .upgrade()
             .expect("Failed to upgrade state weak reference in scroll event");
 
-        let webview_ref = state.webview.borrow();
-        let webview = webview_ref
+        let webview = state.webview.borrow();
+        let webview = webview
             .as_ref()
             .expect("Webview not initialized for scroll event");
 
