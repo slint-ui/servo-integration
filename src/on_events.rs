@@ -17,8 +17,6 @@ pub fn on_scroll_event(state: Rc<State>) {
         .expect("Failed to upgrade app weak reference");
 
     app.on_scroll_event(move |dx, dy| {
-        println!("");
-        println!("");
 
         let state = state_weak
             .upgrade()
@@ -69,7 +67,6 @@ pub fn on_pointer_event(state: Rc<State>) {
         let scale_factor = *state.scale_factor.borrow();
 
         let event_str = format!("{:?}", event);
-        // println!("Pointer event: {event_str:?}");
 
         let app = state
             .app
