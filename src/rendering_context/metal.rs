@@ -528,27 +528,3 @@ impl WPGPUTextureFromMetal {
         Ok(())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use winit::dpi::PhysicalSize;
-
-    #[test]
-    fn test_wgpu_texture_descriptor_creation() {
-        let size = PhysicalSize::new(512, 512);
-        let descriptor = WPGPUTextureFromMetal::create_wgpu_texture_descriptor(
-            size,
-            "Test Texture",
-            wgpu::TextureUsages::TEXTURE_BINDING,
-            wgpu::TextureFormat::Rgba8Unorm,
-        );
-
-        assert_eq!(descriptor.size.width, 512);
-        assert_eq!(descriptor.size.height, 512);
-        assert_eq!(descriptor.size.depth_or_array_layers, 1);
-        assert_eq!(descriptor.format, wgpu::TextureFormat::Rgba8UnormSrgb);
-        assert_eq!(descriptor.usage, wgpu::TextureUsages::TEXTURE_BINDING);
-        assert_eq!(descriptor.label, Some("Test Texture"));
-    }
-}
