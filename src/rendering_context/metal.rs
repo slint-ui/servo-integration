@@ -563,6 +563,7 @@ mod tests {
             size,
             "Test Texture",
             wgpu::TextureUsages::TEXTURE_BINDING,
+            wgpu::TextureFormat::Rgba8Unorm,
         );
 
         assert_eq!(descriptor.size.width, 512);
