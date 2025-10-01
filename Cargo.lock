@@ -7585,6 +7585,7 @@ dependencies = [
  "smol",
  "surfman",
  "termcolor",
+ "time-now",
  "url",
  "webrender_api",
  "wgpu",
@@ -8683,6 +8684,12 @@ dependencies = [
  "num-conv",
  "time-core",
 ]
+
+[[package]]
+name = "time-now"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ee8a8f2ac1a27ccb3a3e5cce6bc4244fff349e52929387ea6a1f9dd90e55a0d"
 
 [[package]]
 name = "timers"

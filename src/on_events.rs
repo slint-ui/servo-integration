@@ -1,12 +1,30 @@
-use std::rc::Rc;
+use std::{io::Write, rc::Rc};
 
 use euclid::Vector2D;
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 use webrender_api::{ScrollLocation, units::DevicePoint};
 
 use servo::{InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent};
 
 use crate::state::State;
+
+pub fn print_time(str: &str, color: Color) {
+    let now = time_now::now_as_millis();
+    let last_6_digits = now % 1_000_000;
+
+    let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
+    // Print the string in the specified color
+    stdout
+        .set_color(ColorSpec::new().set_fg(Some(color)))
+        .unwrap();
+    write!(&mut stdout, "{:<30} {} ms", str, last_6_digits).unwrap();
+
+    // Reset color and add newline
+    stdout.reset().unwrap();
+    writeln!(&mut stdout).unwrap();
+}
 
 pub fn on_scroll_event(state: Rc<State>) {
     let state_weak = Rc::downgrade(&state);
@@ -17,6 +35,10 @@ pub fn on_scroll_event(state: Rc<State>) {
         .expect("Failed to upgrade app weak reference");
 
     app.on_scroll_event(move |dx, dy| {
+        println!("");
+        println!("");
+        print_time("on_scroll_event", Color::Green);
+
         let state = state_weak
             .upgrade()
             .expect("Failed to upgrade state weak reference in scroll event");
@@ -36,13 +58,13 @@ pub fn on_scroll_event(state: Rc<State>) {
         let mouse_x = app.get_mouse_x();
         let mouse_y = app.get_mouse_y();
 
-        // println!("dx:{dx:?} dy:{dy:?}");
-
         let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
         let moved_by = Vector2D::new(dx, dy);
+        let servo_delta = -moved_by;
 
-        webview.notify_scroll_event(ScrollLocation::Delta(-moved_by), point.to_i32());
+        webview.notify_scroll_event(ScrollLocation::Delta(servo_delta), point.to_i32());
+        print_time("notify_scroll_event", Color::Blue);
     });
 }
 

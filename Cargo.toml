@@ -18,6 +18,7 @@ winit = "0.30"
 rustls = "0.23"
 euclid = "0.22.11"
 surfman = "0.10.0"
+time-now = "0.1.2"
 
 wgpu-hal = "26.0.4"
 wgpu-core = "26.0.1"

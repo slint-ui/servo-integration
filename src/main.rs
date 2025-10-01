@@ -54,7 +54,6 @@ fn main() {
                         if let Some(state) = state_weak.upgrade() {
                             *state.device.borrow_mut() = Some(device.clone());
                             *state.queue.borrow_mut() = Some(queue.clone());
-                            println!("WGPU device and queue initialized successfully");
                         }
                     }
                 }

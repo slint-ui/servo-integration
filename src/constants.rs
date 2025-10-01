@@ -1,3 +1,4 @@
+// pub const DEFAULT_URL: &str = "https://slint.dev";
 pub const DEFAULT_URL: &str = "https://slint.dev/docs";
 
 /// Maximum push constant size required for WGPU features

@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use euclid::Scale;
+use termcolor::Color;
 use url::Url;
 use winit::dpi::PhysicalSize;
 
@@ -11,8 +12,8 @@ use slint::{ComponentHandle, winit_030::WinitWindowAccessor};
 use servo::{ServoBuilder, WebViewBuilder};
 
 use crate::{
-    constants, delegate::AppDelegate, rendering_context::CustomRenderingContext, state::State,
-    waker::Waker,
+    constants, delegate::AppDelegate, on_events::print_time,
+    rendering_context::CustomRenderingContext, state::State, waker::Waker,
 };
 
 pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
@@ -25,9 +26,12 @@ pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
                 .expect("Failed to upgrade state weak reference in servo event loop");
 
             loop {
+                print_time("spawn_local loop", Color::Yellow);
                 let _ = waker_receiver.recv().await;
                 if let Some(ref servo) = *state.servo.borrow() {
+                    print_time("before spin_event_loop", Color::Red);
                     servo.spin_event_loop();
+                    print_time("after spin_event_loop", Color::Red);
                 }
             }
         }
