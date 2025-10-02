@@ -11,11 +11,14 @@ use slint::{ComponentHandle, winit_030::WinitWindowAccessor};
 use servo::{ServoBuilder, WebViewBuilder};
 
 use crate::{
-    constants, delegate::AppDelegate, rendering_context::CustomRenderingContext, state::State,
+    constants,
+    delegate::AppDelegate,
+    rendering_context::try_create_gpu_context,
+    adapter::ServoSlintAdapter,
     waker::Waker,
 };
 
-pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
+pub fn spin_servo_event_loop(state: Rc<ServoSlintAdapter>, waker_receiver: Receiver<()>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({
@@ -35,7 +38,7 @@ pub fn spin_servo_event_loop(state: Rc<State>, waker_receiver: Receiver<()>) {
     .expect("Failed to spawn servo event loop task");
 }
 
-pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
+pub fn init_servo_webview(state: Rc<ServoSlintAdapter>, waker_sender: Sender<()>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({
@@ -60,13 +63,22 @@ pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
 
             let physical_size = PhysicalSize::new(window_size.width, window_size.height);
 
-            let rendering_context = CustomRenderingContext::new(physical_size).expect(
-                "Failed to create custom rendering context - ensure your system supports Metal",
-            );
+            let wgpu_device = state.device.borrow();
+            let wgpu_device = wgpu_device
+                .as_ref()
+                .expect("WGPU device not initialized - ensure rendering setup completed");
 
-            let rendering_context_rc = Rc::new(rendering_context);
+            let wgpu_queue = state.queue.borrow();
+            let wgpu_queue = wgpu_queue
+                .as_ref()
+                .expect("WGPU queue not initialized - ensure rendering setup completed");
 
-            let servo = ServoBuilder::new(rendering_context_rc.clone())
+            let rendering_adapter =
+                try_create_gpu_context(wgpu_device, wgpu_queue, physical_size).unwrap();
+
+            let rendering_context = rendering_adapter.get_rendering_context();
+            
+            let servo = ServoBuilder::new(rendering_context)
                 .event_loop_waker(Box::new(Waker::new(waker_sender)))
                 .build();
 
@@ -86,7 +98,7 @@ pub fn init_servo_webview(state: Rc<State>, waker_sender: Sender<()>) {
             *state.servo.borrow_mut() = Some(servo);
             *state.webview.borrow_mut() = Some(webview);
             *state.scale_factor.borrow_mut() = scale_factor;
-            *state.rendering_context.borrow_mut() = Some(rendering_context_rc.clone());
+            *state.rendering_adapter.borrow_mut() = Some(rendering_adapter);
         }
     })
     .expect("Failed to spawn servo initialization task");

@@ -17,13 +17,13 @@ use crate::rendering_context::{
     metal::WPGPUTextureFromMetal, surfman_context::SurfmanRenderingContext,
 };
 
-pub struct CustomRenderingContext {
+pub struct GPURenderingContext {
     pub size: Cell<PhysicalSize<u32>>,
     pub swap_chain: SwapChain<Device>,
     pub surfman_rendering_info: SurfmanRenderingContext,
 }
 
-impl Drop for CustomRenderingContext {
+impl Drop for GPURenderingContext {
     fn drop(&mut self) {
         let device = &mut self.surfman_rendering_info.device.borrow_mut();
         let context = &mut self.surfman_rendering_info.context.borrow_mut();
@@ -31,7 +31,7 @@ impl Drop for CustomRenderingContext {
     }
 }
 
-impl CustomRenderingContext {
+impl GPURenderingContext {
     pub fn new(size: PhysicalSize<u32>) -> Result<Self, Error> {
         let connection = Connection::new()?;
 
@@ -83,7 +83,7 @@ impl CustomRenderingContext {
     }
 }
 
-impl RenderingContext for CustomRenderingContext {
+impl RenderingContext for GPURenderingContext {
     fn prepare_for_rendering(&self) {
         self.surfman_rendering_info.prepare_for_rendering();
     }

@@ -2,14 +2,14 @@ use std::rc::Rc;
 
 use servo::{WebView, WebViewDelegate};
 
-use crate::state::State;
+use crate::adapter::ServoSlintAdapter;
 
 pub struct AppDelegate {
-    pub state: Rc<State>,
+    pub state: Rc<ServoSlintAdapter>,
 }
 
 impl AppDelegate {
-    pub fn new(state: Rc<State>) -> Self {
+    pub fn new(state: Rc<ServoSlintAdapter>) -> Self {
         Self { state }
     }
 }

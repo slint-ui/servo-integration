@@ -5,7 +5,7 @@ mod delegate;
 mod on_events;
 mod rendering_context;
 mod servo_util;
-mod state;
+mod adapter;
 mod waker;
 
 use smol::channel;
@@ -20,7 +20,7 @@ use crate::{
     application_handler::ApplicationHandler,
     on_events::{on_pointer_event, on_scroll_event},
     servo_util::{init_servo_webview, spin_servo_event_loop},
-    state::State,
+    adapter::ServoSlintAdapter,
 };
 
 slint::include_modules!();
@@ -46,7 +46,7 @@ fn main() {
 
     let app_weak = app.as_weak();
 
-    let state = Rc::new(State::new(app_weak, waker_sender.clone()));
+    let state = Rc::new(ServoSlintAdapter::new(app_weak, waker_sender.clone()));
 
     let state_weak = Rc::downgrade(&state);
 
