@@ -19,8 +19,8 @@ use crate::rendering_context::{
 
 pub struct CustomRenderingContext {
     pub size: Cell<PhysicalSize<u32>>,
-    pub surfman_rendering_info: SurfmanRenderingContext,
     pub swap_chain: SwapChain<Device>,
+    pub surfman_rendering_info: SurfmanRenderingContext,
 }
 
 impl Drop for CustomRenderingContext {
@@ -51,9 +51,9 @@ impl CustomRenderingContext {
         let swap_chain = surfman_rendering_info.create_attached_swap_chain()?;
 
         Ok(Self {
+            swap_chain,
             size: Cell::new(size),
             surfman_rendering_info,
-            swap_chain,
         })
     }
 
@@ -69,9 +69,8 @@ impl CustomRenderingContext {
 
         let size = self.size.get();
 
-        let wgpu_texture = WPGPUTextureFromMetal::new(size)
-            .get(wgpu_device, wgpu_queue, device, &surface)
-            .expect("Failed to get WGPU texture from Metal texture");
+        let wgpu_texture =
+            WPGPUTextureFromMetal::new(size, wgpu_device).get(wgpu_device, wgpu_queue, device, &surface);
 
         let _ = device
             .bind_surface_to_context(&mut context, surface)
