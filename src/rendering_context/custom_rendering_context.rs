@@ -2,10 +2,6 @@ use std::{cell::Cell, rc::Rc, sync::Arc};
 
 use euclid::default::Size2D;
 
-#[cfg(target_os = "linux")]
-use crate::gl_bindings as gl;
-use ash::vk;
-use glow::HasContext;
 use image::RgbaImage;
 use servo::RenderingContext;
 use slint::wgpu_26::wgpu;
@@ -13,9 +9,26 @@ use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
 
 use surfman::{
-    Connection, Device, Error, Surface, SurfaceTexture, SurfaceType,
+    Connection, Device, Surface, SurfaceTexture, SurfaceType,
     chains::{PreserveBuffer, SwapChain},
 };
+
+#[cfg(target_os = "linux")]
+#[derive(thiserror::Error, Debug)]
+pub enum VulkanTextureError {
+    #[error("{0:?}")]
+    Surfman(surfman::Error),
+    #[error("{0}")]
+    Vulkan(#[from] ash::vk::Result),
+    #[error("No surface returned when the surface was unbound from the context")]
+    NoSurface,
+    #[error("The surface didn't have a framebuffer object")]
+    NoFramebuffer,
+    #[error("Wgpu is not using the vulkan backend")]
+    WgpuNotVulkan,
+    #[error("{0}")]
+    OpenGL(String),
+}
 
 use crate::rendering_context::surfman_context::SurfmanRenderingContext;
 
@@ -34,7 +47,7 @@ impl Drop for CustomRenderingContext {
 }
 
 impl CustomRenderingContext {
-    pub fn new(size: PhysicalSize<u32>) -> Result<Self, Error> {
+    pub fn new(size: PhysicalSize<u32>) -> Result<Self, surfman::Error> {
         let connection = Connection::new()?;
 
         let adapter = connection.create_adapter()?;
@@ -64,22 +77,31 @@ impl CustomRenderingContext {
         &self,
         wgpu_device: &wgpu::Device,
         _wgpu_queue: &wgpu::Queue,
-    ) -> Result<wgpu::Texture, Error> {
+    ) -> Result<wgpu::Texture, VulkanTextureError> {
+        use crate::gl_bindings as gl;
+        use ash::vk;
+        use glow::HasContext;
+
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 
-        let surface = device.unbind_surface_from_context(&mut context)?.unwrap();
+        let surface = device
+            .unbind_surface_from_context(&mut context)
+            .map_err(VulkanTextureError::Surfman)?
+            .ok_or(VulkanTextureError::NoSurface)?;
 
-        device.make_context_current(&mut context)?;
+        device
+            .make_context_current(&mut context)
+            .map_err(VulkanTextureError::Surfman)?;
 
         let surface_info = device.surface_info(&surface);
 
         let size = self.size.get();
-        let height = size.height as i32;
-        let width = size.width as i32;
 
         let texture = unsafe {
-            let hal_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
+            let hal_device = wgpu_device
+                .as_hal::<wgpu::wgc::api::Vulkan>()
+                .ok_or(VulkanTextureError::WgpuNotVulkan)?;
             let vulkan_device = hal_device.raw_device().clone();
             let vulkan_instance = hal_device.shared_instance().raw_instance();
 
@@ -88,27 +110,25 @@ impl CustomRenderingContext {
             let mut external_memory_image_info = vk::ExternalMemoryImageCreateInfo::default()
                 .handle_types(vk::ExternalMemoryHandleTypeFlags::OPAQUE_FD);
 
-            let vulkan_image = vulkan_device
-                .create_image(
-                    &vk::ImageCreateInfo::default()
-                        .image_type(vk::ImageType::TYPE_2D)
-                        .format(vk::Format::R8G8B8A8_UNORM)
-                        .extent(vk::Extent3D {
-                            width: size.width,
-                            height: size.height,
-                            depth: 1,
-                        })
-                        .mip_levels(1)
-                        .array_layers(1)
-                        .samples(vk::SampleCountFlags::TYPE_1)
-                        .tiling(vk::ImageTiling::OPTIMAL)
-                        .usage(vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::COLOR_ATTACHMENT)
-                        .sharing_mode(vk::SharingMode::EXCLUSIVE)
-                        .initial_layout(vk::ImageLayout::UNDEFINED)
-                        .push_next(&mut external_memory_image_info),
-                    None,
-                )
-                .unwrap();
+            let vulkan_image = vulkan_device.create_image(
+                &vk::ImageCreateInfo::default()
+                    .image_type(vk::ImageType::TYPE_2D)
+                    .format(vk::Format::R8G8B8A8_UNORM)
+                    .extent(vk::Extent3D {
+                        width: size.width,
+                        height: size.height,
+                        depth: 1,
+                    })
+                    .mip_levels(1)
+                    .array_layers(1)
+                    .samples(vk::SampleCountFlags::TYPE_1)
+                    .tiling(vk::ImageTiling::OPTIMAL)
+                    .usage(vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::COLOR_ATTACHMENT)
+                    .sharing_mode(vk::SharingMode::EXCLUSIVE)
+                    .initial_layout(vk::ImageLayout::UNDEFINED)
+                    .push_next(&mut external_memory_image_info),
+                None,
+            )?;
 
             // Allocate memory and bind to image
 
@@ -120,34 +140,28 @@ impl CustomRenderingContext {
             let mut export_info = vk::ExportMemoryAllocateInfo::default()
                 .handle_types(vk::ExternalMemoryHandleTypeFlags::OPAQUE_FD);
 
-            let memory = vulkan_device
-                .allocate_memory(
-                    &vk::MemoryAllocateInfo::default()
-                        .allocation_size(memory_requirements.size)
-                        // todo: required?
-                        //.memory_type_index(mem_type_index as _)
-                        .push_next(&mut dedicated_allocate_info)
-                        .push_next(&mut export_info),
-                    None,
-                )
-                .unwrap();
+            let memory = vulkan_device.allocate_memory(
+                &vk::MemoryAllocateInfo::default()
+                    .allocation_size(memory_requirements.size)
+                    // todo: required?
+                    //.memory_type_index(mem_type_index as _)
+                    .push_next(&mut dedicated_allocate_info)
+                    .push_next(&mut export_info),
+                None,
+            )?;
 
-            vulkan_device
-                .bind_image_memory(vulkan_image, memory, 0)
-                .unwrap();
+            vulkan_device.bind_image_memory(vulkan_image, memory, 0)?;
 
             // Get memory handle
 
             let external_memory_fd_api =
                 ash::khr::external_memory_fd::Device::new(&vulkan_instance, &vulkan_device);
 
-            let memory_handle = external_memory_fd_api
-                .get_memory_fd(
-                    &vk::MemoryGetFdInfoKHR::default()
-                        .memory(memory)
-                        .handle_type(vk::ExternalMemoryHandleTypeFlags::OPAQUE_FD),
-                )
-                .unwrap();
+            let memory_handle = external_memory_fd_api.get_memory_fd(
+                &vk::MemoryGetFdInfoKHR::default()
+                    .memory(memory)
+                    .handle_type(vk::ExternalMemoryHandleTypeFlags::OPAQUE_FD),
+            )?;
 
             // import into gl
 
@@ -172,22 +186,26 @@ impl CustomRenderingContext {
                 memory_handle,
             );
             // Create a texture and bind it to the imported memory.
-            let texture = gl.create_texture().unwrap();
+            let texture = gl.create_texture().map_err(VulkanTextureError::OpenGL)?;
             gl.bind_texture(gl::TEXTURE_2D, Some(texture));
             gl_with_extensions.TexStorageMem2DEXT(
                 gl::TEXTURE_2D,
                 1,
                 gl::RGBA8,
-                width,
-                height,
+                size.width as i32,
+                size.height as i32,
                 memory_object,
                 0,
             );
 
             // Blit to it
 
-            let draw_framebuffer = gl.create_framebuffer().unwrap();
-            let read_framebuffer = surface_info.framebuffer_object.unwrap();
+            let draw_framebuffer = gl
+                .create_framebuffer()
+                .map_err(VulkanTextureError::OpenGL)?;
+            let read_framebuffer = surface_info
+                .framebuffer_object
+                .ok_or(VulkanTextureError::NoFramebuffer)?;
             // todo: tried using gl.named_framebuffer_texture instead but it errored.
             gl.bind_framebuffer(gl::DRAW_FRAMEBUFFER, Some(draw_framebuffer));
             gl.framebuffer_texture_2d(
@@ -203,12 +221,12 @@ impl CustomRenderingContext {
                 Some(draw_framebuffer),
                 0,
                 0,
-                width,
-                height,
+                size.width as i32,
+                size.height as i32,
                 // flipped upside down
                 0,
-                height,
-                width,
+                size.height as i32,
+                size.width as i32,
                 0,
                 gl::COLOR_BUFFER_BIT,
                 gl::NEAREST,
@@ -278,7 +296,7 @@ impl CustomRenderingContext {
         &self,
         wgpu_device: &wgpu::Device,
         wgpu_queue: &wgpu::Queue,
-    ) -> Result<wgpu::Texture, Error> {
+    ) -> Result<wgpu::Texture, surfman::Error> {
         let device = &self.surfman_rendering_info.device.borrow();
         let mut context = self.surfman_rendering_info.context.borrow_mut();
 

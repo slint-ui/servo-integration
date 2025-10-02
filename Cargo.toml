@@ -39,6 +39,7 @@ libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3
 embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
     "baked-default-resources",
 ] }
+thiserror = "2.0.17"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ash = "0.38.0"
