@@ -6,9 +6,9 @@ use webrender_api::{ScrollLocation, units::DevicePoint};
 
 use servo::{InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent};
 
-use crate::adapter::ServoSlintAdapter;
+use crate::adapter::SlintServoAdapter;
 
-pub fn on_scroll_event(state: Rc<ServoSlintAdapter>) {
+pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
     let app = state
@@ -46,7 +46,7 @@ pub fn on_scroll_event(state: Rc<ServoSlintAdapter>) {
     });
 }
 
-pub fn on_pointer_event(state: Rc<ServoSlintAdapter>) {
+pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
     let app = state

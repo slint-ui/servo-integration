@@ -14,11 +14,11 @@ use crate::{
     constants,
     delegate::AppDelegate,
     rendering_context::try_create_gpu_context,
-    adapter::ServoSlintAdapter,
+    adapter::SlintServoAdapter,
     waker::Waker,
 };
 
-pub fn spin_servo_event_loop(state: Rc<ServoSlintAdapter>, waker_receiver: Receiver<()>) {
+pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>, waker_receiver: Receiver<()>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({
@@ -38,7 +38,7 @@ pub fn spin_servo_event_loop(state: Rc<ServoSlintAdapter>, waker_receiver: Recei
     .expect("Failed to spawn servo event loop task");
 }
 
-pub fn init_servo_webview(state: Rc<ServoSlintAdapter>, waker_sender: Sender<()>) {
+pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({

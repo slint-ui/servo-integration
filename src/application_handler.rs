@@ -2,14 +2,14 @@ use std::{cell::RefCell, rc::Rc};
 
 use slint::winit_030::{CustomApplicationHandler, EventResult};
 
-use crate::adapter::ServoSlintAdapter;
+use crate::adapter::SlintServoAdapter;
 
 pub struct ApplicationHandler {
-    pub state: Rc<RefCell<Option<Rc<ServoSlintAdapter>>>>,
+    pub state: Rc<RefCell<Option<Rc<SlintServoAdapter>>>>,
 }
 
 impl ApplicationHandler {
-    pub fn new(state: Rc<RefCell<Option<Rc<ServoSlintAdapter>>>>) -> Self {
+    pub fn new(state: Rc<RefCell<Option<Rc<SlintServoAdapter>>>>) -> Self {
         Self { state }
     }
 }

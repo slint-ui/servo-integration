@@ -6,7 +6,7 @@ use smol::channel::Sender;
 
 use crate::{MyApp, rendering_context::ServoRenderingAdapter};
 
-pub struct ServoSlintAdapter {
+pub struct SlintServoAdapter {
     pub app: Weak<MyApp>,
     pub waker_sender: Sender<()>,
     pub device: RefCell<Option<wgpu::Device>>,
@@ -17,7 +17,7 @@ pub struct ServoSlintAdapter {
     pub rendering_adapter: RefCell<Option<Box<dyn ServoRenderingAdapter>>>,
 }
 
-impl ServoSlintAdapter {
+impl SlintServoAdapter {
     pub fn new(app: Weak<MyApp>, waker_sender: Sender<()>) -> Self {
         Self {
             app,
