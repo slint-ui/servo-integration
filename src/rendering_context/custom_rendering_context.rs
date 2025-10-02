@@ -70,6 +70,8 @@ impl CustomRenderingContext {
 
         let surface = device.unbind_surface_from_context(&mut context)?.unwrap();
 
+        device.make_context_current(&mut context)?;
+
         let surface_info = device.surface_info(&surface);
 
         let size = self.size.get();
