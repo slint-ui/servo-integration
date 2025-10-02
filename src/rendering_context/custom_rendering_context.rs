@@ -2,6 +2,7 @@ use std::{cell::Cell, rc::Rc, sync::Arc};
 
 use euclid::default::Size2D;
 
+#[cfg(target_os = "linux")]
 use crate::gl_bindings as gl;
 use ash::vk;
 use glow::HasContext;
@@ -58,6 +59,7 @@ impl CustomRenderingContext {
         })
     }
 
+    #[cfg(target_os = "linux")]
     pub fn get_wgpu_texture_from_vulkan(
         &self,
         wgpu_device: &wgpu::Device,
@@ -269,7 +271,7 @@ impl CustomRenderingContext {
         Ok(texture)
     }
 
-    /*
+    #[cfg(target_vendor = "apple")]
     pub fn get_wgpu_texture_from_metal(
         &self,
         wgpu_device: &wgpu::Device,
@@ -295,7 +297,6 @@ impl CustomRenderingContext {
 
         Ok(wgpu_texture)
     }
-    */
 }
 
 impl RenderingContext for CustomRenderingContext {

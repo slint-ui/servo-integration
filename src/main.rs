@@ -6,6 +6,7 @@ mod servo_util;
 mod state;
 mod waker;
 
+#[cfg(target_os = "linux")]
 mod gl_bindings {
     #![allow(unsafe_op_in_unsafe_fn)]
 

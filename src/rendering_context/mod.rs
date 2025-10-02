@@ -1,5 +1,6 @@
 mod custom_rendering_context;
-//mod metal;
+#[cfg(target_vendor = "apple")]
+mod metal;
 mod surfman_context;
 
 pub use custom_rendering_context::CustomRenderingContext;
