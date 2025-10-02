@@ -3,6 +3,7 @@ use std::{cell::Cell, rc::Rc, sync::Arc};
 use euclid::default::Size2D;
 
 use crate::gl_bindings as gl;
+use ash::vk;
 use glow::HasContext;
 use image::RgbaImage;
 use servo::RenderingContext;
@@ -74,25 +75,77 @@ impl CustomRenderingContext {
         let width = size.width as i32;
 
         let texture = unsafe {
-            let vulkan_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
+            let hal_device = wgpu_device.as_hal::<wgpu::wgc::api::Vulkan>().unwrap();
+            let vulkan_device = hal_device.raw_device().clone();
+            let vulkan_instance = hal_device.shared_instance().raw_instance();
 
-            let (vulkan_texture, memory_handle, allocation_size) = vulkan_device
-                .create_shareable_texture(&wgpu_hal::TextureDescriptor {
-                    label: None,
-                    size: wgpu::Extent3d {
-                        width: size.width,
-                        height: size.height,
-                        depth_or_array_layers: 1,
-                    },
-                    format: wgpu::TextureFormat::Rgba8Unorm,
-                    dimension: wgpu::TextureDimension::D2,
-                    mip_level_count: 1,
-                    sample_count: 1,
-                    usage: wgpu::TextureUses::RESOURCE | wgpu::TextureUses::COLOR_TARGET,
-                    view_formats: vec![],
-                    memory_flags: wgpu_hal::MemoryFlags::empty(),
-                })
+            // Create image
+
+            let mut external_memory_image_info = vk::ExternalMemoryImageCreateInfo::default()
+                .handle_types(vk::ExternalMemoryHandleTypeFlags::OPAQUE_FD);
+
+            let vulkan_image = vulkan_device
+                .create_image(
+                    &vk::ImageCreateInfo::default()
+                        .image_type(vk::ImageType::TYPE_2D)
+                        .format(vk::Format::R8G8B8A8_UNORM)
+                        .extent(vk::Extent3D {
+                            width: size.width,
+                            height: size.height,
+                            depth: 1,
+                        })
+                        .mip_levels(1)
+                        .array_layers(1)
+                        .samples(vk::SampleCountFlags::TYPE_1)
+                        .tiling(vk::ImageTiling::OPTIMAL)
+                        .usage(vk::ImageUsageFlags::SAMPLED | vk::ImageUsageFlags::COLOR_ATTACHMENT)
+                        .sharing_mode(vk::SharingMode::EXCLUSIVE)
+                        .initial_layout(vk::ImageLayout::UNDEFINED)
+                        .push_next(&mut external_memory_image_info),
+                    None,
+                )
                 .unwrap();
+
+            // Allocate memory and bind to image
+
+            let memory_requirements = vulkan_device.get_image_memory_requirements(vulkan_image);
+
+            let mut dedicated_allocate_info =
+                vk::MemoryDedicatedAllocateInfo::default().image(vulkan_image);
+
+            let mut export_info = vk::ExportMemoryAllocateInfo::default()
+                .handle_types(vk::ExternalMemoryHandleTypeFlags::OPAQUE_FD);
+
+            let memory = vulkan_device
+                .allocate_memory(
+                    &vk::MemoryAllocateInfo::default()
+                        .allocation_size(memory_requirements.size)
+                        // todo: required?
+                        //.memory_type_index(mem_type_index as _)
+                        .push_next(&mut dedicated_allocate_info)
+                        .push_next(&mut export_info),
+                    None,
+                )
+                .unwrap();
+
+            vulkan_device
+                .bind_image_memory(vulkan_image, memory, 0)
+                .unwrap();
+
+            // Get memory handle
+
+            let external_memory_fd_api =
+                ash::khr::external_memory_fd::Device::new(&vulkan_instance, &vulkan_device);
+
+            let memory_handle = external_memory_fd_api
+                .get_memory_fd(
+                    &vk::MemoryGetFdInfoKHR::default()
+                        .memory(memory)
+                        .handle_type(vk::ExternalMemoryHandleTypeFlags::OPAQUE_FD),
+                )
+                .unwrap();
+
+            // import into gl
 
             let gl = &self.surfman_rendering_info.glow_gl;
 
@@ -110,7 +163,7 @@ impl CustomRenderingContext {
             );
             gl_with_extensions.ImportMemoryFdEXT(
                 memory_object,
-                allocation_size,
+                memory_requirements.size,
                 gl::HANDLE_TYPE_OPAQUE_FD_EXT,
                 memory_handle,
             );
@@ -126,6 +179,8 @@ impl CustomRenderingContext {
                 memory_object,
                 0,
             );
+
+            // Blit to it
 
             let draw_framebuffer = gl.create_framebuffer().unwrap();
             let read_framebuffer = surface_info.framebuffer_object.unwrap();
@@ -155,9 +210,37 @@ impl CustomRenderingContext {
                 gl::NEAREST,
             );
             gl.flush();
+            // Delete all the opengl objects. Seems to be required to prevent memory leaks
+            // according to `amdgpu_top`.
+            gl.delete_framebuffer(draw_framebuffer);
+            gl.delete_texture(texture);
+            gl_with_extensions.DeleteMemoryObjectsEXT(1, &memory_object);
 
             wgpu_device.create_texture_from_hal::<wgpu::wgc::api::Vulkan>(
-                vulkan_texture,
+                hal_device.texture_from_raw(
+                    vulkan_image,
+                    &wgpu_hal::TextureDescriptor {
+                        label: None,
+                        size: wgpu::Extent3d {
+                            width: size.width,
+                            height: size.height,
+                            depth_or_array_layers: 1,
+                        },
+                        format: wgpu::TextureFormat::Rgba8Unorm,
+                        dimension: wgpu::TextureDimension::D2,
+                        mip_level_count: 1,
+                        sample_count: 1,
+                        usage: wgpu::TextureUses::RESOURCE | wgpu::TextureUses::COLOR_TARGET,
+                        view_formats: vec![],
+                        memory_flags: wgpu_hal::MemoryFlags::empty(),
+                    },
+                    Some(Box::new(move || {
+                        // Images aren't cleaned up by wgpu-hal if theres a drop callback set so do it manually
+                        vulkan_device.destroy_image(vulkan_image, None);
+                        // Free the memory
+                        vulkan_device.free_memory(memory, None);
+                    })),
+                ),
                 &wgpu::TextureDescriptor {
                     label: None,
                     size: wgpu::Extent3d {
