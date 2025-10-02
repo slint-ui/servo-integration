@@ -16,10 +16,7 @@ pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderin
         SoftwareRenderingContext::new(size).expect("Failed to create software rendering context"),
     );
 
-    Box::new(ServoSoftwareRenderingContext {
-        size,
-        rendering_context,
-    })
+    Box::new(ServoSoftwareRenderingContext { rendering_context })
 }
 
 pub fn try_create_gpu_context(
@@ -68,7 +65,6 @@ impl ServoRenderingAdapter for ServoGPURenderingContext {
 }
 
 struct ServoSoftwareRenderingContext {
-    pub size: PhysicalSize<u32>,
     rendering_context: std::rc::Rc<SoftwareRenderingContext>,
 }
 
