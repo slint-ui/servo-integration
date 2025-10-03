@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use euclid::Point2D;
 use servo::{RenderingContext, SoftwareRenderingContext};
 use slint::{Image, SharedPixelBuffer};
@@ -8,11 +10,11 @@ use crate::rendering_context::GPURenderingContext;
 
 pub trait ServoRenderingAdapter {
     fn current_framebuffer_as_image(&self) -> Image;
-    fn get_rendering_context(&self) -> std::rc::Rc<dyn RenderingContext>;
+    fn get_rendering_context(&self) -> Rc<dyn RenderingContext>;
 }
 
 pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAdapter> {
-    let rendering_context = std::rc::Rc::new(
+    let rendering_context = Rc::new(
         SoftwareRenderingContext::new(size).expect("Failed to create software rendering context"),
     );
 
@@ -28,9 +30,8 @@ pub fn try_create_gpu_context(
         return Some(create_software_context(size));
     }
 
-    let rendering_context = std::rc::Rc::new(
-        GPURenderingContext::new(size).expect("Failed to create GPU rendering context"),
-    );
+    let rendering_context =
+        Rc::new(GPURenderingContext::new(size).expect("Failed to create GPU rendering context"));
 
     Some(Box::new(ServoGPURenderingContext {
         device: device.clone(),
@@ -59,13 +60,13 @@ impl ServoRenderingAdapter for ServoGPURenderingContext {
         )
     }
 
-    fn get_rendering_context(&self) -> std::rc::Rc<dyn RenderingContext> {
+    fn get_rendering_context(&self) -> Rc<dyn RenderingContext> {
         self.rendering_context.clone()
     }
 }
 
 struct ServoSoftwareRenderingContext {
-    rendering_context: std::rc::Rc<SoftwareRenderingContext>,
+    rendering_context: Rc<SoftwareRenderingContext>,
 }
 
 impl ServoRenderingAdapter for ServoSoftwareRenderingContext {
@@ -86,7 +87,7 @@ impl ServoRenderingAdapter for ServoSoftwareRenderingContext {
         Image::from_rgba8(shared_pixel_buffer)
     }
 
-    fn get_rendering_context(&self) -> std::rc::Rc<dyn RenderingContext> {
+    fn get_rendering_context(&self) -> Rc<dyn RenderingContext> {
         self.rendering_context.clone()
     }
 }
