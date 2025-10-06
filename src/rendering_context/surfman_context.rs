@@ -110,7 +110,7 @@ impl SurfmanRenderingContext {
         SwapChain::create_attached(device, context, SurfaceAccess::GPUOnly)
     }
 
-    pub fn framebuffer(&self) -> Option<NativeFramebuffer> {
+    fn framebuffer(&self) -> Option<NativeFramebuffer> {
         let device = &self.device.borrow();
         let context = &self.context.borrow();
         device
@@ -174,7 +174,7 @@ impl SurfmanRenderingContext {
         Some(self.device.borrow().connection())
     }
 
-    pub fn read_framebuffer_to_image(
+    fn read_framebuffer_to_image(
         gl: &Rc<dyn Gl>,
         framebuffer_id: u32,
         source_rectangle: DeviceIntRect,

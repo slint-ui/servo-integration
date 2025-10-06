@@ -8,7 +8,7 @@ use winit::dpi::PhysicalSize;
 
 use crate::rendering_context::GPURenderingContext;
 
-pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAdapter> {
+fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAdapter> {
     let rendering_context = Rc::new(
         SoftwareRenderingContext::new(size).expect("Failed to create software rendering context"),
     );

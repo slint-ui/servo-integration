@@ -84,7 +84,7 @@ pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
     });
 }
 
-pub fn convert_slint_pointer_event_to_servo_input_event(
+fn convert_slint_pointer_event_to_servo_input_event(
     event_str: &str,
     point: DevicePoint,
 ) -> InputEvent {

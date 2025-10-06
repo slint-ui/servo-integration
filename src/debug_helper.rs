@@ -2,7 +2,7 @@ use std::io::Write;
 
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
-pub fn print_time(str: &str, color: Color) {
+fn print_time(str: &str, color: Color) {
     let now = time_now::now_as_millis();
     let last_6_digits = now % 1_000_000;
 
