@@ -25,14 +25,21 @@ pub fn try_create_gpu_context(
         return Some(create_software_context(size));
     }
 
-    let rendering_context =
-        Rc::new(GPURenderingContext::new(size).expect("Failed to create GPU rendering context"));
-
-    Some(Box::new(ServoGPURenderingContext {
-        device: device.clone(),
-        queue: queue.clone(),
-        rendering_context,
-    }))
+    // Try to create GPU rendering context, fall back to software if it fails
+    match GPURenderingContext::new(size) {
+        Ok(gpu_context) => {
+            let rendering_context = Rc::new(gpu_context);
+            Some(Box::new(ServoGPURenderingContext {
+                device: device.clone(),
+                queue: queue.clone(),
+                rendering_context,
+            }))
+        }
+        Err(_) => {
+            // GPU rendering context creation failed, fall back to software rendering
+            Some(create_software_context(size))
+        }
+    }
 }
 
 pub trait ServoRenderingAdapter {
