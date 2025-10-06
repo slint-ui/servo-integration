@@ -45,6 +45,14 @@ impl State {
             .as_ref()
             .expect("WGPU queue not initialized - ensure rendering setup completed");
 
+        #[cfg(target_os = "linux")]
+        let texture = rendering_context
+            .get_wgpu_texture_from_vulkan(wgpu_device, wgpu_queue)
+            .expect(
+                "Failed to get WGPU texture from Vulkan texture - ensure rendering context is valid",
+            );
+
+        #[cfg(target_vendor = "apple")]
         let texture = rendering_context
             .get_wgpu_texture_from_metal(wgpu_device, wgpu_queue)
             .expect(

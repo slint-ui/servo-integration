@@ -6,6 +6,13 @@ mod servo_util;
 mod state;
 mod waker;
 
+#[cfg(target_os = "linux")]
+mod gl_bindings {
+    #![allow(unsafe_op_in_unsafe_fn)]
+
+    include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
+}
+
 use smol::channel;
 use std::{cell::RefCell, rc::Rc};
 
