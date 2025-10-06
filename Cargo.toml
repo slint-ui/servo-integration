@@ -67,3 +67,7 @@ slint = { version = "1.13.1", features = [
 
 [build-dependencies]
 slint-build = { version = "1.13.1" }
+
+
+[[package.metadata.android.uses_permission]]
+name = "android.permission.INTERNET"
