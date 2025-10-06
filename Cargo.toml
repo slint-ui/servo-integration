@@ -8,8 +8,9 @@ name = "servo-integration"
 path = "src/main.rs"
 
 [lib]
+name = "servo_integration_lib"
 path = "src/lib.rs"
-crate-type = ["cdylib"]
+crate-type = ["rlib", "cdylib"]
 
 [dependencies]
 gl = "0.14"
