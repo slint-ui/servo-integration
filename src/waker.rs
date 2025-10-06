@@ -1,5 +1,5 @@
-use smol::channel::Sender;
 use servo::EventLoopWaker;
+use smol::channel::Sender;
 
 #[derive(Clone)]
 pub struct Waker(Sender<()>);
@@ -12,7 +12,7 @@ impl Waker {
 
 impl EventLoopWaker for Waker {
     fn wake(&self) {
-        let _ = self.0.try_send(());
+        self.0.try_send(()).expect("Failed to wake event loop");
     }
 
     fn clone_box(&self) -> Box<dyn EventLoopWaker> {

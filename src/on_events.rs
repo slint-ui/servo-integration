@@ -6,46 +6,75 @@ use webrender_api::{ScrollLocation, units::DevicePoint};
 
 use servo::{InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent};
 
-use crate::state::State;
+use crate::adapter::SlintServoAdapter;
 
-pub fn on_scroll_event(state: Rc<State>) {
+pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
-    state.app.on_scroll_event(move |dx, dy| {
-        let state = state_weak.upgrade().unwrap();
 
-        let webview_ref = state.webview.borrow();
-        let webview = webview_ref.as_ref().unwrap();
+    let app = state
+        .app
+        .upgrade()
+        .expect("Failed to upgrade app weak reference");
+
+    app.on_scroll_event(move |dx, dy| {
+
+        let state = state_weak
+            .upgrade()
+            .expect("Failed to upgrade state weak reference in scroll event");
+
+        let webview = state.webview.borrow();
+        let webview = webview
+            .as_ref()
+            .expect("Webview not initialized for scroll event");
 
         let scale_factor = *state.scale_factor.borrow();
 
-        let mouse_x = state.app.get_mouse_x();
-        let mouse_y = state.app.get_mouse_y();
+        let app = state
+            .app
+            .upgrade()
+            .expect("Failed to upgrade app weak reference in scroll event");
 
-        println!("dx:{dx:?} dy:{dy:?}");
+        let mouse_x = app.get_mouse_x();
+        let mouse_y = app.get_mouse_y();
 
         let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
         let moved_by = Vector2D::new(dx, dy);
+        let servo_delta = -moved_by;
 
-        webview.notify_scroll_event(ScrollLocation::Delta(-moved_by), point.to_i32());
+        webview.notify_scroll_event(ScrollLocation::Delta(servo_delta), point.to_i32());
     });
 }
 
-pub fn on_pointer_event(state: Rc<State>) {
+pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
-    state.app.on_pointer_event(move |event| {
-        let state = state_weak.upgrade().unwrap();
 
-        let webview_ref = state.webview.borrow();
-        let webview = webview_ref.as_ref().unwrap();
+    let app = state
+        .app
+        .upgrade()
+        .expect("Failed to upgrade app weak reference for pointer events");
+
+    app.on_pointer_event(move |event| {
+        let state = state_weak
+            .upgrade()
+            .expect("Failed to upgrade state weak reference in pointer event");
+
+        let webview = state.webview.borrow();
+        let webview = webview
+            .as_ref()
+            .expect("Webview not initialized for pointer event");
 
         let scale_factor = *state.scale_factor.borrow();
 
         let event_str = format!("{:?}", event);
-        // println!("Pointer event: {}", event_str);
 
-        let mouse_x = state.app.get_mouse_x();
-        let mouse_y = state.app.get_mouse_y();
+        let app = state
+            .app
+            .upgrade()
+            .expect("Failed to upgrade app weak reference in pointer event");
+
+        let mouse_x = app.get_mouse_x();
+        let mouse_y = app.get_mouse_y();
 
         let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
@@ -62,30 +91,26 @@ pub fn convert_slint_pointer_event_to_servo_input_event(
     let button = get_mouse_button(event_str);
 
     if event_str.contains("kind: Down") {
-        return InputEvent::MouseButton(MouseButtonEvent::new(
+        InputEvent::MouseButton(MouseButtonEvent::new(
             MouseButtonAction::Down,
             button,
             point,
-        ));
+        ))
     } else if event_str.contains("kind: Up") {
-        return InputEvent::MouseButton(MouseButtonEvent::new(
-            MouseButtonAction::Up,
-            button,
-            point,
-        ));
+        InputEvent::MouseButton(MouseButtonEvent::new(MouseButtonAction::Up, button, point))
     } else {
-        return InputEvent::MouseMove(MouseMoveEvent::new(point));
+        InputEvent::MouseMove(MouseMoveEvent::new(point))
     }
 }
 
 fn get_mouse_button(event_str: &str) -> MouseButton {
     if event_str.contains("button: Left") {
-        return MouseButton::Left;
+        MouseButton::Left
     } else if event_str.contains("button: Right") {
-        return MouseButton::Right;
+        MouseButton::Right
     } else if event_str.contains("button: Middle") {
-        return MouseButton::Middle;
+        MouseButton::Middle
     } else {
-        return MouseButton::Left;
+        MouseButton::Left
     }
 }
