@@ -1,6 +1,4 @@
 mod adapter;
-#[cfg(not(target_os = "android"))]
-mod application_handler;
 mod constants;
 mod debug_helper;
 mod delegate;
@@ -9,19 +7,22 @@ mod rendering_context;
 mod servo_util;
 mod waker;
 
+#[cfg(not(target_os = "android"))]
+mod application_handler;
+
 use smol::channel;
 use std::{cell::RefCell, rc::Rc};
 
-use slint::{
-    ComponentHandle,
-    wgpu_26::{WGPUConfiguration, WGPUSettings, wgpu},
-};
+use slint::ComponentHandle;
 
 use crate::{
     adapter::SlintServoAdapter,
     on_events::{on_pointer_event, on_scroll_event},
     servo_util::{init_servo_webview, spin_servo_event_loop},
 };
+
+#[cfg(not(target_os = "android"))]
+use slint::wgpu_26::{WGPUConfiguration, WGPUSettings, wgpu};
 
 #[cfg(not(target_os = "android"))]
 use crate::application_handler::ApplicationHandler;
@@ -47,14 +48,6 @@ pub fn main() {
             .with_winit_custom_application_handler(application_handler)
             .select()
             .expect("Failed to create Slint backend with WGPU based renderer - ensure your system supports WGPU");
-    }
-
-    #[cfg(target_os = "android")]
-    {
-        // For Android, use the default backend without winit
-        slint::BackendSelector::new()
-            .select()
-            .expect("Failed to create Slint backend for Android");
     }
 
     let app = MyApp::new().expect("Failed to create Slint application - check UI resources");

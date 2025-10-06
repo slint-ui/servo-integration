@@ -1,20 +1,25 @@
 use std::cell::RefCell;
 
 use servo::{Servo, WebView};
-use slint::{ComponentHandle, Weak, wgpu_26::wgpu};
+use slint::{ComponentHandle, Weak};
 use smol::channel::Sender;
 
 use crate::{MyApp, rendering_context::ServoRenderingAdapter};
 
+#[cfg(not(target_os = "android"))]
+use slint::wgpu_26::wgpu;
+
 pub struct SlintServoAdapter {
     pub app: Weak<MyApp>,
     pub waker_sender: Sender<()>,
-    pub device: RefCell<Option<wgpu::Device>>,
-    pub queue: RefCell<Option<wgpu::Queue>>,
     pub scale_factor: RefCell<f32>,
     pub servo: RefCell<Option<Servo>>,
     pub webview: RefCell<Option<WebView>>,
     pub rendering_adapter: RefCell<Option<Box<dyn ServoRenderingAdapter>>>,
+    #[cfg(not(target_os = "android"))]
+    pub device: RefCell<Option<wgpu::Device>>,
+    #[cfg(not(target_os = "android"))]
+    pub queue: RefCell<Option<wgpu::Queue>>,
 }
 
 impl SlintServoAdapter {
@@ -22,12 +27,14 @@ impl SlintServoAdapter {
         Self {
             app,
             waker_sender,
-            device: RefCell::new(None),
-            queue: RefCell::new(None),
             servo: RefCell::new(None),
             webview: RefCell::new(None),
             scale_factor: RefCell::new(1.0),
             rendering_adapter: RefCell::new(None),
+            #[cfg(not(target_os = "android"))]
+            device: RefCell::new(None),
+            #[cfg(not(target_os = "android"))]
+            queue: RefCell::new(None),
         }
     }
 

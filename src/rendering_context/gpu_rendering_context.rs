@@ -4,7 +4,6 @@ use euclid::default::Size2D;
 
 use image::RgbaImage;
 use servo::RenderingContext;
-use slint::wgpu_26::wgpu;
 use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
 
@@ -14,6 +13,9 @@ use surfman::{
 };
 
 use crate::rendering_context::surfman_context::SurfmanRenderingContext;
+
+#[cfg(not(target_os = "android"))]
+use slint::wgpu_26::wgpu;
 
 #[cfg(target_os = "macos")]
 use crate::rendering_context::metal::WPGPUTextureFromMetal;
@@ -86,16 +88,6 @@ impl GPURenderingContext {
             });
 
         Ok(wgpu_texture)
-    }
-
-    #[cfg(not(target_os = "macos"))]
-    pub fn get_wgpu_texture_from_metal(
-        &self,
-        _wgpu_device: &wgpu::Device,
-        _wgpu_queue: &wgpu::Queue,
-    ) -> Result<wgpu::Texture, Error> {
-        // For non-macOS platforms, return an error as metal is not available
-        Err(Error::IncompatibleBackend)
     }
 }
 

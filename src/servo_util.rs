@@ -7,18 +7,19 @@ use winit::dpi::PhysicalSize;
 use smol::channel::{Receiver, Sender};
 
 use slint::ComponentHandle;
-#[cfg(not(target_os = "android"))]
-use slint::winit_030::WinitWindowAccessor;
 
 use servo::{ServoBuilder, WebViewBuilder};
 
-use crate::{
-    constants,
-    delegate::AppDelegate,
-    rendering_context::try_create_gpu_context,
-    adapter::SlintServoAdapter,
-    waker::Waker,
-};
+use crate::{adapter::SlintServoAdapter, constants, delegate::AppDelegate, waker::Waker};
+
+#[cfg(not(target_os = "android"))]
+use slint::winit_030::WinitWindowAccessor;
+
+#[cfg(not(target_os = "android"))]
+use crate::rendering_context::try_create_gpu_context;
+
+#[cfg(target_os = "android")]
+use crate::rendering_context::create_software_context;
 
 pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>, waker_receiver: Receiver<()>) {
     let state_weak = Rc::downgrade(&state);
@@ -80,7 +81,7 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
                 try_create_gpu_context(wgpu_device, wgpu_queue, physical_size).unwrap();
 
             let rendering_context = rendering_adapter.get_rendering_context();
-            
+
             let servo = ServoBuilder::new(rendering_context)
                 .event_loop_waker(Box::new(Waker::new(waker_sender)))
                 .build();
@@ -126,21 +127,11 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
             let physical_size = PhysicalSize::new(800u32, 600u32); // Default size for Android
             let scale_factor = 1.0f32; // Default scale factor
 
-            let wgpu_device = state.device.borrow();
-            let wgpu_device = wgpu_device
-                .as_ref()
-                .expect("WGPU device not initialized - ensure rendering setup completed");
-
-            let wgpu_queue = state.queue.borrow();
-            let wgpu_queue = wgpu_queue
-                .as_ref()
-                .expect("WGPU queue not initialized - ensure rendering setup completed");
-
-            let rendering_adapter =
-                try_create_gpu_context(wgpu_device, wgpu_queue, physical_size).unwrap();
+            // For Android, use software rendering since wgpu is not available
+            let rendering_adapter = create_software_context(physical_size);
 
             let rendering_context = rendering_adapter.get_rendering_context();
-            
+
             let servo = ServoBuilder::new(rendering_context)
                 .event_loop_waker(Box::new(Waker::new(waker_sender)))
                 .build();

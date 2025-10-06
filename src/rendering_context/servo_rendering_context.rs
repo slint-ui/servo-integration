@@ -16,6 +16,7 @@ pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderin
     Box::new(ServoSoftwareRenderingContext { rendering_context })
 }
 
+#[cfg(not(target_os = "android"))]
 pub fn try_create_gpu_context(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
@@ -40,12 +41,14 @@ pub trait ServoRenderingAdapter {
     fn get_rendering_context(&self) -> Rc<dyn RenderingContext>;
 }
 
+#[cfg(not(target_os = "android"))]
 struct ServoGPURenderingContext {
     device: wgpu::Device,
     queue: wgpu::Queue,
     rendering_context: std::rc::Rc<GPURenderingContext>,
 }
 
+#[cfg(not(target_os = "android"))]
 impl ServoRenderingAdapter for ServoGPURenderingContext {
     fn current_framebuffer_as_image(&self) -> Image {
         let texture = self
