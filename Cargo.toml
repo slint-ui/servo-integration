@@ -7,26 +7,48 @@ edition = "2024"
 name = "servo-integration"
 path = "src/main.rs"
 
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
 [dependencies]
 gl = "0.14"
 url = "2.5.2"
+winit = "0.30"
 smol = "2.0.2"
 glow = "0.16.0"
+rustls = "0.23"
 gleam = "0.15.1"
 image = "0.25.8"
-winit = "0.30"
-rustls = "0.23"
+termcolor = "1.4"
 euclid = "0.22.11"
 surfman = "0.10.0"
 time-now = "0.1.2"
+thiserror = "2.0.17"
+foreign-types-shared = "0.3.1"
 
 wgpu-hal = "26.0.4"
 wgpu-core = "26.0.1"
 wgpu = { version = "26.0", features = ["metal"] }
 
-metal = "0.32.0"
-foreign-types-shared = "0.3.1"
+slint = { version = "1.13.1", features = [
+    "unstable-wgpu-26",
+    "unstable-winit-030",
+    "backend-android-activity-06"
+] }
 
+webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
+
+libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }
+embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
+    "baked-default-resources",
+] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+ash = "0.38.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+metal = "0.32.0"
 objc2 = "0.6.2"
 objc2-io-surface = "0.3.1"
 objc2-foundation = "0.3.1"
@@ -36,23 +58,6 @@ objc2-metal = { version = "0.3.1", features = [
     "MTLResource",
     "MTLTexture",
     "objc2-io-surface",
-] }
-
-# Force newer termcolor to be compatible with naga v26
-termcolor = "1.4"
-
-slint = { version = "1.13.1", features = [
-    "unstable-wgpu-26",
-    "unstable-winit-030",
-] }
-# i-slint-core = { version = "1.13.1" }
-
-
-webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
-
-libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }
-embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
-    "baked-default-resources",
 ] }
 
 [build-dependencies]

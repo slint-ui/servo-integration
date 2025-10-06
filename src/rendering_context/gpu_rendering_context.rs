@@ -13,9 +13,10 @@ use surfman::{
     chains::{PreserveBuffer, SwapChain},
 };
 
-use crate::rendering_context::{
-    metal::WPGPUTextureFromMetal, surfman_context::SurfmanRenderingContext,
-};
+use crate::rendering_context::surfman_context::SurfmanRenderingContext;
+
+#[cfg(target_os = "macos")]
+use crate::rendering_context::metal::WPGPUTextureFromMetal;
 
 pub struct GPURenderingContext {
     pub size: Cell<PhysicalSize<u32>>,
@@ -57,6 +58,7 @@ impl GPURenderingContext {
         })
     }
 
+    #[cfg(target_os = "macos")]
     pub fn get_wgpu_texture_from_metal(
         &self,
         wgpu_device: &wgpu::Device,
@@ -69,8 +71,12 @@ impl GPURenderingContext {
 
         let size = self.size.get();
 
-        let wgpu_texture =
-            WPGPUTextureFromMetal::new(size, wgpu_device).get(wgpu_device, wgpu_queue, device, &surface);
+        let wgpu_texture = WPGPUTextureFromMetal::new(size, wgpu_device).get(
+            wgpu_device,
+            wgpu_queue,
+            device,
+            &surface,
+        );
 
         let _ = device
             .bind_surface_to_context(&mut context, surface)
@@ -80,6 +86,16 @@ impl GPURenderingContext {
             });
 
         Ok(wgpu_texture)
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    pub fn get_wgpu_texture_from_metal(
+        &self,
+        _wgpu_device: &wgpu::Device,
+        _wgpu_queue: &wgpu::Queue,
+    ) -> Result<wgpu::Texture, Error> {
+        // For non-macOS platforms, return an error as metal is not available
+        Err(Error::IncompatibleBackend)
     }
 }
 

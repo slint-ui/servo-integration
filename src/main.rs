@@ -1,3 +1,4 @@
+mod adapter;
 mod application_handler;
 mod constants;
 mod debug_helper;
@@ -5,7 +6,6 @@ mod delegate;
 mod on_events;
 mod rendering_context;
 mod servo_util;
-mod adapter;
 mod waker;
 
 use smol::channel;
@@ -17,15 +17,26 @@ use slint::{
 };
 
 use crate::{
+    adapter::SlintServoAdapter,
     application_handler::ApplicationHandler,
     on_events::{on_pointer_event, on_scroll_event},
     servo_util::{init_servo_webview, spin_servo_event_loop},
-    adapter::SlintServoAdapter,
 };
 
 slint::include_modules!();
 
 fn main() {
+    main_code();
+}
+
+#[cfg(target_os = "android")]
+#[unsafe(no_mangle)]
+fn android_main(app: slint::android::AndroidApp) {
+    slint::android::init(app).unwrap();
+    main_code();
+}
+
+fn main_code() {
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
     let state_placeholder = Rc::new(RefCell::new(None));
