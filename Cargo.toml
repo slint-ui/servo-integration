@@ -28,20 +28,14 @@ time-now = "0.1.2"
 thiserror = "2.0.17"
 foreign-types-shared = "0.3.1"
 
-slint = { version = "1.13.1", features = [
-    "unstable-winit-030",
-    "unstable-wgpu-26",
-    "backend-android-activity-06",
-] }
-
 wgpu-hal = "26.0.4"
 wgpu-core = "26.0.1"
 wgpu = { version = "26.0.1", features = ["metal"] }
 
 webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
 
-libservo = { git = "https://github.com/servo/servo" }
-embedder_traits = { git = "https://github.com/servo/servo", features = [
+libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }
+embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
     "baked-default-resources",
 ] }
 
@@ -59,6 +53,15 @@ objc2-metal = { version = "0.3.2", features = [
     "MTLResource",
     "MTLTexture",
     "objc2-io-surface",
+] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+slint = { version = "1.13.1", features = ["backend-android-activity-06"] }
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+slint = { version = "1.13.1", features = [
+    "unstable-winit-030",
+    "unstable-wgpu-26",
 ] }
 
 [build-dependencies]
