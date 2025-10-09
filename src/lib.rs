@@ -19,7 +19,6 @@ mod gl_bindings {
 
 use smol::channel;
 use std::{cell::RefCell, rc::Rc};
-
 use slint::ComponentHandle;
 
 #[cfg(not(target_os = "android"))]
@@ -67,8 +66,6 @@ pub fn main() {
 
     app.window()
         .set_rendering_notifier(move |state, graphics_api| {
-            //eprintln!("rendering state {:#?} {:#?}", state, graphics_api);
-
             match state {
                 slint::RenderingState::RenderingSetup => {
                     #[cfg(not(target_os = "android"))]

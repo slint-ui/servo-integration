@@ -6,6 +6,7 @@ use slint::{Image, SharedPixelBuffer};
 use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
 
+#[cfg(not(target_os = "android"))]
 use crate::rendering_context::GPURenderingContext;
 
 pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAdapter> {

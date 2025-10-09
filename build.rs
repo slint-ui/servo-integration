@@ -1,14 +1,15 @@
 #[cfg(target_os = "linux")]
-extern crate gl_generator;
-
-#[cfg(target_os = "linux")]
-use gl_generator::{Api, Fallbacks, Profile, Registry, StructGenerator};
-#[cfg(target_os = "linux")]
 use std::env;
 #[cfg(target_os = "linux")]
 use std::fs::File;
 #[cfg(target_os = "linux")]
 use std::path::Path;
+
+#[cfg(target_os = "linux")]
+use gl_generator::{Api, Fallbacks, Profile, Registry, StructGenerator};
+
+#[cfg(target_os = "linux")]
+extern crate gl_generator;
 
 fn main() {
     #[cfg(target_os = "linux")]

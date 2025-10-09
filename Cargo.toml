@@ -32,12 +32,6 @@ wgpu-hal = "26.0.4"
 wgpu-core = "26.0.1"
 wgpu = { version = "26.0.1", features = ["metal"] }
 
-# slint = { version = "1.13.1", features = [
-#     "unstable-wgpu-26",
-#     "unstable-winit-030",
-#     "backend-android-activity-06"
-# ] }
-
 webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
 
 libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }

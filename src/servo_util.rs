@@ -77,15 +77,8 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
                 .as_ref()
                 .expect("WGPU queue not initialized - ensure rendering setup completed");
 
-            #[cfg(not(target_os = "android"))]
             let rendering_adapter =
                 try_create_gpu_context(wgpu_device, wgpu_queue, physical_size).unwrap();
-
-            #[cfg(target_os = "android")]
-            let rendering_adapter = {
-                let physical_size = PhysicalSize::new(800, 600);
-                create_software_context(physical_size)
-            };
 
             let rendering_context = rendering_adapter.get_rendering_context();
 
@@ -131,8 +124,8 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
                 .expect("Failed to upgrade app weak reference in servo init");
 
             // For Android, use default size since we don't have winit window access
-            let physical_size = PhysicalSize::new(800, 600); // Default size for Android
-            let scale_factor = 1.0f32; // Default scale factor
+            let physical_size = PhysicalSize::new(1280, 800); // Default size for Android
+            let scale_factor = 1.0; // Default scale factor
 
             // For Android, use software rendering since wgpu is not available
             let rendering_adapter = create_software_context(physical_size);
