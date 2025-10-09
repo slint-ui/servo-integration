@@ -7,6 +7,11 @@ edition = "2024"
 name = "servo-integration"
 path = "src/main.rs"
 
+[lib]
+name = "servo_integration_lib"
+path = "src/lib.rs"
+crate-type = ["rlib", "cdylib"]
+
 [dependencies]
 gl = "0.14.0"
 url = "2.5.7"
