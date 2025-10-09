@@ -4,6 +4,9 @@ use servo::{Servo, WebView};
 use slint::{ComponentHandle, Weak};
 use smol::channel::Sender;
 
+#[cfg(not(target_os = "android"))]
+use slint::wgpu_26::wgpu;
+
 use crate::{MyApp, rendering_context::ServoRenderingAdapter};
 
 #[cfg(not(target_os = "android"))]

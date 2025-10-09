@@ -10,10 +10,10 @@ use slint::ComponentHandle;
 
 use servo::{ServoBuilder, WebViewBuilder};
 
-use crate::{adapter::SlintServoAdapter, constants, delegate::AppDelegate, waker::Waker};
-
 #[cfg(not(target_os = "android"))]
 use slint::winit_030::WinitWindowAccessor;
+
+use crate::{adapter::SlintServoAdapter, constants, delegate::AppDelegate, waker::Waker};
 
 #[cfg(not(target_os = "android"))]
 use crate::rendering_context::try_create_gpu_context;
@@ -124,8 +124,8 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
                 .expect("Failed to upgrade app weak reference in servo init");
 
             // For Android, use default size since we don't have winit window access
-            let physical_size = PhysicalSize::new(800u32, 600u32); // Default size for Android
-            let scale_factor = 1.0f32; // Default scale factor
+            let physical_size = PhysicalSize::new(1280, 800); // Default size for Android
+            let scale_factor = 1.0; // Default scale factor
 
             // For Android, use software rendering since wgpu is not available
             let rendering_adapter = create_software_context(physical_size);

@@ -10,22 +10,28 @@ mod waker;
 #[cfg(not(target_os = "android"))]
 mod application_handler;
 
+#[cfg(target_os = "linux")]
+mod gl_bindings {
+    #![allow(unsafe_op_in_unsafe_fn)]
+
+    include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
+}
+
 use smol::channel;
 use std::{cell::RefCell, rc::Rc};
-
 use slint::ComponentHandle;
-
-use crate::{
-    adapter::SlintServoAdapter,
-    on_events::{on_pointer_event, on_scroll_event},
-    servo_util::{init_servo_webview, spin_servo_event_loop},
-};
 
 #[cfg(not(target_os = "android"))]
 use slint::wgpu_26::{WGPUConfiguration, WGPUSettings, wgpu};
 
 #[cfg(not(target_os = "android"))]
 use crate::application_handler::ApplicationHandler;
+
+use crate::{
+    adapter::SlintServoAdapter,
+    on_events::{on_pointer_event, on_scroll_event},
+    servo_util::{init_servo_webview, spin_servo_event_loop},
+};
 
 slint::include_modules!();
 
@@ -44,10 +50,10 @@ pub fn main() {
             constants::MAX_PUSH_CONSTANT_SIZE;
 
         slint::BackendSelector::new()
-            .require_wgpu_26(WGPUConfiguration::Automatic(wgpu_settings))
-            .with_winit_custom_application_handler(application_handler)
-            .select()
-            .expect("Failed to create Slint backend with WGPU based renderer - ensure your system supports WGPU");
+        .require_wgpu_26(WGPUConfiguration::Automatic(wgpu_settings))
+        .with_winit_custom_application_handler(application_handler)
+        .select()
+        .expect("Failed to create Slint backend with WGPU based renderer - ensure your system supports WGPU");
     }
 
     let app = MyApp::new().expect("Failed to create Slint application - check UI resources");
@@ -59,20 +65,22 @@ pub fn main() {
     let state_weak = Rc::downgrade(&state);
 
     app.window()
-        .set_rendering_notifier(move |state, graphics_api| match state {
-            slint::RenderingState::RenderingSetup => {
-                #[cfg(not(target_os = "android"))]
-                if let slint::GraphicsAPI::WGPU26 { device, queue, .. } = graphics_api {
-                    if let Some(state) = state_weak.upgrade() {
-                        *state.device.borrow_mut() = Some(device.clone());
-                        *state.queue.borrow_mut() = Some(queue.clone());
+        .set_rendering_notifier(move |state, graphics_api| {
+            match state {
+                slint::RenderingState::RenderingSetup => {
+                    #[cfg(not(target_os = "android"))]
+                    if let slint::GraphicsAPI::WGPU26 { device, queue, .. } = graphics_api {
+                        if let Some(state) = state_weak.upgrade() {
+                            *state.device.borrow_mut() = Some(device.clone());
+                            *state.queue.borrow_mut() = Some(queue.clone());
+                        }
                     }
                 }
+                slint::RenderingState::BeforeRendering => {}
+                slint::RenderingState::AfterRendering => {}
+                slint::RenderingState::RenderingTeardown => {}
+                _ => {}
             }
-            slint::RenderingState::BeforeRendering => {}
-            slint::RenderingState::AfterRendering => {}
-            slint::RenderingState::RenderingTeardown => {}
-            _ => {}
         })
         .expect("Failed to set rendering notifier - WGPU integration may not be available");
 

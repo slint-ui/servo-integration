@@ -6,6 +6,7 @@ use slint::{Image, SharedPixelBuffer};
 use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
 
+#[cfg(not(target_os = "android"))]
 use crate::rendering_context::GPURenderingContext;
 
 pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAdapter> {
@@ -26,14 +27,21 @@ pub fn try_create_gpu_context(
         return Some(create_software_context(size));
     }
 
-    let rendering_context =
-        Rc::new(GPURenderingContext::new(size).expect("Failed to create GPU rendering context"));
-
-    Some(Box::new(ServoGPURenderingContext {
-        device: device.clone(),
-        queue: queue.clone(),
-        rendering_context,
-    }))
+    // Try to create GPU rendering context, fall back to software if it fails
+    match GPURenderingContext::new(size) {
+        Ok(gpu_context) => {
+            let rendering_context = Rc::new(gpu_context);
+            Some(Box::new(ServoGPURenderingContext {
+                device: device.clone(),
+                queue: queue.clone(),
+                rendering_context,
+            }))
+        }
+        Err(_) => {
+            // GPU rendering context creation failed, fall back to software rendering
+            Some(create_software_context(size))
+        }
+    }
 }
 
 pub trait ServoRenderingAdapter {
@@ -51,6 +59,14 @@ struct ServoGPURenderingContext {
 #[cfg(not(target_os = "android"))]
 impl ServoRenderingAdapter for ServoGPURenderingContext {
     fn current_framebuffer_as_image(&self) -> Image {
+        #[cfg(target_os = "linux")]
+        let texture = self.rendering_context
+            .get_wgpu_texture_from_vulkan(&self.device, &self.queue)
+            .expect(
+                "Failed to get WGPU texture from Vulkan texture - ensure rendering context is valid",
+            );
+
+        #[cfg(target_vendor = "apple")]
         let texture = self
             .rendering_context
             .get_wgpu_texture_from_metal(&self.device, &self.queue)

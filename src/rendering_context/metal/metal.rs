@@ -119,7 +119,7 @@ impl WPGPUTextureFromMetal {
     }
 
     /// Creates a WGPU texture descriptor with standard settings for this use case.
-    pub fn create_wgpu_texture_descriptor(
+    fn create_wgpu_texture_descriptor(
         size: PhysicalSize<u32>,
         label: &str,
         usage: wgpu::TextureUsages,
