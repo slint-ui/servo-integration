@@ -8,7 +8,7 @@ use winit::dpi::PhysicalSize;
 
 use crate::rendering_context::GPURenderingContext;
 
-fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAdapter> {
+pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAdapter> {
     let rendering_context = Rc::new(
         SoftwareRenderingContext::new(size).expect("Failed to create software rendering context"),
     );
@@ -16,6 +16,7 @@ fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderingAda
     Box::new(ServoSoftwareRenderingContext { rendering_context })
 }
 
+#[cfg(not(target_os = "android"))]
 pub fn try_create_gpu_context(
     device: &wgpu::Device,
     queue: &wgpu::Queue,
@@ -47,12 +48,14 @@ pub trait ServoRenderingAdapter {
     fn get_rendering_context(&self) -> Rc<dyn RenderingContext>;
 }
 
+#[cfg(not(target_os = "android"))]
 struct ServoGPURenderingContext {
     device: wgpu::Device,
     queue: wgpu::Queue,
     rendering_context: std::rc::Rc<GPURenderingContext>,
 }
 
+#[cfg(not(target_os = "android"))]
 impl ServoRenderingAdapter for ServoGPURenderingContext {
     fn current_framebuffer_as_image(&self) -> Image {
         #[cfg(target_os = "linux")]

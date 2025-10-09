@@ -32,11 +32,11 @@ wgpu-hal = "26.0.4"
 wgpu-core = "26.0.1"
 wgpu = { version = "26.0.1", features = ["metal"] }
 
-slint = { version = "1.13.1", features = [
-    "unstable-wgpu-26",
-    "unstable-winit-030",
-    "backend-android-activity-06"
-] }
+# slint = { version = "1.13.1", features = [
+#     "unstable-wgpu-26",
+#     "unstable-winit-030",
+#     "backend-android-activity-06"
+# ] }
 
 webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
 
@@ -47,6 +47,15 @@ embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ash = "0.38.0"
+
+[target.'cfg(target_os = "android")'.dependencies]
+slint = { version = "1.13.1", features = ["backend-android-activity-06"] }
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+slint = { version = "1.13.1", features = [
+    "unstable-winit-030",
+    "unstable-wgpu-26",
+] }
 
 [target.'cfg(target_vendor = "apple")'.dependencies]
 metal = "0.32.0"
@@ -66,3 +75,6 @@ slint-build = { version = "1.13.1" }
 
 [target.'cfg(target_os = "linux")'.build-dependencies]
 gl_generator = "0.14.0"
+
+[[package.metadata.android.uses_permission]]
+name = "android.permission.INTERNET"
