@@ -9,9 +9,6 @@ use slint::wgpu_26::wgpu;
 
 use crate::{MyApp, rendering_context::ServoRenderingAdapter};
 
-#[cfg(not(target_os = "android"))]
-use slint::wgpu_26::wgpu;
-
 pub struct SlintServoAdapter {
     pub app: Weak<MyApp>,
     pub waker_sender: Sender<()>,
