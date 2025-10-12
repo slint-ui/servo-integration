@@ -1,12 +1,9 @@
 use std::rc::Rc;
 
 use euclid::Scale;
+use slint::ComponentHandle;
 use url::Url;
 use winit::dpi::PhysicalSize;
-
-use smol::channel::{Receiver, Sender};
-
-use slint::ComponentHandle;
 
 use servo::{ServoBuilder, WebViewBuilder};
 

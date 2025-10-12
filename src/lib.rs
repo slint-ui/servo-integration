@@ -17,8 +17,8 @@ mod gl_bindings {
     include!(concat!(env!("OUT_DIR"), "/gl_bindings.rs"));
 }
 
-use slint::{ComponentHandle, Weak};
-use smol::channel::{Receiver, Sender, unbounded};
+use slint::ComponentHandle;
+use smol::channel;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
@@ -46,7 +46,7 @@ use {
 
 #[cfg(not(target_os = "android"))]
 pub fn main() {
-    let (waker_sender, waker_receiver) = unbounded::<()>();
+    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
     let state_placeholder = Rc::new(RefCell::new(None));
 
@@ -124,7 +124,7 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 
     let app_weak = app.as_weak();
 
-    let (waker_sender, waker_receiver) = unbounded::<()>();
+    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
     let state = Rc::new(SlintServoAdapter::new(
         app_weak,
