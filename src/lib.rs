@@ -41,7 +41,7 @@ use {
     crate::servo_util::android_init_servo_webview,
     i_slint_backend_android_activity::AndroidPlatform,
     i_slint_backend_android_activity::android_activity::MainEvent,
-    i_slint_backend_android_activity::android_activity::PollEvent, winit::dpi::PhysicalSize,
+    i_slint_backend_android_activity::android_activity::PollEvent,
 };
 
 #[cfg(not(target_os = "android"))]
@@ -118,7 +118,7 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 
     let listener_handle = platform.event_listener_handle();
 
-    slint::platform::set_platform(Box::new(platform));
+    slint::platform::set_platform(Box::new(platform)).unwrap();
 
     let app = MyApp::new().expect("Failed to create Slint application - check UI resources");
 
@@ -138,7 +138,7 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
         on_android_event(event, state_clone.clone());
     });
 
-    spin_servo_event_loop(state.clone(), waker_receiver);
+    spin_servo_event_loop(state.clone());
 
     on_scroll_event(state.clone());
 
