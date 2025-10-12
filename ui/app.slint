@@ -12,6 +12,11 @@ export component MyApp inherits Window {
     callback scroll_event(length, length);
     callback pointer_event(PointerEvent);
 
+    callback back();
+    callback forward();
+    callback reload();
+    callback go();
+
     VerticalBox {
         padding: 0px;
         spacing: 0px;
@@ -22,16 +27,24 @@ export component MyApp inherits Window {
             spacing: 8px;
 
             Button {
-                horizontal-stretch: 0;
                 text: "Back";
+                clicked => {
+                    back();
+                }
             }
 
             Button {
                 text: "Forward";
+                clicked => {
+                    forward();
+                }
             }
 
             Button {
                 text: "Reload";
+                clicked => {
+                    reload();
+                }
             }
 
             Rectangle {
@@ -46,6 +59,9 @@ export component MyApp inherits Window {
 
             Button {
                 text: "Go";
+                clicked => {
+                    go();
+                }
             }
         }
 

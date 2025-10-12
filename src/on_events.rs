@@ -9,6 +9,56 @@ use servo::{
 
 use crate::adapter::SlintServoAdapter;
 
+pub fn on_buttons(state: Rc<SlintServoAdapter>) {
+    let state_weak = Rc::downgrade(&state);
+
+    let app = state
+        .app
+        .upgrade()
+        .expect("Failed to upgrade app weak reference");
+
+    app.on_back(move || {
+        let state = state_weak
+            .upgrade()
+            .expect("Failed to upgrade state weak reference in scroll event");
+
+        let webview = state.webview.borrow();
+        let webview = webview
+            .as_ref()
+            .expect("Webview not initialized for scroll event");
+
+        webview.go_back(1);
+    });
+
+    let state_weak = Rc::downgrade(&state);
+    app.on_forward(move || {
+        let state = state_weak
+            .upgrade()
+            .expect("Failed to upgrade state weak reference in scroll event");
+
+        let webview = state.webview.borrow();
+        let webview = webview
+            .as_ref()
+            .expect("Webview not initialized for scroll event");
+
+        webview.go_forward(1);
+    });
+
+    let state_weak = Rc::downgrade(&state);
+    app.on_reload(move || {
+        let state = state_weak
+            .upgrade()
+            .expect("Failed to upgrade state weak reference in scroll event");
+
+        let webview = state.webview.borrow();
+        let webview = webview
+            .as_ref()
+            .expect("Webview not initialized for scroll event");
+
+        webview.reload();
+    });
+}
+
 pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 

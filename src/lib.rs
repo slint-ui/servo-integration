@@ -23,7 +23,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     adapter::SlintServoAdapter,
-    on_events::{on_pointer_event, on_scroll_event},
+    on_events::{on_buttons, on_pointer_event, on_scroll_event},
     servo_util::spin_servo_event_loop,
 };
 
@@ -106,6 +106,8 @@ pub fn main() {
     on_scroll_event(state.clone());
 
     on_pointer_event(state.clone());
+
+    on_buttons(state.clone());
 
     app.run()
         .expect("Application failed to run - check for runtime errors");
