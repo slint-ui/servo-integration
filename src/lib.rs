@@ -99,9 +99,9 @@ pub fn main() {
     // Update the placeholder with the actual state
     *state_placeholder.borrow_mut() = Some(state.clone());
 
-    init_servo_webview(state.clone(), waker_sender);
+    init_servo_webview(state.clone());
 
-    spin_servo_event_loop(state.clone(), waker_receiver);
+    spin_servo_event_loop(state.clone());
 
     on_scroll_event(state.clone());
 
@@ -133,10 +133,9 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     ));
 
     let state_clone = state.clone();
-    let waker_sender_clone = waker_sender.clone();
 
     listener_handle.set(move |event| {
-        on_android_event(event, state_clone.clone(), waker_sender_clone.clone());
+        on_android_event(event, state_clone.clone());
     });
 
     spin_servo_event_loop(state.clone(), waker_receiver);
@@ -150,15 +149,11 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 }
 
 #[cfg(target_os = "android")]
-fn on_android_event(
-    poll_event: &PollEvent<'_>,
-    state: Rc<SlintServoAdapter>,
-    waker_sender: Sender<()>,
-) {
+fn on_android_event(poll_event: &PollEvent<'_>, state: Rc<SlintServoAdapter>) {
     match poll_event {
         PollEvent::Main(main_event) => match main_event {
             MainEvent::InitWindow { .. } => {
-                android_init_servo_webview(state.clone(), waker_sender);
+                android_init_servo_webview(state.clone());
             }
             MainEvent::InputAvailable => {
                 let _ = state.waker_sender.try_send(());

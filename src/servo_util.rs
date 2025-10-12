@@ -21,7 +21,7 @@ use crate::rendering_context::try_create_gpu_context;
 #[cfg(target_os = "android")]
 use crate::rendering_context::create_software_context;
 
-pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>, waker_receiver: Receiver<()>) {
+pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({
@@ -31,7 +31,7 @@ pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>, waker_receiver: Recei
                 .expect("Failed to upgrade state weak reference in servo event loop");
 
             loop {
-                let _ = waker_receiver.recv().await;
+                let _ = state.waker_receiver.recv().await;
                 if let Some(ref servo) = *state.servo.borrow() {
                     servo.spin_event_loop();
                 }
@@ -42,7 +42,7 @@ pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>, waker_receiver: Recei
 }
 
 #[cfg(not(target_os = "android"))]
-pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>) {
+pub fn init_servo_webview(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({
@@ -83,7 +83,7 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
             let rendering_context = rendering_adapter.get_rendering_context();
 
             let servo = ServoBuilder::new(rendering_context)
-                .event_loop_waker(Box::new(Waker::new(waker_sender)))
+                .event_loop_waker(Box::new(Waker::new(state.waker_sender.clone())))
                 .build();
 
             let url = Url::parse(constants::DEFAULT_URL).expect("Failed to parse default URL");
@@ -109,7 +109,7 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
 }
 
 #[cfg(target_os = "android")]
-pub fn android_init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>) {
+pub fn android_init_servo_webview(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({
@@ -136,7 +136,7 @@ pub fn android_init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Se
             let rendering_context = rendering_adapter.get_rendering_context();
 
             let servo = ServoBuilder::new(rendering_context)
-                .event_loop_waker(Box::new(Waker::new(waker_sender)))
+                .event_loop_waker(Box::new(Waker::new(state.waker_sender.clone())))
                 .build();
 
             let url = Url::parse(constants::DEFAULT_URL).expect("Failed to parse default URL");
