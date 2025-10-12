@@ -22,24 +22,30 @@ export component MyApp inherits Window {
             spacing: 8px;
 
             Button {
-                width: 35px;
-                text: "<";
+                horizontal-stretch: 0;
+                text: "Back";
             }
 
             Button {
-                width: 35px;
-                text: ">";
+                text: "Forward";
             }
 
             Button {
-                width: 35px;
+                text: "Reload";
+            }
+
+            Rectangle {
+                background: #636366;
+                border-radius: 4px;
+                TextInput {
+                    text: "Url Bar";
+                    horizontal-stretch: 1;
+                    vertical-alignment: TextVerticalAlignment.center;
+                }
+            }
+
+            Button {
                 text: "Go";
-            }
-
-            Text {
-                width: 100px;
-                text: "Text from slint";
-                vertical-alignment: TextVerticalAlignment.center;
             }
         }
 
