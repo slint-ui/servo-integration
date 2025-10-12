@@ -146,6 +146,8 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 
     on_pointer_event(state.clone());
 
+    on_buttons(state.clone());
+
     app.run()
         .expect("Application failed to run - check for runtime errors");
 }
