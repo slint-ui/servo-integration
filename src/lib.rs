@@ -136,11 +136,14 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
     let waker_sender_clone = waker_sender.clone();
 
     listener_handle.set(move |event| {
-        // eprintln!("Event: {event:?}");
         on_android_event(event, state_clone.clone(), waker_sender_clone.clone());
     });
 
     spin_servo_event_loop(state.clone(), waker_receiver);
+
+    on_scroll_event(state.clone());
+
+    on_pointer_event(state.clone());
 
     app.run()
         .expect("Application failed to run - check for runtime errors");
@@ -156,6 +159,9 @@ fn on_android_event(
         PollEvent::Main(main_event) => match main_event {
             MainEvent::InitWindow { .. } => {
                 android_init_servo_webview(state.clone(), waker_sender);
+            }
+            MainEvent::InputAvailable => {
+                let _ = state.waker_sender.try_send(());
             }
             _ => {}
         },
