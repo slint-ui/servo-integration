@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use servo::{Servo, WebView};
 use slint::{ComponentHandle, Weak};
-use smol::channel::Sender;
+use smol::channel::{Receiver, Sender};
 
 #[cfg(not(target_os = "android"))]
 use slint::wgpu_27::wgpu;
@@ -12,6 +12,7 @@ use crate::{MyApp, rendering_context::ServoRenderingAdapter};
 pub struct SlintServoAdapter {
     pub app: Weak<MyApp>,
     pub waker_sender: Sender<()>,
+    pub waker_receiver: Receiver<()>,
     pub scale_factor: RefCell<f32>,
     pub servo: RefCell<Option<Servo>>,
     pub webview: RefCell<Option<WebView>>,
@@ -23,10 +24,11 @@ pub struct SlintServoAdapter {
 }
 
 impl SlintServoAdapter {
-    pub fn new(app: Weak<MyApp>, waker_sender: Sender<()>) -> Self {
+    pub fn new(app: Weak<MyApp>, waker_sender: Sender<()>, waker_receiver: Receiver<()>) -> Self {
         Self {
             app,
             waker_sender,
+            waker_receiver,
             servo: RefCell::new(None),
             webview: RefCell::new(None),
             scale_factor: RefCell::new(1.0),

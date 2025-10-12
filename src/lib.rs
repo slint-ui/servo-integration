@@ -18,7 +18,7 @@ mod gl_bindings {
 }
 
 use slint::{ComponentHandle, Weak};
-use smol::channel;
+use smol::channel::{Receiver, Sender, unbounded};
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
@@ -46,7 +46,7 @@ use {
 
 #[cfg(not(target_os = "android"))]
 pub fn main() {
-    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
+    let (waker_sender, waker_receiver) = unbounded::<()>();
 
     let state_placeholder = Rc::new(RefCell::new(None));
 
@@ -70,7 +70,11 @@ pub fn main() {
 
     let app_weak = app.as_weak();
 
-    let state = Rc::new(SlintServoAdapter::new(app_weak, waker_sender.clone()));
+    let state = Rc::new(SlintServoAdapter::new(
+        app_weak,
+        waker_sender.clone(),
+        waker_receiver.clone(),
+    ));
 
     let state_weak = Rc::downgrade(&state);
 
@@ -110,38 +114,6 @@ pub fn main() {
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 pub fn android_main(android_app: slint::android::AndroidApp) {
-    // before_window_initilized(android_app);
-    after_window_initialized(android_apps);
-}
-
-#[cfg(target_os = "android")]
-fn before_window_initilized(android_app: slint::android::AndroidApp) {
-    slint::android::init(android_app).unwrap();
-
-    let app = MyApp::new().expect("Failed to create Slint application - check UI resources");
-
-    let app_weak = app.as_weak();
-
-    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
-
-    let state = Rc::new(SlintServoAdapter::new(app_weak, waker_sender.clone()));
-
-    let state_weak = Rc::downgrade(&state);
-
-    android_init_servo_webview(state.clone(), waker_sender);
-
-    spin_servo_event_loop(state.clone(), waker_receiver);
-
-    app.run()
-        .expect("Application failed to run - check for runtime errors");
-}
-
-thread_local! {
-    static SERVO_STATE: RefCell<Option<Rc<SlintServoAdapter>>> = RefCell::new(None);
-}
-
-#[cfg(target_os = "android")]
-fn after_window_initialized(android_app: slint::android::AndroidApp) {
     let mut platform = AndroidPlatform::new(android_app.clone());
 
     let listener_handle = platform.event_listener_handle();
@@ -152,10 +124,23 @@ fn after_window_initialized(android_app: slint::android::AndroidApp) {
 
     let app_weak = app.as_weak();
 
+    let (waker_sender, waker_receiver) = unbounded::<()>();
+
+    let state = Rc::new(SlintServoAdapter::new(
+        app_weak,
+        waker_sender.clone(),
+        waker_receiver.clone(),
+    ));
+
+    let state_clone = state.clone();
+    let waker_sender_clone = waker_sender.clone();
+
     listener_handle.set(move |event| {
         // eprintln!("Event: {event:?}");
-        on_android_event(event, app_weak.clone(), android_app.clone());
+        on_android_event(event, state_clone.clone(), waker_sender_clone.clone());
     });
+
+    spin_servo_event_loop(state.clone(), waker_receiver);
 
     app.run()
         .expect("Application failed to run - check for runtime errors");
@@ -164,34 +149,13 @@ fn after_window_initialized(android_app: slint::android::AndroidApp) {
 #[cfg(target_os = "android")]
 fn on_android_event(
     poll_event: &PollEvent<'_>,
-    app_weak: Weak<MyApp>,
-    android_app: slint::android::AndroidApp,
+    state: Rc<SlintServoAdapter>,
+    waker_sender: Sender<()>,
 ) {
     match poll_event {
         PollEvent::Main(main_event) => match main_event {
             MainEvent::InitWindow { .. } => {
-                println!("Window initialized!");
-
-                let native_window = android_app.native_window().unwrap();
-
-                let (waker_sender, waker_receiver) = channel::unbounded::<()>();
-
-                let state = Rc::new(SlintServoAdapter::new(app_weak, waker_sender.clone()));
-
-                // Store it so it doesn't get dropped
-                SERVO_STATE.with(|s| {
-                    *s.borrow_mut() = Some(state.clone());
-                });
-
                 android_init_servo_webview(state.clone(), waker_sender);
-
-                spin_servo_event_loop(state, waker_receiver);
-            }
-            MainEvent::Destroy => {
-                println!("Window destroyed, cleaning up servo state");
-                SERVO_STATE.with(|s| {
-                    *s.borrow_mut() = None;
-                });
             }
             _ => {}
         },
