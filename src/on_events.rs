@@ -2,9 +2,10 @@ use std::rc::Rc;
 
 use euclid::Vector2D;
 
-use webrender_api::{ScrollLocation, units::DevicePoint};
-
-use servo::{InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent};
+use servo::{
+    InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent,
+    webrender_api::{ScrollLocation, units::DevicePoint},
+};
 
 use crate::adapter::SlintServoAdapter;
 
@@ -17,7 +18,6 @@ pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
         .expect("Failed to upgrade app weak reference");
 
     app.on_scroll_event(move |dx, dy| {
-
         let state = state_weak
             .upgrade()
             .expect("Failed to upgrade state weak reference in scroll event");

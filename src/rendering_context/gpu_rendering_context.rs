@@ -1,20 +1,18 @@
 use std::{cell::Cell, rc::Rc, sync::Arc};
 
 use euclid::default::Size2D;
-
 use image::RgbaImage;
-use servo::RenderingContext;
-use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
+
+use servo::{RenderingContext, webrender_api::units::DeviceIntRect};
 
 use surfman::{
     Connection, Device, Surface, SurfaceTexture, SurfaceType,
     chains::{PreserveBuffer, SwapChain},
 };
 
-
 #[cfg(not(target_os = "android"))]
-use slint::wgpu_26::wgpu;
+use slint::wgpu_27::wgpu;
 
 #[cfg(target_os = "linux")]
 #[derive(thiserror::Error, Debug)]

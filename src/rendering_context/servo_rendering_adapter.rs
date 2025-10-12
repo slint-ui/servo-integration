@@ -1,10 +1,11 @@
 use std::rc::Rc;
 
 use euclid::Point2D;
-use servo::{RenderingContext, SoftwareRenderingContext};
-use slint::{Image, SharedPixelBuffer};
-use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
+
+use slint::{Image, SharedPixelBuffer};
+
+use servo::{RenderingContext, SoftwareRenderingContext, webrender_api::units::DeviceIntRect};
 
 #[cfg(not(target_os = "android"))]
 use crate::rendering_context::GPURenderingContext;

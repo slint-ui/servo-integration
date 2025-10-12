@@ -109,7 +109,7 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
 }
 
 #[cfg(target_os = "android")]
-pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>) {
+pub fn android_init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>) {
     let state_weak = Rc::downgrade(&state);
 
     slint::spawn_local({
@@ -123,11 +123,14 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>, waker_sender: Sender<()>
                 .upgrade()
                 .expect("Failed to upgrade app weak reference in servo init");
 
-            // For Android, use default size since we don't have winit window access
-            let physical_size = PhysicalSize::new(1280, 800); // Default size for Android
-            let scale_factor = 1.0; // Default scale factor
+            let window = app.window();
 
-            // For Android, use software rendering since wgpu is not available
+            let window_size = window.size();
+
+            let scale_factor = window.scale_factor() as f32;
+
+            let physical_size = PhysicalSize::new(window_size.width, window_size.height);
+
             let rendering_adapter = create_software_context(physical_size);
 
             let rendering_context = rendering_adapter.get_rendering_context();

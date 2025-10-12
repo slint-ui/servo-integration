@@ -1,20 +1,22 @@
 [package]
-name = "servo-integration"
+name = "servo_integration"
 version = "0.1.0"
 edition = "2024"
-
-[[bin]]
-name = "servo-integration"
-path = "src/main.rs"
+build = "src/build.rs"
 
 [lib]
 name = "servo_integration_lib"
 path = "src/lib.rs"
 crate-type = ["rlib", "cdylib"]
 
+[[bin]]
+name = "servo_integration"
+path = "src/main.rs"
+
 [dependencies]
 gl = "0.14.0"
 url = "2.5.7"
+log = "0.4.28"
 smol = "2.0.2"
 glow = "0.16.0"
 gleam = "0.15.1"
@@ -28,14 +30,12 @@ termcolor = "1.4.1"
 thiserror = "2.0.17"
 foreign-types-shared = "0.3.1"
 
-wgpu-hal = "26.0.4"
-wgpu-core = "26.0.1"
-wgpu = { version = "26.0.1", features = ["metal"] }
+wgpu-hal = "27.0.2"
+wgpu-core = "27.0.1"
+wgpu = { version = "27.0.1", features = ["metal"] }
 
-webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
-
-libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }
-embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
+libservo = { git = "https://github.com/servo/servo", rev = "e1c418d8" }
+embedder_traits = { git = "https://github.com/servo/servo", rev = "e1c418d8", features = [
     "baked-default-resources",
 ] }
 
@@ -43,12 +43,16 @@ embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c
 ash = "0.38.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
-slint = { version = "1.13.1", features = ["backend-android-activity-06"] }
+android_logger = "0.15.1"
+i-slint-backend-android-activity = { git = 'https://github.com/burhankhanzada/slint', branch = "android" }
+slint = { git = 'https://github.com/burhankhanzada/slint', branch = "android", features = [
+    "backend-android-activity-06",
+] }
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
-slint = { version = "1.13.1", features = [
+slint = { git = 'https://github.com/burhankhanzada/slint', branch = "android", features = [
     "unstable-winit-030",
-    "unstable-wgpu-26",
+    "unstable-wgpu-27",
 ] }
 
 [target.'cfg(target_vendor = "apple")'.dependencies]
@@ -65,7 +69,7 @@ objc2-metal = { version = "0.3.2", features = [
 ] }
 
 [build-dependencies]
-slint-build = { version = "1.13.1" }
+slint-build = { git = 'https://github.com/burhankhanzada/slint', branch = "android" }
 
 [target.'cfg(target_os = "linux")'.build-dependencies]
 gl_generator = "0.14.0"
