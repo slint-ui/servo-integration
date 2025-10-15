@@ -1,4 +1,4 @@
-import {VerticalBox, Button, HorizontalBox} from "std-widgets.slint";
+import {VerticalBox, HorizontalBox, Button, LineEdit} from "std-widgets.slint";
 
 export component MyApp inherits Window {
     width: 1224px;
@@ -47,10 +47,9 @@ export component MyApp inherits Window {
                 }
             }
 
-            TextInput {
+            LineEdit {
                 text: "Urlbar";
                 horizontal-stretch: 1;
-                vertical-alignment: TextVerticalAlignment.center;
             }
 
             Button {
@@ -62,6 +61,7 @@ export component MyApp inherits Window {
         }
 
         touch_area := TouchArea {
+
             image := Image {
                 width: 100%;
                 height: 100%;
