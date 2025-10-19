@@ -1,13 +1,51 @@
 use std::rc::Rc;
 
-use euclid::Vector2D;
+use euclid::{Box2D, Point2D, Size2D, Vector2D};
 
 use servo::{
     InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent,
-    webrender_api::{ScrollLocation, units::DevicePoint},
+    webrender_api::{
+        ScrollLocation,
+        units::{DevicePixel, DevicePoint},
+    },
 };
+use winit::dpi::PhysicalSize;
 
 use crate::adapter::SlintServoAdapter;
+
+pub fn on_resize(state: Rc<SlintServoAdapter>) {
+    let state_weak = Rc::downgrade(&state);
+
+    let app = state
+        .app
+        .upgrade()
+        .expect("Failed to upgrade app weak reference");
+
+    app.on_resize(move |width, height| {
+        let state = state_weak
+            .upgrade()
+            .expect("Failed to upgrade state weak reference in servo init");
+
+        println!("physical_size {}, {}", width, height);
+
+        let webview = state.webview.borrow();
+        let webview = webview
+            .as_ref()
+            .expect("Webview not initialized for scroll event");
+
+        let scale_factor = state.scale_factor.borrow();
+        let scale_factor = *scale_factor;
+
+        let size = Size2D::new(width, height) * scale_factor;
+
+        let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
+
+        let rect: Box2D<f32, DevicePixel> = Box2D::from_origin_and_size(Point2D::origin(), size);
+
+        webview.move_resize(rect);
+        webview.resize(physical_size);
+    });
+}
 
 pub fn on_buttons(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);

@@ -54,7 +54,7 @@ pub trait ServoRenderingAdapter {
 struct ServoGPURenderingContext {
     device: wgpu::Device,
     queue: wgpu::Queue,
-    rendering_context: std::rc::Rc<GPURenderingContext>,
+    rendering_context: Rc<GPURenderingContext>,
 }
 
 #[cfg(not(target_os = "android"))]

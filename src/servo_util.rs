@@ -1,11 +1,11 @@
 use std::rc::Rc;
 
-use euclid::Scale;
+use euclid::{Scale, Size2D};
 use slint::ComponentHandle;
 use url::Url;
 use winit::dpi::PhysicalSize;
 
-use servo::{ServoBuilder, WebViewBuilder};
+use servo::{ServoBuilder, WebViewBuilder, webrender_api::units::DevicePixel};
 
 #[cfg(not(target_os = "android"))]
 use slint::winit_030::WinitWindowAccessor;
@@ -59,10 +59,14 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>) {
                 .await
                 .expect("Failed to get winit window");
 
-            let window_size = winit_window.inner_size();
             let scale_factor = winit_window.scale_factor() as f32;
 
-            let physical_size = PhysicalSize::new(window_size.width, window_size.height);
+            let width = app.get_viewport_width();
+            let height = app.get_viewport_height();
+
+            let size: Size2D<f32, DevicePixel> = Size2D::new(width, height) * scale_factor;
+
+            let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
 
             let wgpu_device = state.device.borrow();
             let wgpu_device = wgpu_device
