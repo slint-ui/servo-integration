@@ -9,9 +9,10 @@ use servo::{
         units::{DevicePixel, DevicePoint},
     },
 };
+use slint::ComponentHandle;
 use winit::dpi::PhysicalSize;
 
-use crate::adapter::SlintServoAdapter;
+use crate::{WebviewLogic, adapter::SlintServoAdapter};
 
 pub fn on_resize(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
@@ -21,30 +22,32 @@ pub fn on_resize(state: Rc<SlintServoAdapter>) {
         .upgrade()
         .expect("Failed to upgrade app weak reference");
 
-    app.on_resize(move |width, height| {
-        let state = state_weak
-            .upgrade()
-            .expect("Failed to upgrade state weak reference in servo init");
+    app.global::<WebviewLogic>()
+        .on_resize(move |width, height| {
+            let state = state_weak
+                .upgrade()
+                .expect("Failed to upgrade state weak reference in servo init");
 
-        println!("physical_size {}, {}", width, height);
+            println!("physical_size {}, {}", width, height);
 
-        let webview = state.webview.borrow();
-        let webview = webview
-            .as_ref()
-            .expect("Webview not initialized for scroll event");
+            let webview = state.webview.borrow();
+            let webview = webview
+                .as_ref()
+                .expect("Webview not initialized for scroll event");
 
-        let scale_factor = state.scale_factor.borrow();
-        let scale_factor = *scale_factor;
+            let scale_factor = state.scale_factor.borrow();
+            let scale_factor = *scale_factor;
 
-        let size = Size2D::new(width, height) * scale_factor;
+            let size = Size2D::new(width, height) * scale_factor;
 
-        let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
+            let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
 
-        let rect: Box2D<f32, DevicePixel> = Box2D::from_origin_and_size(Point2D::origin(), size);
+            let rect: Box2D<f32, DevicePixel> =
+                Box2D::from_origin_and_size(Point2D::origin(), size);
 
-        webview.move_resize(rect);
-        webview.resize(physical_size);
-    });
+            webview.move_resize(rect);
+            webview.resize(physical_size);
+        });
 }
 
 pub fn on_buttons(state: Rc<SlintServoAdapter>) {
@@ -105,33 +108,26 @@ pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
         .upgrade()
         .expect("Failed to upgrade app weak reference");
 
-    app.on_scroll_event(move |dx, dy| {
-        let state = state_weak
-            .upgrade()
-            .expect("Failed to upgrade state weak reference in scroll event");
+    app.global::<WebviewLogic>()
+        .on_scroll_event(move |dx, dy, mouse_x, mouse_y| {
+            let state = state_weak
+                .upgrade()
+                .expect("Failed to upgrade state weak reference in scroll event");
 
-        let webview = state.webview.borrow();
-        let webview = webview
-            .as_ref()
-            .expect("Webview not initialized for scroll event");
+            let webview = state.webview.borrow();
+            let webview = webview
+                .as_ref()
+                .expect("Webview not initialized for scroll event");
 
-        let scale_factor = *state.scale_factor.borrow();
+            let scale_factor = *state.scale_factor.borrow();
 
-        let app = state
-            .app
-            .upgrade()
-            .expect("Failed to upgrade app weak reference in scroll event");
+            let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
-        let mouse_x = app.get_mouse_x();
-        let mouse_y = app.get_mouse_y();
+            let moved_by = Vector2D::new(dx, dy);
+            let servo_delta = -moved_by;
 
-        let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
-
-        let moved_by = Vector2D::new(dx, dy);
-        let servo_delta = -moved_by;
-
-        webview.notify_scroll_event(ScrollLocation::Delta(servo_delta), point.to_i32());
-    });
+            webview.notify_scroll_event(ScrollLocation::Delta(servo_delta), point.to_i32());
+        });
 }
 
 pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
@@ -142,34 +138,27 @@ pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
         .upgrade()
         .expect("Failed to upgrade app weak reference for pointer events");
 
-    app.on_pointer_event(move |event| {
-        let state = state_weak
-            .upgrade()
-            .expect("Failed to upgrade state weak reference in pointer event");
+    app.global::<WebviewLogic>()
+        .on_pointer_event(move |event, mouse_x, mouse_y| {
+            let state = state_weak
+                .upgrade()
+                .expect("Failed to upgrade state weak reference in pointer event");
 
-        let webview = state.webview.borrow();
-        let webview = webview
-            .as_ref()
-            .expect("Webview not initialized for pointer event");
+            let webview = state.webview.borrow();
+            let webview = webview
+                .as_ref()
+                .expect("Webview not initialized for pointer event");
 
-        let scale_factor = *state.scale_factor.borrow();
+            let scale_factor = *state.scale_factor.borrow();
 
-        let event_str = format!("{:?}", event);
+            let event_str = format!("{:?}", event);
 
-        let app = state
-            .app
-            .upgrade()
-            .expect("Failed to upgrade app weak reference in pointer event");
+            let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
-        let mouse_x = app.get_mouse_x();
-        let mouse_y = app.get_mouse_y();
+            let input_event = convert_slint_pointer_event_to_servo_input_event(&event_str, point);
 
-        let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
-
-        let input_event = convert_slint_pointer_event_to_servo_input_event(&event_str, point);
-
-        webview.notify_input_event(input_event);
-    });
+            webview.notify_input_event(input_event);
+        });
 }
 
 fn convert_slint_pointer_event_to_servo_input_event(

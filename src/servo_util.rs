@@ -18,6 +18,8 @@ use crate::rendering_context::try_create_gpu_context;
 #[cfg(target_os = "android")]
 use crate::rendering_context::create_software_context;
 
+use crate::WebviewLogic;
+
 pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
@@ -61,8 +63,8 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>) {
 
             let scale_factor = winit_window.scale_factor() as f32;
 
-            let width = app.get_viewport_width();
-            let height = app.get_viewport_height();
+            let width = app.global::<WebviewLogic>().get_viewport_width();
+            let height = app.global::<WebviewLogic>().get_viewport_height();
 
             let size: Size2D<f32, DevicePixel> = Size2D::new(width, height) * scale_factor;
 
@@ -130,7 +132,12 @@ pub fn android_init_servo_webview(state: Rc<SlintServoAdapter>) {
 
             let scale_factor = window.scale_factor() as f32;
 
-            let physical_size = PhysicalSize::new(window_size.width, window_size.height);
+            let width = app.global::<WebviewLogic>().get_viewport_width();
+            let height = app.global::<WebviewLogic>().get_viewport_height();
+
+            let size: Size2D<f32, DevicePixel> = Size2D::new(width, height) * scale_factor;
+
+            let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
 
             let rendering_adapter = create_software_context(physical_size);
 

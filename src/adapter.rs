@@ -7,7 +7,7 @@ use smol::channel::{Receiver, Sender};
 #[cfg(not(target_os = "android"))]
 use slint::wgpu_27::wgpu;
 
-use crate::{MyApp, rendering_context::ServoRenderingAdapter};
+use crate::{rendering_context::ServoRenderingAdapter, MyApp, WebviewLogic};
 
 pub struct SlintServoAdapter {
     pub app: Weak<MyApp>,
@@ -53,7 +53,7 @@ impl SlintServoAdapter {
             .upgrade()
             .expect("Application reference is no longer valid - UI may have been destroyed");
 
-        app.set_web_content(slint_image);
+        app.global::<WebviewLogic>().set_web_content(slint_image);
         app.window().request_redraw();
     }
 }
