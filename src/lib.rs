@@ -22,7 +22,7 @@ use smol::channel;
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    adapter::SlintServoAdapter,
+    adapter::{SlintServoAdapter, upgrade_adapter},
     on_events::{on_buttons, on_pointer_event, on_resize, on_scroll_event},
     servo_util::spin_servo_event_loop,
 };
@@ -70,22 +70,21 @@ pub fn main() {
 
     let app_weak = app.as_weak();
 
-    let state = Rc::new(SlintServoAdapter::new(
+    let adapter = Rc::new(SlintServoAdapter::new(
         app_weak,
         waker_sender.clone(),
         waker_receiver.clone(),
     ));
 
-    let state_weak = Rc::downgrade(&state);
+    let adapter_weak = Rc::downgrade(&adapter);
 
     app.window()
-        .set_rendering_notifier(move |state, graphics_api| match state {
+        .set_rendering_notifier(move |rendering_state, graphics_api| match rendering_state {
             slint::RenderingState::RenderingSetup => {
                 #[cfg(not(target_os = "android"))]
                 if let slint::GraphicsAPI::WGPU27 { device, queue, .. } = graphics_api {
-                    if let Some(state) = state_weak.upgrade() {
-                        state.set_wgpu_device_queue(device, queue);
-                    }
+                    let adpater = upgrade_adapter(&adapter_weak);
+                    adpater.set_wgpu_device_queue(device, queue);
                 }
             }
             slint::RenderingState::BeforeRendering => {}
@@ -96,19 +95,19 @@ pub fn main() {
         .expect("Failed to set rendering notifier - WGPU integration may not be available");
 
     // Update the placeholder with the actual state
-    *state_placeholder.borrow_mut() = Some(state.clone());
+    *state_placeholder.borrow_mut() = Some(adapter.clone());
 
-    init_servo_webview(state.clone());
+    init_servo_webview(adapter.clone());
 
-    spin_servo_event_loop(state.clone());
+    spin_servo_event_loop(adapter.clone());
 
-    on_resize(state.clone());
+    on_resize(adapter.clone());
 
-    on_scroll_event(state.clone());
+    on_scroll_event(adapter.clone());
 
-    on_pointer_event(state.clone());
+    on_pointer_event(adapter.clone());
 
-    on_buttons(state.clone());
+    on_buttons(adapter.clone());
 
     app.run()
         .expect("Application failed to run - check for runtime errors");
@@ -131,39 +130,39 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
-    let state = Rc::new(SlintServoAdapter::new(
+    let adapter = Rc::new(SlintServoAdapter::new(
         app_weak,
         waker_sender.clone(),
         waker_receiver.clone(),
     ));
 
-    let state_clone = state.clone();
+    let adapter_clone = adapter.clone();
 
     listener_handle.set(move |event| {
-        on_android_event(event, state_clone.clone());
+        on_android_event(event, adapter_clone.clone());
     });
 
-    spin_servo_event_loop(state.clone());
+    spin_servo_event_loop(adapter.clone());
 
-    on_resize(state.clone());
+    on_resize(adapter.clone());
 
-    on_scroll_event(state.clone());
+    on_scroll_event(adapter.clone());
 
-    on_pointer_event(state.clone());
+    on_pointer_event(adapter.clone());
 
-    on_buttons(state.clone());
+    on_buttons(adapter.clone());
 
     app.run()
         .expect("Application failed to run - check for runtime errors");
 }
 
 #[cfg(target_os = "android")]
-fn on_android_event(poll_event: &PollEvent<'_>, state: Rc<SlintServoAdapter>) {
-    let _ = state.waker_sender().try_send(());
+fn on_android_event(poll_event: &PollEvent<'_>, adapter: Rc<SlintServoAdapter>) {
+    let _ = adapter.waker_sender().try_send(());
     match poll_event {
         PollEvent::Main(main_event) => match main_event {
             MainEvent::InitWindow { .. } => {
-                android_init_servo_webview(state.clone());
+                android_init_servo_webview(adapter.clone());
             }
             _ => {}
         },
