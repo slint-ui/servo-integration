@@ -10,6 +10,7 @@ use servo::{
     },
 };
 use slint::ComponentHandle;
+use url::Url;
 use winit::dpi::PhysicalSize;
 
 use crate::{
@@ -17,11 +18,30 @@ use crate::{
     adapter::{SlintServoAdapter, upgrade_adapter},
 };
 
-pub fn on_resize(adapter: Rc<SlintServoAdapter>) {
-    let adpater_weak = Rc::downgrade(&adapter);
+pub fn on_app_callbacks(adapter: Rc<SlintServoAdapter>) {
+    on_go(adapter.clone());
+    on_resize(adapter.clone());
+    on_buttons(adapter.clone());
+    on_scroll_event(adapter.clone());
+    on_pointer_event(adapter.clone());
+}
 
+pub fn on_go(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
+    let adpater_weak = Rc::downgrade(&adapter);
+    app.on_go(move |url| {
+        let adapter = upgrade_adapter(&adpater_weak);
+        let webview = adapter.webview();
+        let url = Url::parse(url.as_str()).expect("Failed to parse url");
+        webview.load(url);
+    });
+}
+
+pub fn on_resize(adapter: Rc<SlintServoAdapter>) {
+    let app = adapter.app();
+
+    let adpater_weak = Rc::downgrade(&adapter);
     app.global::<WebviewLogic>()
         .on_resize(move |width, height| {
             let adapter = upgrade_adapter(&adpater_weak);
@@ -74,10 +94,9 @@ pub fn on_buttons(adapter: Rc<SlintServoAdapter>) {
 }
 
 pub fn on_scroll_event(adapter: Rc<SlintServoAdapter>) {
-    let adapter_weak = Rc::downgrade(&adapter);
-
     let app = adapter.app();
 
+    let adapter_weak = Rc::downgrade(&adapter);
     app.global::<WebviewLogic>()
         .on_scroll_event(move |dx, dy, mouse_x, mouse_y| {
             let adapter = upgrade_adapter(&adapter_weak);
@@ -96,10 +115,9 @@ pub fn on_scroll_event(adapter: Rc<SlintServoAdapter>) {
 }
 
 pub fn on_pointer_event(adapter: Rc<SlintServoAdapter>) {
-    let adapter_weak = Rc::downgrade(&adapter);
-
     let app = adapter.app();
 
+    let adapter_weak = Rc::downgrade(&adapter);
     app.global::<WebviewLogic>()
         .on_pointer_event(move |event, mouse_x, mouse_y| {
             let adapter = upgrade_adapter(&adapter_weak);

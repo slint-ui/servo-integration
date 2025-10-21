@@ -13,8 +13,11 @@ use servo::{
 use slint::winit_030::WinitWindowAccessor;
 
 use crate::{
-    adapter::{SlintServoAdapter, upgrade_adapter}, constants, delegate::AppDelegate,
-    rendering_context::ServoRenderingAdapter, waker::Waker,
+    WebviewLogic,
+    adapter::{SlintServoAdapter, upgrade_adapter},
+    delegate::AppDelegate,
+    rendering_context::ServoRenderingAdapter,
+    waker::Waker,
 };
 
 #[cfg(not(target_os = "android"))]
@@ -22,8 +25,6 @@ use crate::rendering_context::try_create_gpu_context;
 
 #[cfg(target_os = "android")]
 use crate::rendering_context::create_software_context;
-
-use crate::WebviewLogic;
 
 pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
@@ -62,7 +63,9 @@ fn init_webview(
 ) {
     let scale = Scale::new(scale_factor);
 
-    let url = Url::parse(constants::DEFAULT_URL).expect("Failed to parse default URL");
+    let url = state.app().get_url();
+
+    let url = Url::parse(url.as_str()).expect("Failed to parse url");
 
     let delegate = Rc::new(AppDelegate::new(state.clone()));
 

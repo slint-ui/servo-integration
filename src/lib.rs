@@ -23,7 +23,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     adapter::{SlintServoAdapter, upgrade_adapter},
-    on_events::{on_buttons, on_pointer_event, on_resize, on_scroll_event},
+    on_events::on_app_callbacks,
     servo_util::spin_servo_event_loop,
 };
 
@@ -101,13 +101,7 @@ pub fn main() {
 
     spin_servo_event_loop(adapter.clone());
 
-    on_resize(adapter.clone());
-
-    on_scroll_event(adapter.clone());
-
-    on_pointer_event(adapter.clone());
-
-    on_buttons(adapter.clone());
+    on_app_callbacks(adapter.clone());
 
     app.run()
         .expect("Application failed to run - check for runtime errors");
@@ -144,13 +138,7 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 
     spin_servo_event_loop(adapter.clone());
 
-    on_resize(adapter.clone());
-
-    on_scroll_event(adapter.clone());
-
-    on_pointer_event(adapter.clone());
-
-    on_buttons(adapter.clone());
+    on_app_callbacks(adapter.clone());
 
     app.run()
         .expect("Application failed to run - check for runtime errors");

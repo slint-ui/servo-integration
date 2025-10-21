@@ -12,7 +12,7 @@ export component MyApp inherits Window {
     preferred-width: 1224px;
     preferred-height: 768px;
 
-    out property <string> url;
+    out property <string> url: "https://slint.dev";
 
     callback back();
     callback forward();
@@ -50,7 +50,7 @@ export component MyApp inherits Window {
             }
 
             LineEdit {
-                placeholder-text: "Urlbar";
+                text: url;
                 horizontal-stretch: 1;
                 accepted(url) => {
                     go(url);
