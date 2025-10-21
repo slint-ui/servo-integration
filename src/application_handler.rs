@@ -26,7 +26,7 @@ impl CustomApplicationHandler for ApplicationHandler {
         let state = self.state.borrow();
         let state = state.as_ref().unwrap();
 
-        let _ = state.waker_sender.try_send(());
+        let _ = state.waker_sender().try_send(());
 
         return EventResult::Propagate;
     }

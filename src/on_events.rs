@@ -17,10 +17,7 @@ use crate::{WebviewLogic, adapter::SlintServoAdapter};
 pub fn on_resize(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
-    let app = state
-        .app
-        .upgrade()
-        .expect("Failed to upgrade app weak reference");
+    let app = state.app();
 
     app.global::<WebviewLogic>()
         .on_resize(move |width, height| {
@@ -49,10 +46,7 @@ pub fn on_resize(state: Rc<SlintServoAdapter>) {
 pub fn on_buttons(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
-    let app = state
-        .app
-        .upgrade()
-        .expect("Failed to upgrade app weak reference");
+    let app = state.app();
 
     app.on_back(move || {
         let state = state_weak
@@ -90,10 +84,7 @@ pub fn on_buttons(state: Rc<SlintServoAdapter>) {
 pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
-    let app = state
-        .app
-        .upgrade()
-        .expect("Failed to upgrade app weak reference");
+    let app = state.app();
 
     app.global::<WebviewLogic>()
         .on_scroll_event(move |dx, dy, mouse_x, mouse_y| {
@@ -117,10 +108,7 @@ pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
 pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
     let state_weak = Rc::downgrade(&state);
 
-    let app = state
-        .app
-        .upgrade()
-        .expect("Failed to upgrade app weak reference for pointer events");
+    let app = state.app();
 
     app.global::<WebviewLogic>()
         .on_pointer_event(move |event, mouse_x, mouse_y| {

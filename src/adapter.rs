@@ -1,7 +1,7 @@
 use std::cell::{Ref, RefCell, RefMut};
 
 use servo::{Servo, WebView};
-use slint::{ComponentHandle, Weak};
+use slint::ComponentHandle;
 use smol::channel::{Receiver, Sender};
 
 #[cfg(not(target_os = "android"))]
@@ -10,9 +10,9 @@ use slint::wgpu_27::wgpu;
 use crate::{MyApp, WebviewLogic, rendering_context::ServoRenderingAdapter};
 
 pub struct SlintServoAdapter {
-    pub app: Weak<MyApp>,
-    pub waker_sender: Sender<()>,
-    pub waker_receiver: Receiver<()>,
+    app: slint::Weak<MyApp>,
+    waker_sender: Sender<()>,
+    waker_receiver: Receiver<()>,
     pub servo: RefCell<Option<Servo>>,
     inner: RefCell<SlintServoAdapterInner>,
 }
@@ -28,7 +28,11 @@ pub struct SlintServoAdapterInner {
 }
 
 impl SlintServoAdapter {
-    pub fn new(app: Weak<MyApp>, waker_sender: Sender<()>, waker_receiver: Receiver<()>) -> Self {
+    pub fn new(
+        app: slint::Weak<MyApp>,
+        waker_sender: Sender<()>,
+        waker_receiver: Receiver<()>,
+    ) -> Self {
         Self {
             app,
             waker_sender,
@@ -52,6 +56,18 @@ impl SlintServoAdapter {
 
     pub fn inner_mut(&self) -> RefMut<'_, SlintServoAdapterInner> {
         self.inner.borrow_mut()
+    }
+
+    pub fn app(&self) -> MyApp {
+        self.app.upgrade().expect("Failed to upgrade MyApp")
+    }
+
+    pub fn waker_sender(&self) -> Sender<()> {
+        self.waker_sender.clone()
+    }
+
+    pub fn waker_reciver(&self) -> Receiver<()> {
+        self.waker_receiver.clone()
     }
 
     pub fn scale_factor(&self) -> f32 {

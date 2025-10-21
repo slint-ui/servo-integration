@@ -161,13 +161,11 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 
 #[cfg(target_os = "android")]
 fn on_android_event(poll_event: &PollEvent<'_>, state: Rc<SlintServoAdapter>) {
+let _ = state.waker_sender().try_send(());
     match poll_event {
         PollEvent::Main(main_event) => match main_event {
             MainEvent::InitWindow { .. } => {
                 android_init_servo_webview(state.clone());
-            }
-            MainEvent::InputAvailable => {
-                let _ = state.waker_sender.try_send(());
             }
             _ => {}
         },
