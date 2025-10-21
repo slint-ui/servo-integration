@@ -150,11 +150,7 @@ pub fn android_init_servo_webview(state: Rc<SlintServoAdapter>) {
 
             webview.show(true);
 
-            let mut inner = state.inner_mut();
-            inner.servo = Some(servo);
-            inner.webview = Some(webview);
-            inner.scale_factor = scale_factor;
-            inner.rendering_adapter = Some(rendering_adapter);
+            state.set_inner(servo, webview, scale_factor, rendering_adapter);
         }
     })
     .expect("Failed to spawn servo initialization task for Android");

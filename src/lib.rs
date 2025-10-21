@@ -117,6 +117,8 @@ pub fn main() {
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 pub fn android_main(android_app: slint::android::AndroidApp) {
+    // slint::android::init(android_app).unwrap();
+
     use crate::on_events::on_resize;
 
     let mut platform = AndroidPlatform::new(android_app.clone());

@@ -30,19 +30,19 @@ pub fn on_resize(state: Rc<SlintServoAdapter>) {
 
             println!("physical_size {}, {}", width, height);
 
-            let webview = state.webview();
+            if let Some(webview) = state.try_get_webview() {
+                let scale_factor = state.scale_factor();
 
-            let scale_factor = state.scale_factor();
+                let size = Size2D::new(width, height) * scale_factor;
 
-            let size = Size2D::new(width, height) * scale_factor;
+                let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
 
-            let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
+                let rect: Box2D<f32, DevicePixel> =
+                    Box2D::from_origin_and_size(Point2D::origin(), size);
 
-            let rect: Box2D<f32, DevicePixel> =
-                Box2D::from_origin_and_size(Point2D::origin(), size);
-
-            webview.move_resize(rect);
-            webview.resize(physical_size);
+                webview.move_resize(rect);
+                webview.resize(physical_size);
+            }
         });
 }
 

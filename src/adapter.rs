@@ -84,6 +84,10 @@ impl SlintServoAdapter {
             .clone()
     }
 
+    pub fn try_get_webview(&self) -> Option<WebView> {
+        self.inner().webview.clone()
+    }
+
     pub fn set_inner(
         &self,
         servo: Servo,
