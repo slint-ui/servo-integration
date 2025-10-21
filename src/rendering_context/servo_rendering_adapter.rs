@@ -70,6 +70,11 @@ impl ServoRenderingAdapter for ServoGPURenderingContext {
                 "Failed to get WGPU texture from Metal texture - ensure rendering context is valid",
             );
 
+        #[cfg(target_os = "windows")]
+        let texture = self.rendering_context
+            .get_wgpu_texture_from_dx12(&self.device, &self.queue)
+            .expect("Failed to get WGPU texture from DX12 texture - ensure rendering context is valid");
+
         Image::try_from(texture).expect(
             "Failed to create Slint image from WGPU texture - check texture format compatibility",
         )

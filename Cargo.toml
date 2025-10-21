@@ -19,10 +19,11 @@ rustls = "0.23"
 euclid = "0.22.11"
 surfman = "0.10.0"
 time-now = "0.1.2"
+anyhow = "1.0"
 
 wgpu-hal = "26.0.4"
 wgpu-core = "26.0.1"
-wgpu = { version = "26.0", features = ["metal"] }
+wgpu = { version = "26.0", features = ["metal", "dx12"] }
 
 foreign-types-shared = "0.3.1"
 
@@ -37,7 +38,7 @@ slint = { version = "1.13.1", features = [
 
 webrender_api = { git = "https://github.com/servo/webrender", branch = "0.67" }
 
-libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }
+# libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7" }
 embedder_traits = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = [
     "baked-default-resources",
 ] }
@@ -59,8 +60,15 @@ objc2-metal = { version = "0.3.1", features = [
     "objc2-io-surface",
 ] }
 
+[target.'cfg(target_os = "windows")'.dependencies]
+libservo = { git = "https://github.com/servo/servo", rev = "af7de5ccf141c7cbb8a3792faeef916cdfa3dfc7", features = ["no-wgl"] }
+windows-sys = { version = "0.61", features = ["Win32_Graphics_Gdi"] }
+
 [build-dependencies]
 slint-build = { version = "1.13.1" }
 
 [target.'cfg(target_os = "linux")'.build-dependencies]
 gl_generator = "0.14.0"
+
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"

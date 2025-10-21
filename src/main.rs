@@ -39,12 +39,12 @@ fn main() {
 
     let application_handler = ApplicationHandler::new(state_placeholder.clone());
 
-    let mut wgpu_settings = WGPUSettings::default();
-    wgpu_settings.device_required_features = wgpu::Features::PUSH_CONSTANTS;
-    wgpu_settings.device_required_limits.max_push_constant_size = constants::MAX_PUSH_CONSTANT_SIZE;
+    // let mut wgpu_settings = WGPUSettings::default();
+    // wgpu_settings.device_required_features = wgpu::Features::PUSH_CONSTANTS;
+    // wgpu_settings.device_required_limits.max_push_constant_size = constants::MAX_PUSH_CONSTANT_SIZE;
 
     slint::BackendSelector::new()
-        .require_wgpu_26(WGPUConfiguration::Automatic(wgpu_settings))
+        // .require_wgpu_26(WGPUConfiguration::Automatic(wgpu_settings))
         .with_winit_custom_application_handler(application_handler)
         .select()
         .expect("Failed to create Slint backend with WGPU based renderer - ensure your system supports WGPU");
@@ -57,26 +57,26 @@ fn main() {
 
     let state_weak = Rc::downgrade(&state);
 
-    app.window()
-        .set_rendering_notifier(move |state, graphics_api| {
-            //eprintln!("rendering state {:#?} {:#?}", state, graphics_api);
+    // app.window()
+    //     .set_rendering_notifier(move |state, graphics_api| {
+    //         //eprintln!("rendering state {:#?} {:#?}", state, graphics_api);
 
-            match state {
-                slint::RenderingState::RenderingSetup => {
-                    if let slint::GraphicsAPI::WGPU26 { device, queue, .. } = graphics_api {
-                        if let Some(state) = state_weak.upgrade() {
-                            *state.device.borrow_mut() = Some(device.clone());
-                            *state.queue.borrow_mut() = Some(queue.clone());
-                        }
-                    }
-                }
-                slint::RenderingState::BeforeRendering => {}
-                slint::RenderingState::AfterRendering => {}
-                slint::RenderingState::RenderingTeardown => {}
-                _ => {}
-            }
-        })
-        .expect("Failed to set rendering notifier - WGPU integration may not be available");
+    //         match state {
+    //             slint::RenderingState::RenderingSetup => {
+    //                 if let slint::GraphicsAPI::WGPU26 { device, queue, .. } = graphics_api {
+    //                     if let Some(state) = state_weak.upgrade() {
+    //                         *state.device.borrow_mut() = Some(device.clone());
+    //                         *state.queue.borrow_mut() = Some(queue.clone());
+    //                     }
+    //                 }
+    //             }
+    //             slint::RenderingState::BeforeRendering => {}
+    //             slint::RenderingState::AfterRendering => {}
+    //             slint::RenderingState::RenderingTeardown => {}
+    //             _ => {}
+    //         }
+    //     })
+    //     .expect("Failed to set rendering notifier - WGPU integration may not be available");
 
     // Update the placeholder with the actual state
     *state_placeholder.borrow_mut() = Some(state.clone());

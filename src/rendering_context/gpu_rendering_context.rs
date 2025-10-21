@@ -7,6 +7,7 @@ use servo::RenderingContext;
 use slint::wgpu_26::wgpu;
 use webrender_api::units::DeviceIntRect;
 use winit::dpi::PhysicalSize;
+use anyhow::anyhow;
 
 use surfman::{
     Connection, Device, Surface, SurfaceTexture, SurfaceType,
@@ -318,6 +319,20 @@ impl GPURenderingContext {
             });
 
         Ok(texture)
+    }
+
+    #[cfg(target_os = "windows")]
+    pub fn get_wgpu_texture_from_dx12(
+        &self,
+        device: &wgpu::Device,
+        queue: &wgpu::Queue,
+    ) -> Result<wgpu::Texture, anyhow::Error> {
+        // Placeholder implementation for now
+        println!("Called get_wgpu_texture_from_dx12() – placeholder");
+        let _size = self.size.get();
+
+        // TODO: implement real DX12 to wgpu texture extraction
+        Err(anyhow!("DX12 support not implemented yet"))
     }
 }
 

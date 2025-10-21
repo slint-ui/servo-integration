@@ -5383,6 +5383,8 @@ checksum = "0ab823731ea6297e7280dade983df955d1a8209d2deb44f505932b8873168992"
 dependencies = [
  "bindgen 0.71.1",
  "cc",
+ "gl_generator",
+ "libz-sys",
  "walkdir",
 ]
 
@@ -7569,6 +7571,7 @@ dependencies = [
 name = "servo-integration"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "ash",
  "embedder_traits",
  "euclid",
@@ -7597,7 +7600,9 @@ dependencies = [
  "wgpu",
  "wgpu-core",
  "wgpu-hal",
+ "windows-sys 0.61.0",
  "winit",
+ "winresource",
 ]
 
 [[package]]
@@ -10635,6 +10640,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "21a0236b59786fed61e2a80582dd500fe61f18b5dca67a4a067d0bc9039339cf"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "winresource"
+version = "0.1.23"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edcacf11b6f48dd21b9ba002f991bdd5de29b2da8cc2800412f4b80f677e4957"
+dependencies = [
+ "toml",
+ "version_check",
 ]
 
 [[package]]
