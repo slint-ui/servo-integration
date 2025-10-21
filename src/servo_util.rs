@@ -13,7 +13,7 @@ use servo::{
 use slint::winit_030::WinitWindowAccessor;
 
 use crate::{
-    adapter::SlintServoAdapter, constants, delegate::AppDelegate,
+    adapter::{SlintServoAdapter, upgrade_adapter}, constants, delegate::AppDelegate,
     rendering_context::ServoRenderingAdapter, waker::Waker,
 };
 
@@ -30,9 +30,7 @@ pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>) {
 
     slint::spawn_local({
         async move {
-            let state = state_weak
-                .upgrade()
-                .expect("Failed to upgrade state weak reference in servo event loop");
+            let state = upgrade_adapter(&state_weak);
 
             loop {
                 let _ = state.waker_reciver().recv().await;
@@ -86,9 +84,7 @@ pub fn init_servo_webview(state: Rc<SlintServoAdapter>) {
 
     slint::spawn_local({
         async move {
-            let state = state_weak
-                .upgrade()
-                .expect("Failed to upgrade state weak reference in servo init");
+            let state = upgrade_adapter(&state_weak);
 
             let app = state.app();
 
@@ -129,9 +125,7 @@ pub fn android_init_servo_webview(state: Rc<SlintServoAdapter>) {
 
     slint::spawn_local({
         async move {
-            let state = state_weak
-                .upgrade()
-                .expect("Failed to upgrade state weak reference in servo init");
+            let state = upgrade_adapter(&state_weak);
 
             let app = state.app();
 

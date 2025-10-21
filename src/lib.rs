@@ -119,8 +119,6 @@ pub fn main() {
 pub fn android_main(android_app: slint::android::AndroidApp) {
     // slint::android::init(android_app).unwrap();
 
-    use crate::on_events::on_resize;
-
     let mut platform = AndroidPlatform::new(android_app.clone());
 
     let listener_handle = platform.event_listener_handle();
@@ -161,7 +159,7 @@ pub fn android_main(android_app: slint::android::AndroidApp) {
 
 #[cfg(target_os = "android")]
 fn on_android_event(poll_event: &PollEvent<'_>, state: Rc<SlintServoAdapter>) {
-let _ = state.waker_sender().try_send(());
+    let _ = state.waker_sender().try_send(());
     match poll_event {
         PollEvent::Main(main_event) => match main_event {
             MainEvent::InitWindow { .. } => {

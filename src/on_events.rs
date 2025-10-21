@@ -12,23 +12,22 @@ use servo::{
 use slint::ComponentHandle;
 use winit::dpi::PhysicalSize;
 
-use crate::{WebviewLogic, adapter::SlintServoAdapter};
+use crate::{
+    WebviewLogic,
+    adapter::{SlintServoAdapter, upgrade_adapter},
+};
 
-pub fn on_resize(state: Rc<SlintServoAdapter>) {
-    let state_weak = Rc::downgrade(&state);
+pub fn on_resize(adapter: Rc<SlintServoAdapter>) {
+    let adpater_weak = Rc::downgrade(&adapter);
 
-    let app = state.app();
+    let app = adapter.app();
 
     app.global::<WebviewLogic>()
         .on_resize(move |width, height| {
-            let state = state_weak
-                .upgrade()
-                .expect("Failed to upgrade state weak reference in servo init");
+            let adapter = upgrade_adapter(&adpater_weak);
 
-            println!("physical_size {}, {}", width, height);
-
-            if let Some(webview) = state.try_get_webview() {
-                let scale_factor = state.scale_factor();
+            if let Some(webview) = adapter.try_get_webview() {
+                let scale_factor = adapter.scale_factor();
 
                 let size = Size2D::new(width, height) * scale_factor;
 
@@ -43,58 +42,49 @@ pub fn on_resize(state: Rc<SlintServoAdapter>) {
         });
 }
 
-pub fn on_buttons(state: Rc<SlintServoAdapter>) {
-    let state_weak = Rc::downgrade(&state);
+pub fn on_buttons(adapter: Rc<SlintServoAdapter>) {
+    let app = adapter.app();
 
-    let app = state.app();
-
+    let adapter_weak = Rc::downgrade(&adapter);
     app.on_back(move || {
-        let state = state_weak
-            .upgrade()
-            .expect("Failed to upgrade state weak reference in scroll event");
+        let adapter = upgrade_adapter(&adapter_weak);
 
-        let webview = state.webview();
+        let webview = adapter.webview();
 
         webview.go_back(1);
     });
 
-    let state_weak = Rc::downgrade(&state);
+    let adapter_weak = Rc::downgrade(&adapter);
     app.on_forward(move || {
-        let state = state_weak
-            .upgrade()
-            .expect("Failed to upgrade state weak reference in scroll event");
+        let adapter = upgrade_adapter(&adapter_weak);
 
-        let webview = state.webview();
+        let webview = adapter.webview();
 
         webview.go_forward(1);
     });
 
-    let state_weak = Rc::downgrade(&state);
+    let adapter_weak = Rc::downgrade(&adapter);
     app.on_reload(move || {
-        let state = state_weak
-            .upgrade()
-            .expect("Failed to upgrade state weak reference in scroll event");
+        let adapter = upgrade_adapter(&adapter_weak);
 
-        let webview = state.webview();
+        let webview = adapter.webview();
 
         webview.reload();
     });
 }
 
-pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
-    let state_weak = Rc::downgrade(&state);
+pub fn on_scroll_event(adapter: Rc<SlintServoAdapter>) {
+    let adapter_weak = Rc::downgrade(&adapter);
 
-    let app = state.app();
+    let app = adapter.app();
 
     app.global::<WebviewLogic>()
         .on_scroll_event(move |dx, dy, mouse_x, mouse_y| {
-            let state = state_weak
-                .upgrade()
-                .expect("Failed to upgrade state weak reference in scroll event");
+            let adapter = upgrade_adapter(&adapter_weak);
 
-            let webview = state.webview();
+            let webview = adapter.webview();
 
-            let scale_factor = state.scale_factor();
+            let scale_factor = adapter.scale_factor();
 
             let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
@@ -105,20 +95,18 @@ pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
         });
 }
 
-pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
-    let state_weak = Rc::downgrade(&state);
+pub fn on_pointer_event(adapter: Rc<SlintServoAdapter>) {
+    let adapter_weak = Rc::downgrade(&adapter);
 
-    let app = state.app();
+    let app = adapter.app();
 
     app.global::<WebviewLogic>()
         .on_pointer_event(move |event, mouse_x, mouse_y| {
-            let state = state_weak
-                .upgrade()
-                .expect("Failed to upgrade state weak reference in pointer event");
+            let adapter = upgrade_adapter(&adapter_weak);
 
-            let webview = state.webview();
+            let webview = adapter.webview();
 
-            let scale_factor = state.scale_factor();
+            let scale_factor = adapter.scale_factor();
 
             let event_str = format!("{:?}", event);
 

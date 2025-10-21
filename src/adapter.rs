@@ -1,4 +1,5 @@
 use std::cell::{Ref, RefCell, RefMut};
+use std::rc::{Rc, Weak};
 
 use servo::{Servo, WebView};
 use slint::ComponentHandle;
@@ -8,6 +9,12 @@ use smol::channel::{Receiver, Sender};
 use slint::wgpu_27::wgpu;
 
 use crate::{MyApp, WebviewLogic, rendering_context::ServoRenderingAdapter};
+
+pub fn upgrade_adapter(weak_ref: &Weak<SlintServoAdapter>) -> Rc<SlintServoAdapter> {
+    weak_ref
+        .upgrade()
+        .expect("Failed to upgrade SlintServoAdapter")
+}
 
 pub struct SlintServoAdapter {
     app: slint::Weak<MyApp>,
