@@ -23,7 +23,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     adapter::SlintServoAdapter,
-    on_events::{on_resize, on_buttons, on_pointer_event, on_scroll_event},
+    on_events::{on_buttons, on_pointer_event, on_resize, on_scroll_event},
     servo_util::spin_servo_event_loop,
 };
 
@@ -84,8 +84,7 @@ pub fn main() {
                 #[cfg(not(target_os = "android"))]
                 if let slint::GraphicsAPI::WGPU27 { device, queue, .. } = graphics_api {
                     if let Some(state) = state_weak.upgrade() {
-                        *state.device.borrow_mut() = Some(device.clone());
-                        *state.queue.borrow_mut() = Some(queue.clone());
+                        state.set_wgpu_device_queue(device, queue);
                     }
                 }
             }

@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{Ref, RefCell, RefMut};
 
 use servo::{Servo, WebView};
 use slint::{ComponentHandle, Weak};
@@ -7,20 +7,24 @@ use smol::channel::{Receiver, Sender};
 #[cfg(not(target_os = "android"))]
 use slint::wgpu_27::wgpu;
 
-use crate::{rendering_context::ServoRenderingAdapter, MyApp, WebviewLogic};
+use crate::{MyApp, WebviewLogic, rendering_context::ServoRenderingAdapter};
 
 pub struct SlintServoAdapter {
     pub app: Weak<MyApp>,
     pub waker_sender: Sender<()>,
     pub waker_receiver: Receiver<()>,
-    pub scale_factor: RefCell<f32>,
     pub servo: RefCell<Option<Servo>>,
-    pub webview: RefCell<Option<WebView>>,
-    pub rendering_adapter: RefCell<Option<Box<dyn ServoRenderingAdapter>>>,
+    inner: RefCell<SlintServoAdapterInner>,
+}
+
+pub struct SlintServoAdapterInner {
+    scale_factor: f32,
+    webview: Option<WebView>,
+    rendering_adapter: Option<Box<dyn ServoRenderingAdapter>>,
     #[cfg(not(target_os = "android"))]
-    pub device: RefCell<Option<wgpu::Device>>,
+    device: Option<wgpu::Device>,
     #[cfg(not(target_os = "android"))]
-    pub queue: RefCell<Option<wgpu::Queue>>,
+    queue: Option<wgpu::Queue>,
 }
 
 impl SlintServoAdapter {
@@ -30,21 +34,80 @@ impl SlintServoAdapter {
             waker_sender,
             waker_receiver,
             servo: RefCell::new(None),
-            webview: RefCell::new(None),
-            scale_factor: RefCell::new(1.0),
-            rendering_adapter: RefCell::new(None),
-            #[cfg(not(target_os = "android"))]
-            device: RefCell::new(None),
-            #[cfg(not(target_os = "android"))]
-            queue: RefCell::new(None),
+            inner: RefCell::new(SlintServoAdapterInner {
+                webview: None,
+                scale_factor: 1.0,
+                rendering_adapter: None,
+                #[cfg(not(target_os = "android"))]
+                device: None,
+                #[cfg(not(target_os = "android"))]
+                queue: None,
+            }),
         }
     }
 
-    pub fn update_web_content_with_latest_frame(&self) {
-        let rendering_adapter = self.rendering_adapter.borrow();
-        let rendering_adapter = rendering_adapter
+    pub fn inner(&self) -> Ref<'_, SlintServoAdapterInner> {
+        self.inner.borrow()
+    }
+
+    pub fn inner_mut(&self) -> RefMut<'_, SlintServoAdapterInner> {
+        self.inner.borrow_mut()
+    }
+
+    pub fn scale_factor(&self) -> f32 {
+        self.inner().scale_factor
+    }
+
+    #[cfg(not(target_os = "android"))]
+    pub fn wgpu_device(&self) -> wgpu::Device {
+        self.inner()
+            .device
             .as_ref()
-            .expect("Failed to get rendering adpater check if it initliazed first");
+            .expect("Device not initialized yet")
+            .clone()
+    }
+
+    #[cfg(not(target_os = "android"))]
+    pub fn wgpu_queue(&self) -> wgpu::Queue {
+        self.inner()
+            .queue
+            .as_ref()
+            .expect("Queue not initialized yet")
+            .clone()
+    }
+
+    pub fn webview(&self) -> WebView {
+        self.inner()
+            .webview
+            .as_ref()
+            .expect("Webview not initialized yet")
+            .clone()
+    }
+
+    pub fn set_inner(
+        &self,
+        servo: Servo,
+        webview: WebView,
+        scale_factor: f32,
+        rendering_adapter: Box<dyn ServoRenderingAdapter>,
+    ) {
+        *self.servo.borrow_mut() = Some(servo);
+        let mut inner = self.inner_mut();
+        inner.webview = Some(webview);
+        inner.scale_factor = scale_factor;
+        inner.rendering_adapter = Some(rendering_adapter);
+    }
+
+    #[cfg(not(target_os = "android"))]
+    pub fn set_wgpu_device_queue(&self, device: &wgpu::Device, queue: &wgpu::Queue) {
+        let mut inner = self.inner_mut();
+        inner.device = Some(device.clone());
+        inner.queue = Some(queue.clone());
+    }
+
+    pub fn update_web_content_with_latest_frame(&self) {
+        let inner = self.inner();
+        let rendering_adapter = inner.rendering_adapter.as_ref().unwrap();
 
         let slint_image = rendering_adapter.current_framebuffer_as_image();
 

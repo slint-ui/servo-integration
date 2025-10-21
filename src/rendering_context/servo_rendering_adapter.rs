@@ -20,8 +20,8 @@ pub fn create_software_context(size: PhysicalSize<u32>) -> Box<dyn ServoRenderin
 
 #[cfg(not(target_os = "android"))]
 pub fn try_create_gpu_context(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
+    device: wgpu::Device,
+    queue: wgpu::Queue,
     size: PhysicalSize<u32>,
 ) -> Option<Box<dyn ServoRenderingAdapter>> {
     if std::env::var_os("SLINT_SERVO_FORCE_SOFTWARE").is_some() {

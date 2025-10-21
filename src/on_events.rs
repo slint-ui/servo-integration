@@ -30,13 +30,9 @@ pub fn on_resize(state: Rc<SlintServoAdapter>) {
 
             println!("physical_size {}, {}", width, height);
 
-            let webview = state.webview.borrow();
-            let webview = webview
-                .as_ref()
-                .expect("Webview not initialized for scroll event");
+            let webview = state.webview();
 
-            let scale_factor = state.scale_factor.borrow();
-            let scale_factor = *scale_factor;
+            let scale_factor = state.scale_factor();
 
             let size = Size2D::new(width, height) * scale_factor;
 
@@ -63,10 +59,7 @@ pub fn on_buttons(state: Rc<SlintServoAdapter>) {
             .upgrade()
             .expect("Failed to upgrade state weak reference in scroll event");
 
-        let webview = state.webview.borrow();
-        let webview = webview
-            .as_ref()
-            .expect("Webview not initialized for scroll event");
+        let webview = state.webview();
 
         webview.go_back(1);
     });
@@ -77,10 +70,7 @@ pub fn on_buttons(state: Rc<SlintServoAdapter>) {
             .upgrade()
             .expect("Failed to upgrade state weak reference in scroll event");
 
-        let webview = state.webview.borrow();
-        let webview = webview
-            .as_ref()
-            .expect("Webview not initialized for scroll event");
+        let webview = state.webview();
 
         webview.go_forward(1);
     });
@@ -91,10 +81,7 @@ pub fn on_buttons(state: Rc<SlintServoAdapter>) {
             .upgrade()
             .expect("Failed to upgrade state weak reference in scroll event");
 
-        let webview = state.webview.borrow();
-        let webview = webview
-            .as_ref()
-            .expect("Webview not initialized for scroll event");
+        let webview = state.webview();
 
         webview.reload();
     });
@@ -114,12 +101,9 @@ pub fn on_scroll_event(state: Rc<SlintServoAdapter>) {
                 .upgrade()
                 .expect("Failed to upgrade state weak reference in scroll event");
 
-            let webview = state.webview.borrow();
-            let webview = webview
-                .as_ref()
-                .expect("Webview not initialized for scroll event");
+            let webview = state.webview();
 
-            let scale_factor = *state.scale_factor.borrow();
+            let scale_factor = state.scale_factor();
 
             let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
 
@@ -144,12 +128,9 @@ pub fn on_pointer_event(state: Rc<SlintServoAdapter>) {
                 .upgrade()
                 .expect("Failed to upgrade state weak reference in pointer event");
 
-            let webview = state.webview.borrow();
-            let webview = webview
-                .as_ref()
-                .expect("Webview not initialized for pointer event");
+            let webview = state.webview();
 
-            let scale_factor = *state.scale_factor.borrow();
+            let scale_factor = state.scale_factor();
 
             let event_str = format!("{:?}", event);
 
