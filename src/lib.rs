@@ -24,7 +24,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::{
     adapter::{SlintServoAdapter, upgrade_adapter},
     on_events::on_app_callbacks,
-    servo_util::spin_servo_event_loop,
+    servo_util::{init_servo_webview, spin_servo_event_loop},
 };
 
 slint::include_modules!();
@@ -32,19 +32,9 @@ slint::include_modules!();
 #[cfg(not(target_os = "android"))]
 use {
     crate::application_handler::ApplicationHandler,
-    crate::servo_util::init_servo_webview,
     slint::wgpu_27::{WGPUConfiguration, WGPUSettings, wgpu},
 };
 
-#[cfg(target_os = "android")]
-use {
-    crate::servo_util::android_init_servo_webview,
-    i_slint_backend_android_activity::AndroidPlatform,
-    i_slint_backend_android_activity::android_activity::MainEvent,
-    i_slint_backend_android_activity::android_activity::PollEvent,
-};
-
-#[cfg(not(target_os = "android"))]
 pub fn main() {
     let (waker_sender, waker_receiver) = channel::unbounded::<()>();
 
@@ -78,10 +68,10 @@ pub fn main() {
 
     let adapter_weak = Rc::downgrade(&adapter);
 
+    #[cfg(not(target_os = "android"))]
     app.window()
         .set_rendering_notifier(move |rendering_state, graphics_api| match rendering_state {
             slint::RenderingState::RenderingSetup => {
-                #[cfg(not(target_os = "android"))]
                 if let slint::GraphicsAPI::WGPU27 { device, queue, .. } = graphics_api {
                     let adpater = upgrade_adapter(&adapter_weak);
                     adpater.set_wgpu_device_queue(device, queue);
@@ -110,50 +100,6 @@ pub fn main() {
 #[cfg(target_os = "android")]
 #[unsafe(no_mangle)]
 pub fn android_main(android_app: slint::android::AndroidApp) {
-    // slint::android::init(android_app).unwrap();
-
-    let mut platform = AndroidPlatform::new(android_app.clone());
-
-    let listener_handle = platform.event_listener_handle();
-
-    slint::platform::set_platform(Box::new(platform)).unwrap();
-
-    let app = MyApp::new().expect("Failed to create Slint application - check UI resources");
-
-    let app_weak = app.as_weak();
-
-    let (waker_sender, waker_receiver) = channel::unbounded::<()>();
-
-    let adapter = Rc::new(SlintServoAdapter::new(
-        app_weak,
-        waker_sender.clone(),
-        waker_receiver.clone(),
-    ));
-
-    let adapter_clone = adapter.clone();
-
-    listener_handle.set(move |event| {
-        on_android_event(event, adapter_clone.clone());
-    });
-
-    spin_servo_event_loop(adapter.clone());
-
-    on_app_callbacks(adapter.clone());
-
-    app.run()
-        .expect("Application failed to run - check for runtime errors");
-}
-
-#[cfg(target_os = "android")]
-fn on_android_event(poll_event: &PollEvent<'_>, adapter: Rc<SlintServoAdapter>) {
-    let _ = adapter.waker_sender().try_send(());
-    match poll_event {
-        PollEvent::Main(main_event) => match main_event {
-            MainEvent::InitWindow { .. } => {
-                android_init_servo_webview(adapter.clone());
-            }
-            _ => {}
-        },
-        _ => {}
-    }
+    slint::android::init(android_app).unwrap();
+    main();
 }
