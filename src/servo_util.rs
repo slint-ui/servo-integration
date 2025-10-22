@@ -44,6 +44,36 @@ pub fn spin_servo_event_loop(state: Rc<SlintServoAdapter>) {
     .expect("Failed to spawn servo event loop task");
 }
 
+pub fn init_servo_webview(state: Rc<SlintServoAdapter>) {
+    let state_weak = Rc::downgrade(&state);
+
+    slint::spawn_local({
+        async move {
+            let state = upgrade_adapter(&state_weak);
+
+            let app = state.app();
+
+            let width = app.global::<WebviewLogic>().get_viewport_width();
+            let height = app.global::<WebviewLogic>().get_viewport_height();
+
+            #[cfg(not(target_os = "android"))]
+            let (scale_factor, physical_size, rendering_adapter) =
+                non_android_rendering(width, height, &state, &app).await;
+
+            #[cfg(target_os = "android")]
+            let (scale_factor, physical_size, rendering_adapter) =
+                android_rendering(width, height, &app);
+
+            let rendering_context = rendering_adapter.get_rendering_context();
+
+            let servo = intit_servo(state.clone(), rendering_context);
+
+            init_webview(scale_factor, physical_size, state, servo, rendering_adapter);
+        }
+    })
+    .expect("Failed to spawn servo initialization task");
+}
+
 fn intit_servo(state: Rc<SlintServoAdapter>, rendering_context: Rc<dyn RenderingContext>) -> Servo {
     let waker = Waker::new(state.waker_sender());
 
@@ -81,65 +111,50 @@ fn init_webview(
     state.set_inner(servo, webview, scale_factor, rendering_adapter);
 }
 
-pub fn init_servo_webview(state: Rc<SlintServoAdapter>) {
-    let state_weak = Rc::downgrade(&state);
+#[cfg(not(target_os = "android"))]
+async fn non_android_rendering(
+    width: f32,
+    height: f32,
+    state: &SlintServoAdapter,
+    app: &impl ComponentHandle,
+) -> (f32, PhysicalSize<u32>, Box<dyn ServoRenderingAdapter>) {
+    let winit_window = app
+        .window()
+        .winit_window()
+        .await
+        .expect("Failed to get winit window");
 
-    slint::spawn_local({
-        async move {
-            let state = upgrade_adapter(&state_weak);
+    let scale_factor = winit_window.scale_factor() as f32;
 
-            let app = state.app();
+    let size: Size2D<f32, DevicePixel> = Size2D::new(width, height) * scale_factor;
 
-            let width = app.global::<WebviewLogic>().get_viewport_width();
-            let height = app.global::<WebviewLogic>().get_viewport_height();
+    let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
 
-            #[cfg(not(target_os = "android"))]
-            let (scale_factor, physical_size, rendering_adapter) = {
-                let winit_window = app
-                    .window()
-                    .winit_window()
-                    .await
-                    .expect("Failed to get winit window");
+    let wgpu_device = state.wgpu_device();
+    let wgpu_queue = state.wgpu_queue();
 
-                let scale_factor = winit_window.scale_factor() as f32;
+    let rendering_adapter = try_create_gpu_context(wgpu_device, wgpu_queue, physical_size).unwrap();
 
-                let size: Size2D<f32, DevicePixel> = Size2D::new(width, height) * scale_factor;
+    (scale_factor, physical_size, rendering_adapter)
+}
 
-                let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
+#[cfg(target_os = "android")]
+fn android_rendering(
+    width: f32,
+    height: f32,
+    app: &impl ComponentHandle,
+) -> (f32, PhysicalSize<u32>, Box<dyn ServoRenderingAdapter>) {
+    let window = app.window();
 
-                let wgpu_device = state.wgpu_device();
-                let wgpu_queue = state.wgpu_queue();
+    let window_size = window.size();
 
-                let rendering_adapter =
-                    try_create_gpu_context(wgpu_device, wgpu_queue, physical_size).unwrap();
+    let scale_factor = window.scale_factor() as f32;
 
-                (scale_factor, physical_size, rendering_adapter)
-            };
+    let size: Size2D<f32, DevicePixel> = Size2D::new(width, height) * scale_factor;
 
-            #[cfg(target_os = "android")]
-            let (scale_factor, physical_size, rendering_adapter) = {
+    let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
 
-                let window = app.window();
+    let rendering_adapter = create_software_context(physical_size);
 
-                let window_size = window.size();
-
-                let scale_factor = window.scale_factor() as f32;
-
-                let size: Size2D<f32, DevicePixel> = Size2D::new(width, height) * scale_factor;
-
-                let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
-
-                let rendering_adapter = create_software_context(physical_size);
-
-                (scale_factor, physical_size, rendering_adapter)
-            };
-
-            let rendering_context = rendering_adapter.get_rendering_context();
-
-            let servo = intit_servo(state.clone(), rendering_context);
-
-            init_webview(scale_factor, physical_size, state, servo, rendering_adapter);
-        }
-    })
-    .expect("Failed to spawn servo initialization task");
+    (scale_factor, physical_size, rendering_adapter)
 }
