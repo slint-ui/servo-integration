@@ -65,7 +65,7 @@ fn on_buttons(adapter: Rc<SlintServoAdapter>) {
     });
 }
 
-pub fn on_resize(adapter: Rc<SlintServoAdapter>) {
+fn on_resize(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
     let adapter_weak = Rc::downgrade(&adapter);
@@ -73,23 +73,23 @@ pub fn on_resize(adapter: Rc<SlintServoAdapter>) {
         .on_resize(move |width, height| {
             let adapter = upgrade_adapter(&adapter_weak);
 
-            if let Some(webview) = adapter.try_get_webview() {
-                let scale_factor = adapter.scale_factor();
+            let webview = adapter.webview();
 
-                let size = Size2D::new(width, height) * scale_factor;
+            let scale_factor = adapter.scale_factor();
 
-                let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
+            let size = Size2D::new(width, height) * scale_factor;
 
-                let rect: Box2D<f32, DevicePixel> =
-                    Box2D::from_origin_and_size(Point2D::origin(), size);
+            let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
 
-                webview.move_resize(rect);
-                webview.resize(physical_size);
-            }
+            let rect: Box2D<f32, DevicePixel> =
+                Box2D::from_origin_and_size(Point2D::origin(), size);
+
+            webview.move_resize(rect);
+            webview.resize(physical_size);
         });
 }
 
-pub fn on_move(adapter: Rc<SlintServoAdapter>) {
+fn on_move(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
     let adapter_weak = Rc::downgrade(&adapter);
@@ -144,22 +144,21 @@ fn on_pointer(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
     let adapter_weak = Rc::downgrade(&adapter);
-    app.global::<WebviewLogic>()
-        .on_pointer(move |event, x, y| {
-            let adapter = upgrade_adapter(&adapter_weak);
+    app.global::<WebviewLogic>().on_pointer(move |event, x, y| {
+        let adapter = upgrade_adapter(&adapter_weak);
 
-            let webview = adapter.webview();
+        let webview = adapter.webview();
 
-            let scale_factor = adapter.scale_factor();
+        let scale_factor = adapter.scale_factor();
 
-            let event_str = format!("{:?}", event);
+        let event_str = format!("{:?}", event);
 
-            let point = DevicePoint::new(x * scale_factor, y * scale_factor);
+        let point = DevicePoint::new(x * scale_factor, y * scale_factor);
 
-            let input_event = convert_slint_pointer_event_to_servo_input_event(&event_str, point);
+        let input_event = convert_slint_pointer_event_to_servo_input_event(&event_str, point);
 
-            webview.notify_input_event(input_event);
-        });
+        webview.notify_input_event(input_event);
+    });
 }
 
 fn convert_slint_pointer_event_to_servo_input_event(
