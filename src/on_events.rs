@@ -19,50 +19,14 @@ use crate::{
 };
 
 pub fn on_app_callbacks(adapter: Rc<SlintServoAdapter>) {
-    on_go(adapter.clone());
     on_resize(adapter.clone());
+    on_move(adapter.clone());
     on_buttons(adapter.clone());
-    on_scroll_event(adapter.clone());
-    on_pointer_event(adapter.clone());
+    on_scroll(adapter.clone());
+    on_pointer(adapter.clone());
 }
 
-pub fn on_go(adapter: Rc<SlintServoAdapter>) {
-    let app = adapter.app();
-
-    let adpater_weak = Rc::downgrade(&adapter);
-    app.on_go(move |url| {
-        let adapter = upgrade_adapter(&adpater_weak);
-        let webview = adapter.webview();
-        let url = Url::parse(url.as_str()).expect("Failed to parse url");
-        webview.load(url);
-    });
-}
-
-pub fn on_resize(adapter: Rc<SlintServoAdapter>) {
-    let app = adapter.app();
-
-    let adpater_weak = Rc::downgrade(&adapter);
-    app.global::<WebviewLogic>()
-        .on_resize(move |width, height| {
-            let adapter = upgrade_adapter(&adpater_weak);
-
-            if let Some(webview) = adapter.try_get_webview() {
-                let scale_factor = adapter.scale_factor();
-
-                let size = Size2D::new(width, height) * scale_factor;
-
-                let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
-
-                let rect: Box2D<f32, DevicePixel> =
-                    Box2D::from_origin_and_size(Point2D::origin(), size);
-
-                webview.move_resize(rect);
-                webview.resize(physical_size);
-            }
-        });
-}
-
-pub fn on_buttons(adapter: Rc<SlintServoAdapter>) {
+fn on_buttons(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
     let adapter_weak = Rc::downgrade(&adapter);
@@ -91,35 +55,97 @@ pub fn on_buttons(adapter: Rc<SlintServoAdapter>) {
 
         webview.reload();
     });
+
+    let adpater_weak = Rc::downgrade(&adapter);
+    app.on_go(move |url| {
+        let adapter = upgrade_adapter(&adpater_weak);
+        let webview = adapter.webview();
+        let url = Url::parse(url.as_str()).expect("Failed to parse url");
+        webview.load(url);
+    });
 }
 
-pub fn on_scroll_event(adapter: Rc<SlintServoAdapter>) {
+pub fn on_resize(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
     let adapter_weak = Rc::downgrade(&adapter);
     app.global::<WebviewLogic>()
-        .on_scroll_event(move |dx, dy, mouse_x, mouse_y| {
+        .on_resize(move |width, height| {
+            let adapter = upgrade_adapter(&adapter_weak);
+
+            if let Some(webview) = adapter.try_get_webview() {
+                let scale_factor = adapter.scale_factor();
+
+                let size = Size2D::new(width, height) * scale_factor;
+
+                let physical_size = PhysicalSize::new(size.width as u32, size.height as u32);
+
+                let rect: Box2D<f32, DevicePixel> =
+                    Box2D::from_origin_and_size(Point2D::origin(), size);
+
+                webview.move_resize(rect);
+                webview.resize(physical_size);
+            }
+        });
+}
+
+pub fn on_move(adapter: Rc<SlintServoAdapter>) {
+    let app = adapter.app();
+
+    let adapter_weak = Rc::downgrade(&adapter);
+    app.global::<WebviewLogic>()
+        .on_move(move |initial_x, initial_y, delta_x, delta_y| {
+            println!(
+                "Move event initial_x:{} initial_y:{} delta_x:{} delta_y:{}",
+                initial_x, initial_y, delta_x, delta_y
+            );
+
             let adapter = upgrade_adapter(&adapter_weak);
 
             let webview = adapter.webview();
 
             let scale_factor = adapter.scale_factor();
 
-            let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
+            let point = DevicePoint::new(initial_x * scale_factor, initial_y * scale_factor);
 
-            let moved_by = Vector2D::new(dx, dy);
+            let moved_by = Vector2D::new(delta_x, delta_y);
+
+            webview.notify_scroll_event(ScrollLocation::Delta(moved_by), point.to_i32());
+        });
+}
+
+fn on_scroll(adapter: Rc<SlintServoAdapter>) {
+    let app = adapter.app();
+
+    let adapter_weak = Rc::downgrade(&adapter);
+    app.global::<WebviewLogic>()
+        .on_scroll(move |initial_x, initial_y, delta_x, delta_y| {
+            let adapter = upgrade_adapter(&adapter_weak);
+
+            println!(
+                "Scroll event initial_x:{} initial_y:{} delta_x:{} delta_y:{}",
+                initial_x, initial_y, delta_x, delta_y
+            );
+
+            let webview = adapter.webview();
+
+            let scale_factor = adapter.scale_factor();
+
+            let point = DevicePoint::new(initial_x * scale_factor, initial_y * scale_factor);
+
+            let moved_by = Vector2D::new(delta_x, delta_y);
             let servo_delta = -moved_by;
 
             webview.notify_scroll_event(ScrollLocation::Delta(servo_delta), point.to_i32());
         });
 }
 
-pub fn on_pointer_event(adapter: Rc<SlintServoAdapter>) {
+fn on_pointer(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
     let adapter_weak = Rc::downgrade(&adapter);
     app.global::<WebviewLogic>()
-        .on_pointer_event(move |event, mouse_x, mouse_y| {
+        .on_pointer(move |event, x, y| {
             let adapter = upgrade_adapter(&adapter_weak);
 
             let webview = adapter.webview();
@@ -128,7 +154,7 @@ pub fn on_pointer_event(adapter: Rc<SlintServoAdapter>) {
 
             let event_str = format!("{:?}", event);
 
-            let point = DevicePoint::new(mouse_x * scale_factor, mouse_y * scale_factor);
+            let point = DevicePoint::new(x * scale_factor, y * scale_factor);
 
             let input_event = convert_slint_pointer_event_to_servo_input_event(&event_str, point);
 
