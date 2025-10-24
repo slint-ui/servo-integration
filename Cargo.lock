@@ -745,7 +745,7 @@ dependencies = [
 [[package]]
 name = "background_hang_monitor"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "background_hang_monitor_api",
  "backtrace",
@@ -761,7 +761,7 @@ dependencies = [
 [[package]]
 name = "background_hang_monitor_api"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "ipc-channel",
@@ -786,7 +786,7 @@ dependencies = [
 [[package]]
 name = "base"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "crossbeam-channel",
  "ipc-channel",
@@ -1136,7 +1136,7 @@ dependencies = [
 [[package]]
 name = "canvas"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "app_units",
  "base",
@@ -1167,7 +1167,7 @@ dependencies = [
 [[package]]
 name = "canvas_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "crossbeam-channel",
@@ -1414,7 +1414,7 @@ dependencies = [
 [[package]]
 name = "compositing"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "bincode 1.3.3",
@@ -1448,7 +1448,7 @@ dependencies = [
 [[package]]
 name = "compositing_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "bincode 1.3.3",
@@ -1530,7 +1530,7 @@ dependencies = [
 [[package]]
 name = "constellation"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "background_hang_monitor",
  "background_hang_monitor_api",
@@ -1577,7 +1577,7 @@ dependencies = [
 [[package]]
 name = "constellation_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "canvas_traits",
@@ -1979,7 +1979,7 @@ checksum = "be1e0bca6c3637f992fc1cc7cbc52a78c1ef6db076dbf1059c4323d6a2048376"
 [[package]]
 name = "deny_public_fields"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "syn",
  "synstructure",
@@ -2030,7 +2030,7 @@ dependencies = [
 [[package]]
 name = "devtools"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "base64 0.22.1",
@@ -2056,7 +2056,7 @@ dependencies = [
 [[package]]
 name = "devtools_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "bitflags 2.10.0",
@@ -2163,7 +2163,7 @@ dependencies = [
 [[package]]
 name = "dom_struct"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "quote",
  "syn",
@@ -2172,7 +2172,7 @@ dependencies = [
 [[package]]
 name = "domobject_derive"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2275,7 +2275,7 @@ checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 [[package]]
 name = "embedder_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "bitflags 2.10.0",
@@ -2727,7 +2727,7 @@ dependencies = [
 [[package]]
 name = "fonts"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "app_units",
  "base",
@@ -2779,7 +2779,7 @@ dependencies = [
 [[package]]
 name = "fonts_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "atomic_refcell",
  "base",
@@ -3647,7 +3647,7 @@ dependencies = [
 [[package]]
 name = "hyper_serde"
 version = "0.13.2"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "cookie 0.18.1",
  "headers 0.4.1",
@@ -4805,7 +4805,7 @@ dependencies = [
 [[package]]
 name = "jstraceable_derive"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "proc-macro2",
  "syn",
@@ -4877,7 +4877,7 @@ dependencies = [
 [[package]]
 name = "layout"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -4931,7 +4931,7 @@ dependencies = [
 [[package]]
 name = "layout_api"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "app_units",
  "atomic_refcell",
@@ -5032,7 +5032,7 @@ dependencies = [
 [[package]]
 name = "libservo"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "arboard",
  "background_hang_monitor",
@@ -5331,7 +5331,7 @@ dependencies = [
 [[package]]
 name = "media"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "compositing_traits",
  "euclid",
@@ -5401,7 +5401,7 @@ dependencies = [
 [[package]]
 name = "metrics"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "ipc-channel",
@@ -5636,7 +5636,7 @@ dependencies = [
 [[package]]
 name = "net"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "async-compression",
  "async-recursion",
@@ -5704,7 +5704,7 @@ dependencies = [
 [[package]]
 name = "net_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "compositing_traits",
@@ -6600,7 +6600,7 @@ dependencies = [
 [[package]]
 name = "pixels"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "euclid",
  "image",
@@ -6776,7 +6776,7 @@ dependencies = [
 [[package]]
 name = "profile"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "ipc-channel",
@@ -6796,7 +6796,7 @@ dependencies = [
 [[package]]
 name = "profile_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "crossbeam-channel",
@@ -6960,7 +6960,7 @@ dependencies = [
 [[package]]
 name = "range"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "malloc_size_of_derive",
  "num-traits",
@@ -7388,7 +7388,7 @@ checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 [[package]]
 name = "script"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -7505,7 +7505,7 @@ dependencies = [
 [[package]]
 name = "script_bindings"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "bitflags 2.10.0",
  "crossbeam-channel",
@@ -7542,7 +7542,7 @@ dependencies = [
 [[package]]
 name = "script_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "background_hang_monitor_api",
  "base",
@@ -7865,7 +7865,7 @@ dependencies = [
 [[package]]
 name = "servo-tracing"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7875,7 +7875,7 @@ dependencies = [
 [[package]]
 name = "servo_allocator"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "libc",
  "tikv-jemalloc-sys",
@@ -7895,7 +7895,7 @@ dependencies = [
 [[package]]
 name = "servo_config"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "serde",
  "serde_json",
@@ -7907,7 +7907,7 @@ dependencies = [
 [[package]]
 name = "servo_config_macro"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -7918,7 +7918,7 @@ dependencies = [
 [[package]]
 name = "servo_geometry"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "app_units",
  "euclid",
@@ -7966,7 +7966,7 @@ dependencies = [
 [[package]]
 name = "servo_malloc_size_of"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "accountable-refcell",
  "app_units",
@@ -8004,7 +8004,7 @@ dependencies = [
 [[package]]
 name = "servo_url"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "encoding_rs",
  "malloc_size_of_derive",
@@ -8376,7 +8376,7 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 [[package]]
 name = "storage"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "bincode 1.3.3",
@@ -8405,7 +8405,7 @@ dependencies = [
 [[package]]
 name = "storage_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "ipc-channel",
@@ -8768,7 +8768,7 @@ checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 [[package]]
 name = "task_info"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "cc",
 ]
@@ -8935,7 +8935,7 @@ checksum = "6ee8a8f2ac1a27ccb3a3e5cce6bc4244fff349e52929387ea6a1f9dd90e55a0d"
 [[package]]
 name = "timers"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "crossbeam-channel",
  "malloc_size_of_derive",
@@ -9942,7 +9942,7 @@ dependencies = [
 [[package]]
 name = "webgl"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "base",
  "bitflags 2.10.0",
@@ -9966,7 +9966,7 @@ dependencies = [
 [[package]]
 name = "webgpu"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "arrayvec",
  "base",
@@ -9987,7 +9987,7 @@ dependencies = [
 [[package]]
 name = "webgpu_traits"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "arrayvec",
  "base",
@@ -10076,7 +10076,7 @@ dependencies = [
 [[package]]
 name = "webxr"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "crossbeam-channel",
  "euclid",
@@ -10094,7 +10094,7 @@ dependencies = [
 [[package]]
 name = "webxr-api"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "embedder_traits",
  "euclid",
@@ -11231,7 +11231,7 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 [[package]]
 name = "xpath"
 version = "0.0.1"
-source = "git+https://github.com/servo/servo?rev=6357fc8#6357fc8f1c947d67cd7602165d0978bbfebe055a"
+source = "git+https://github.com/burhankhanzada/servo?branch=touch_event#f214511102f4f0182eaecc0b89f6f5faf53ccb17"
 dependencies = [
  "log",
  "malloc_size_of_derive",

@@ -2,7 +2,6 @@ export global WebviewLogic {
 
     callback resize(width: length, height: length);
     callback pointer(event: PointerEvent, x: length, y: length);
-    callback move(initital_x: length, initital_y: length, delta_x: length, delta_y: length);
     callback scroll(initital_x: length, initital_y: length, delta_x: length, delta_y: length);
 
     in property <image> web_content;
@@ -31,9 +30,6 @@ export component Webview {
             WebviewLogic.resize(self.width, self.height);
         }
 
-        moved => {
-            WebviewLogic.move(self.pressed-x, self.pressed-y, self.pressed-x - self.mouse-x, self.pressed-y - self.mouse-y);
-        }
         pointer-event(event) => {
             WebviewLogic.pointer(event, self.mouse-x, self.mouse-y);
         }

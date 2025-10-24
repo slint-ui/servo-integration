@@ -3,7 +3,8 @@ use std::rc::Rc;
 use euclid::{Box2D, Point2D, Size2D, Vector2D};
 
 use servo::{
-    InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent,
+    InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent, TouchEvent,
+    TouchEventType, TouchId,
     webrender_api::{
         ScrollLocation,
         units::{DevicePixel, DevicePoint},
@@ -20,7 +21,6 @@ use crate::{
 
 pub fn on_app_callbacks(adapter: Rc<SlintServoAdapter>) {
     on_resize(adapter.clone());
-    on_move(adapter.clone());
     on_buttons(adapter.clone());
     on_scroll(adapter.clone());
     on_pointer(adapter.clone());
@@ -89,31 +89,6 @@ fn on_resize(adapter: Rc<SlintServoAdapter>) {
         });
 }
 
-fn on_move(adapter: Rc<SlintServoAdapter>) {
-    let app = adapter.app();
-
-    let adapter_weak = Rc::downgrade(&adapter);
-    app.global::<WebviewLogic>()
-        .on_move(move |initial_x, initial_y, delta_x, delta_y| {
-            println!(
-                "Move event initial_x:{} initial_y:{} delta_x:{} delta_y:{}",
-                initial_x, initial_y, delta_x, delta_y
-            );
-
-            let adapter = upgrade_adapter(&adapter_weak);
-
-            let webview = adapter.webview();
-
-            let scale_factor = adapter.scale_factor();
-
-            let point = DevicePoint::new(initial_x * scale_factor, initial_y * scale_factor);
-
-            let moved_by = Vector2D::new(delta_x, delta_y);
-
-            webview.notify_scroll_event(ScrollLocation::Delta(moved_by), point.to_i32());
-        });
-}
-
 fn on_scroll(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
@@ -145,6 +120,10 @@ fn on_pointer(adapter: Rc<SlintServoAdapter>) {
 
     let adapter_weak = Rc::downgrade(&adapter);
     app.global::<WebviewLogic>().on_pointer(move |event, x, y| {
+        let event_str = format!("{:?}", event);
+
+        println!("Pointer event event:{} x:{} y:{}", event_str, x, y);
+
         let adapter = upgrade_adapter(&adapter_weak);
 
         let webview = adapter.webview();
@@ -155,7 +134,11 @@ fn on_pointer(adapter: Rc<SlintServoAdapter>) {
 
         let point = DevicePoint::new(x * scale_factor, y * scale_factor);
 
-        let input_event = convert_slint_pointer_event_to_servo_input_event(&event_str, point);
+        let input_event = if cfg!(target_os = "android") {
+            android_convert_slint_pointer_event_to_servo_input_event(&event_str, point)
+        } else {
+            convert_slint_pointer_event_to_servo_input_event(&event_str, point)
+        };
 
         webview.notify_input_event(input_event);
     });
@@ -177,6 +160,24 @@ fn convert_slint_pointer_event_to_servo_input_event(
         InputEvent::MouseButton(MouseButtonEvent::new(MouseButtonAction::Up, button, point))
     } else {
         InputEvent::MouseMove(MouseMoveEvent::new(point))
+    }
+}
+
+fn android_convert_slint_pointer_event_to_servo_input_event(
+    event_str: &str,
+    point: DevicePoint,
+) -> InputEvent {
+    let touch_id = TouchId(1);
+
+    if event_str.contains("kind: Down") {
+        let touch_event = TouchEvent::new(TouchEventType::Down, touch_id, point);
+        InputEvent::Touch(touch_event)
+    } else if event_str.contains("kind: Up") {
+        let touch_event = TouchEvent::new(TouchEventType::Up, touch_id, point);
+        InputEvent::Touch(touch_event)
+    } else {
+        let touch_event = TouchEvent::new(TouchEventType::Move, touch_id, point);
+        InputEvent::Touch(touch_event)
     }
 }
 
