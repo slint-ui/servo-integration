@@ -34,20 +34,21 @@ wgpu-hal = "27.0.2"
 wgpu-core = "27.0.1"
 wgpu = { version = "27.0.1", features = ["metal"] }
 
-# libservo = { git = "https://github.com/servo/servo", rev = "6357fc8" }
-libservo = { git = "https://github.com/burhankhanzada/servo", branch = "touch_event" }
-embedder_traits = { git = "https://github.com/burhankhanzada/servo", branch = "touch_event", features = [
+libservo = { git = "https://github.com/servo/servo", rev = "6357fc8" }
+embedder_traits = { git = "https://github.com/servo/servo", rev = "6357fc8", features = [
     "baked-default-resources",
 ] }
+
+i-slint-core = "1.15.0"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 ash = "0.38.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
-slint = { version = "1.14.0", features = ["backend-android-activity-06"] }
+slint = { version = "1.15.0", features = ["backend-android-activity-06"] }
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
-slint = { version = "1.14.0", features = [
+slint = { version = "1.15.0", features = [
     "unstable-winit-030",
     "unstable-wgpu-27",
 ] }
@@ -66,10 +67,16 @@ objc2-metal = { version = "0.3.2", features = [
 ] }
 
 [build-dependencies]
-slint-build = { version = "1.14.0" }
+slint-build = { version = "1.15.0" }
 
 [target.'cfg(target_os = "linux")'.build-dependencies]
 gl_generator = "0.14.0"
 
 [[package.metadata.android.uses_permission]]
 name = "android.permission.INTERNET"
+
+# for local development
+# [patch.crates-io]
+# slint = { path = "../slint/api/rs/slint" }
+# slint-build = { path = "../slint/api/rs/build" }
+# i-slint-core = { path = "../slint/internal/core" }

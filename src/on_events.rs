@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use euclid::{Box2D, Point2D, Size2D, Vector2D};
 
+use i_slint_core::items::{PointerEvent, PointerEventKind};
 use servo::{
     InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent, TouchEvent,
     TouchEventType, TouchId,
@@ -10,7 +11,7 @@ use servo::{
         units::{DevicePixel, DevicePoint},
     },
 };
-use slint::ComponentHandle;
+use slint::{ComponentHandle, platform::PointerEventButton};
 use url::Url;
 use winit::dpi::PhysicalSize;
 
@@ -119,76 +120,64 @@ fn on_pointer(adapter: Rc<SlintServoAdapter>) {
     let app = adapter.app();
 
     let adapter_weak = Rc::downgrade(&adapter);
-    app.global::<WebviewLogic>().on_pointer(move |event, x, y| {
-        let event_str = format!("{:?}", event);
+    app.global::<WebviewLogic>()
+        .on_pointer(move |pointer_event, x, y| {
+            let adapter = upgrade_adapter(&adapter_weak);
 
-        println!("Pointer event event:{} x:{} y:{}", event_str, x, y);
+            let webview = adapter.webview();
 
-        let adapter = upgrade_adapter(&adapter_weak);
+            let scale_factor = adapter.scale_factor();
 
-        let webview = adapter.webview();
+            let point = DevicePoint::new(x * scale_factor, y * scale_factor);
 
-        let scale_factor = adapter.scale_factor();
+            let input_event =
+                convert_slint_pointer_event_to_servo_input_event(&pointer_event, point);
 
-        let event_str = format!("{:?}", event);
-
-        let point = DevicePoint::new(x * scale_factor, y * scale_factor);
-
-        let input_event = if cfg!(target_os = "android") {
-            android_convert_slint_pointer_event_to_servo_input_event(&event_str, point)
-        } else {
-            convert_slint_pointer_event_to_servo_input_event(&event_str, point)
-        };
-
-        webview.notify_input_event(input_event);
-    });
+            webview.notify_input_event(input_event);
+        });
 }
 
 fn convert_slint_pointer_event_to_servo_input_event(
-    event_str: &str,
+    pointer_event: &PointerEvent,
     point: DevicePoint,
 ) -> InputEvent {
-    let button = get_mouse_button(event_str);
-
-    if event_str.contains("kind: Down") {
-        InputEvent::MouseButton(MouseButtonEvent::new(
-            MouseButtonAction::Down,
-            button,
-            point,
-        ))
-    } else if event_str.contains("kind: Up") {
-        InputEvent::MouseButton(MouseButtonEvent::new(MouseButtonAction::Up, button, point))
+    if pointer_event.is_touch {
+        handle_touch_events(pointer_event, point)
     } else {
-        InputEvent::MouseMove(MouseMoveEvent::new(point))
+        _handle_mouse_events(pointer_event, point)
     }
 }
 
-fn android_convert_slint_pointer_event_to_servo_input_event(
-    event_str: &str,
-    point: DevicePoint,
-) -> InputEvent {
+fn handle_touch_events(pointer_event: &PointerEvent, point: DevicePoint) -> InputEvent {
     let touch_id = TouchId(1);
+    let touch_event = match pointer_event.kind {
+        PointerEventKind::Down => TouchEvent::new(TouchEventType::Down, touch_id, point),
+        PointerEventKind::Up => TouchEvent::new(TouchEventType::Up, touch_id, point),
+        _ => TouchEvent::new(TouchEventType::Move, touch_id, point),
+    };
+    InputEvent::Touch(touch_event)
+}
 
-    if event_str.contains("kind: Down") {
-        let touch_event = TouchEvent::new(TouchEventType::Down, touch_id, point);
-        InputEvent::Touch(touch_event)
-    } else if event_str.contains("kind: Up") {
-        let touch_event = TouchEvent::new(TouchEventType::Up, touch_id, point);
-        InputEvent::Touch(touch_event)
-    } else {
-        let touch_event = TouchEvent::new(TouchEventType::Move, touch_id, point);
-        InputEvent::Touch(touch_event)
+fn _handle_mouse_events(pointer_event: &PointerEvent, point: DevicePoint) -> InputEvent {
+    let button = _get_mouse_button(pointer_event);
+    match pointer_event.kind {
+        PointerEventKind::Down => {
+            let mouse_event = MouseButtonEvent::new(MouseButtonAction::Down, button, point);
+            InputEvent::MouseButton(mouse_event)
+        }
+        PointerEventKind::Up => {
+            let mouse_event = MouseButtonEvent::new(MouseButtonAction::Up, button, point);
+            InputEvent::MouseButton(mouse_event)
+        }
+        _ => InputEvent::MouseMove(MouseMoveEvent::new(point)),
     }
 }
 
-fn get_mouse_button(event_str: &str) -> MouseButton {
-    if event_str.contains("button: Left") {
-        MouseButton::Left
-    } else if event_str.contains("button: Right") {
-        MouseButton::Right
-    } else if event_str.contains("button: Middle") {
-        MouseButton::Middle
-    } else {
-        MouseButton::Left
+fn _get_mouse_button(point_event: &PointerEvent) -> MouseButton {
+    match point_event.button {
+        PointerEventButton::Left => MouseButton::Left,
+        PointerEventButton::Right => MouseButton::Right,
+        PointerEventButton::Middle => MouseButton::Middle,
+        _ => MouseButton::Left,
     }
 }
