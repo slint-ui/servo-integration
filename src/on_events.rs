@@ -1,19 +1,21 @@
 use std::rc::Rc;
 
+use url::Url;
+use winit::dpi::PhysicalSize;
+
 use euclid::{Box2D, Point2D, Size2D, Vector2D};
 
-use i_slint_core::items::{PointerEvent, PointerEventKind};
+use i_slint_core::items::{ColorScheme, PointerEvent, PointerEventKind};
+use slint::{ComponentHandle, platform::PointerEventButton};
+
 use servo::{
-    InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent, TouchEvent,
-    TouchEventType, TouchId,
+    InputEvent, MouseButton, MouseButtonAction, MouseButtonEvent, MouseMoveEvent, Theme,
+    TouchEvent, TouchEventType, TouchId,
     webrender_api::{
         ScrollLocation,
         units::{DevicePixel, DevicePoint},
     },
 };
-use slint::{ComponentHandle, platform::PointerEventButton};
-use url::Url;
-use winit::dpi::PhysicalSize;
 
 use crate::{
     WebviewLogic,
@@ -21,10 +23,35 @@ use crate::{
 };
 
 pub fn on_app_callbacks(adapter: Rc<SlintServoAdapter>) {
+    on_theme(adapter.clone());
     on_resize(adapter.clone());
-    on_buttons(adapter.clone());
     on_scroll(adapter.clone());
+    on_buttons(adapter.clone());
     on_pointer(adapter.clone());
+}
+
+fn on_theme(adapter: Rc<SlintServoAdapter>) {
+    let app = adapter.app();
+
+    let adapter_weak = Rc::downgrade(&adapter);
+
+    app.global::<WebviewLogic>().on_theme(move |color_scheme| {
+        println!("{:?}", color_scheme);
+
+        let theme = if color_scheme == ColorScheme::Dark {
+            Theme::Dark
+        } else {
+            Theme::Light
+        };
+
+        let adapter = upgrade_adapter(&adapter_weak);
+
+        let webview = adapter.webview();
+
+        // Theme not updating its the issue with servo itself until mouse move over it
+        // https://github.com/servo/servo/issues/40268
+        webview.notify_theme_change(theme);
+    });
 }
 
 fn on_buttons(adapter: Rc<SlintServoAdapter>) {
@@ -98,11 +125,6 @@ fn on_scroll(adapter: Rc<SlintServoAdapter>) {
         .on_scroll(move |initial_x, initial_y, delta_x, delta_y| {
             let adapter = upgrade_adapter(&adapter_weak);
 
-            println!(
-                "Scroll event initial_x:{} initial_y:{} delta_x:{} delta_y:{}",
-                initial_x, initial_y, delta_x, delta_y
-            );
-
             let webview = adapter.webview();
 
             let scale_factor = adapter.scale_factor();
@@ -144,7 +166,7 @@ fn convert_slint_pointer_event_to_servo_input_event(
     if pointer_event.is_touch {
         handle_touch_events(pointer_event, point)
     } else {
-        _handle_mouse_events(pointer_event, point)
+        handle_mouse_events(pointer_event, point)
     }
 }
 
@@ -158,8 +180,8 @@ fn handle_touch_events(pointer_event: &PointerEvent, point: DevicePoint) -> Inpu
     InputEvent::Touch(touch_event)
 }
 
-fn _handle_mouse_events(pointer_event: &PointerEvent, point: DevicePoint) -> InputEvent {
-    let button = _get_mouse_button(pointer_event);
+fn handle_mouse_events(pointer_event: &PointerEvent, point: DevicePoint) -> InputEvent {
+    let button = get_mouse_button(pointer_event);
     match pointer_event.kind {
         PointerEventKind::Down => {
             let mouse_event = MouseButtonEvent::new(MouseButtonAction::Down, button, point);
@@ -173,7 +195,7 @@ fn _handle_mouse_events(pointer_event: &PointerEvent, point: DevicePoint) -> Inp
     }
 }
 
-fn _get_mouse_button(point_event: &PointerEvent) -> MouseButton {
+fn get_mouse_button(point_event: &PointerEvent) -> MouseButton {
     match point_event.button {
         PointerEventButton::Left => MouseButton::Left,
         PointerEventButton::Right => MouseButton::Right,

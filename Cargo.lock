@@ -8656,7 +8656,7 @@ version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47846491253e976bdd07d0f9cc24b7daf24720d11309302ccbbc6e6b6e53550a"
 dependencies = [
- "skrifa 0.35.0",
+ "skrifa 0.37.0",
  "yazi",
  "zeno",
 ]
