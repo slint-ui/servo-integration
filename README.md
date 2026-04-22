@@ -1,31 +1,3 @@
 # Slint Servo Integration
 
-## For Android build on Mac
-
-### Run below command to install required things
-
-```bash
-brew install android-studio openjdk@17
-
-sdkmanager platform-tools "platforms;android-30" "build-tools;34.0.0" "ndk;28.2.13676358"
-```
-
-### Set these to .zshrc
-
-```bash
-export JAVA_HOME="/opt/homebrew/opt/openjdk@17"
-export PATH=$JAVA_HOME/bin:$PATH
-
-export ANDROID_HOME=~/Library/Android/sdk
-export ANDROID_SDK_ROOT=$ANDROID_HOME
-
-export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358"
-export ANDROID_NDK_ROOT=$ANDROID_NDK_HOME
-
-export PATH=$ANDROID_HOME/tools:$PATH
-export PATH=$ANDROID_HOME/platform-tools:$PATH
-export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
-
-# setting this makes mac build fail
-export BINDGEN_EXTRA_CLANG_ARGS="--target=aarch64-linux-android30 --sysroot=$ANDROID_NDK_ROOT/toolchains/llvm/prebuilt/darwin-x86_64/sysroot"
-```
+This repository is archived because the entire project lives now in <https://github.com/slint-ui/slint/tree/master/examples/servo>
